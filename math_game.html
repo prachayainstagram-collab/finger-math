@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FINGER MATH - เกมนิ้วแทนจำนวน</title>
+    
+    <!-- Tailwind CSS for rapid modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- MediaPipe Hands & Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #2563EB;
+            --secondary: #06B6D4;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a, #0891b2);
+            color: white;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Animated Background Particles */
+        .particles-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.15);
+            font-size: 2rem;
+            animation: float 15s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* Glassmorphism Cards */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 1.5rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        /* Video / Canvas Container */
+        .video-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            border-radius: 1rem;
+            overflow: hidden;
+            background-color: #000;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        .video-container video {
+            display: none; /* Hide original video, we draw on canvas */
+        }
+
+        .video-container canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+            /* สำคัญ: ลบ transform: scaleX(-1); ออกจาก CSS เพราะเราจะกลับด้านภาพในส่วนวาดของ Canvas แทน เพื่อให้จุดอ้างอิงตรงกัน */
+        }
+
+        /* Progress Bars */
+        .progress-bar-bg {
+            background-color: rgba(255,255,255,0.2);
+            border-radius: 999px;
+            overflow: hidden;
+            height: 1rem;
+            width: 100%;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            transition: width 0.1s linear, background-color 0.3s;
+        }
+
+        /* Animations */
+        @keyframes pop {
+            0% { transform: scale(0.9); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+        .animate-shake { animation: shake 0.5s; }
+
+        .hidden-panel { display: none !important; }
+        
+        .badge {
+            transition: all 0.3s;
+            filter: grayscale(100%);
+            opacity: 0.5;
+        }
+        .badge.unlocked {
+            filter: grayscale(0%);
+            opacity: 1;
+            transform: scale(1.1);
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        /* Hold indicator ring */
+        .hold-indicator {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 150px; height: 150px;
+            border-radius: 50%;
+            border: 8px solid rgba(255,255,255,0.2);
+            pointer-events: none;
+            display: none;
+        }
+        .hold-indicator.active {
+            display: block;
+        }
+        .hold-indicator-fill {
+            position: absolute;
+            top: -8px; left: -8px; right: -8px; bottom: -8px;
+            border-radius: 50%;
+            border: 8px solid var(--success);
+            border-color: var(--success) transparent transparent transparent;
+            transform: rotate(-45deg);
+            transition: transform 0.1s linear;
+        }
+
+        /* Responsive Text */
+        .question-text { font-size: clamp(3rem, 8vw, 6rem); font-weight: 800; line-height: 1.1; }
+        .feedback-text { font-size: clamp(2rem, 5vw, 4rem); font-weight: 700; }
+    </style>
+</head>
+<body class="flex flex-col">
+
+    <!-- Background Particles -->
+    <div class="particles-container" id="particles"></div>
+
+    <!-- MAIN GAME UI -->
+    <div id="gameUI" class="hidden-panel flex-col flex-grow p-4 md:p-8 max-w-7xl mx-auto w-full">
+        
+        <!-- Header -->
+        <header class="glass-card p-4 flex flex-wrap justify-between items-center mb-6 gap-4">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-hands-asl-interpreting text-4xl text-blue-300"></i>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-wider">FINGER MATH</h1>
+                    <p class="text-sm text-blue-200">ผู้เล่น: <span id="currentPlayerNameHeader" class="font-bold text-white"></span></p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-6">
+                <div class="text-center">
+                    <p class="text-xs uppercase tracking-wider text-blue-200">ข้อที่</p>
+                    <p id="levelDisplay" class="text-3xl font-black text-green-300">1/10</p>
+                </div>
+                <div class="text-center bg-white/20 px-4 py-2 rounded-xl">
+                    <p class="text-xs uppercase tracking-wider">เวลา</p>
+                    <p id="timeDisplay" class="text-2xl font-bold">10s</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <div class="flex flex-col lg:flex-row gap-6 flex-grow">
+            
+            <!-- Left Side: Webcam & Tracking -->
+            <div class="lg:w-1/2 flex flex-col gap-4">
+                <div class="glass-card p-4 relative">
+                    <div class="absolute top-6 left-6 z-10 bg-black/60 px-4 py-2 rounded-lg border border-white/20">
+                        <p class="text-sm">จำนวนนิ้วที่พบ</p>
+                        <p id="fingerCountDisplay" class="text-5xl font-black text-blue-400">0</p>
+                    </div>
+                    
+                    <div id="cameraStatus" class="absolute inset-0 flex items-center justify-center z-20 bg-black/80 rounded-xl">
+                        <div class="text-center">
+                            <i class="fa-solid fa-spinner fa-spin text-5xl mb-4 text-blue-400"></i>
+                            <p class="text-xl">กำลังเปิดกล้องและ AI...</p>
+                        </div>
+                    </div>
+
+                    <div class="video-container">
+                        <video id="inputVideo" autoplay playsinline></video>
+                        <canvas id="outputCanvas"></canvas>
+                        
+                        <!-- Hold Indicator -->
+                        <div id="holdIndicator" class="hold-indicator">
+                            <div id="holdFill" class="hold-indicator-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="glass-card p-4 flex justify-center gap-4">
+                    <button id="btnPause" class="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-xl font-bold transition flex items-center gap-2">
+                        <i class="fa-solid fa-pause"></i> พัก
+                    </button>
+                    <button id="btnRestart" class="px-6 py-3 bg-red-500/80 hover:bg-red-500 rounded-xl font-bold transition flex items-center gap-2">
+                        <i class="fa-solid fa-rotate-right"></i> เริ่มใหม่
+                    </button>
+                    <button id="btnMenu" class="px-6 py-3 bg-blue-500/80 hover:bg-blue-500 rounded-xl font-bold transition flex items-center gap-2">
+                        <i class="fa-solid fa-bars"></i> เมนูหลัก
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Side: Game Logic -->
+            <div class="lg:w-1/2 flex flex-col gap-6">
+                <!-- Question Card -->
+                <div class="glass-card p-8 flex-grow flex flex-col justify-center items-center relative overflow-hidden text-center min-h-[300px]">
+                    <div id="questionModeText" class="absolute top-4 left-6 text-sm text-blue-200 uppercase tracking-widest">การบวกพื้นฐาน</div>
+                    <div id="scoreDisplayContainer" class="absolute top-4 right-6 text-center">
+                        <p class="text-xs uppercase tracking-wider text-blue-200">คะแนน</p>
+                        <p id="scoreDisplay" class="text-2xl font-bold text-yellow-300">0</p>
+                        <div id="comboDisplay" class="text-sm font-bold text-yellow-300 hidden animate-pop">คอมโบ x3!</div>
+                    </div>
+                    
+                    
+                    <div id="questionContainer" class="w-full mt-8">
+                        <h2 id="questionText" class="question-text mb-4 drop-shadow-lg">3 + 4 = ?</h2>
+                        <p id="instructionText" class="text-xl text-blue-100">ชูนิ้วหน้ากล้องเพื่อตอบคำถาม</p>
+                    </div>
+
+                    <!-- Feedback Overlay -->
+                    <div id="feedbackContainer" class="absolute inset-0 bg-black/80 flex flex-col items-center justify-center hidden-panel z-10 backdrop-blur-sm">
+                        <i id="feedbackIcon" class="fa-solid fa-check-circle text-7xl mb-4"></i>
+                        <h2 id="feedbackText" class="feedback-text drop-shadow-lg mb-2">ถูกต้อง!</h2>
+                        <p id="feedbackPoints" class="text-2xl font-bold text-yellow-300"></p>
+                        <p id="feedbackMessage" class="text-lg text-white mt-2 font-medium"></p>
+                    </div>
+                </div>
+
+                <!-- Stats & Progress -->
+                <div class="glass-card p-6">
+                    <div class="flex justify-between text-sm mb-2 font-semibold">
+                        <span>เวลาที่เหลือ</span>
+                        <span id="timerText">10.0s</span>
+                    </div>
+                    <div class="progress-bar-bg mb-6">
+                        <div id="timerBar" class="progress-bar-fill bg-blue-400" style="width: 100%"></div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-white/10 p-4 rounded-xl text-center">
+                            <p class="text-green-400 text-sm font-bold"><i class="fa-solid fa-check"></i> ตอบถูก</p>
+                            <p id="statCorrect" class="text-3xl font-black">0</p>
+                        </div>
+                        <div class="bg-white/10 p-4 rounded-xl text-center">
+                            <p class="text-red-400 text-sm font-bold"><i class="fa-solid fa-xmark"></i> ตอบผิด</p>
+                            <p id="statWrong" class="text-3xl font-black">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Achievements -->
+                <div class="glass-card p-4">
+                    <h3 class="text-center font-bold mb-3 text-sm text-blue-200 uppercase tracking-widest">เหรียญรางวัล</h3>
+                    <div class="flex justify-around items-center">
+                        <div class="badge flex flex-col items-center" id="badgeBeginner" title="ตอบถูก 10 ข้อ">
+                            <i class="fa-solid fa-medal text-3xl text-orange-400 mb-1"></i>
+                            <span class="text-xs">ผู้เริ่มต้น</span>
+                        </div>
+                        <div class="badge flex flex-col items-center" id="badgeStar" title="ตอบถูก 50 ข้อ">
+                            <i class="fa-solid fa-star text-3xl text-yellow-400 mb-1"></i>
+                            <span class="text-xs">ดาวคณิตศาสตร์</span>
+                        </div>
+                        <div class="badge flex flex-col items-center" id="badgeMaster" title="ตอบถูก 100 ข้อ">
+                            <i class="fa-solid fa-hand-sparkles text-3xl text-blue-400 mb-1"></i>
+                            <span class="text-xs">ปรมาจารย์</span>
+                        </div>
+                        <div class="badge flex flex-col items-center" id="badgeChampion" title="แม่นยำ 100% (ด่าน 5)">
+                            <i class="fa-solid fa-trophy text-3xl text-purple-400 mb-1"></i>
+                            <span class="text-xs">แชมเปี้ยน</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- START MENU / MODAL -->
+    <div id="startMenu" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+        <div class="glass-card max-w-2xl w-full p-8 text-center animate-pop">
+            <i class="fa-solid fa-hands-asl-interpreting text-7xl text-blue-400 mb-6 drop-shadow-lg"></i>
+            <h1 class="text-5xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">FINGER MATH</h1>
+            <p class="text-xl mb-8 text-blue-200">เรียนรู้คณิตศาสตร์ผ่านการเคลื่อนไหวร่างกาย!</p>
+
+            <!-- ส่วนตั้งค่าก่อนเริ่มเกม -->
+            <div class="bg-white/10 p-5 rounded-xl border border-white/20 mb-8 text-left max-w-md mx-auto">
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-yellow-300 mb-1"><i class="fa-solid fa-user"></i> ชื่อนักเรียน (เพื่อบันทึกคะแนน):</label>
+                    <input type="text" id="startPlayerName" placeholder="กรอกชื่อของคุณที่นี่..." class="w-full bg-black/50 border border-yellow-300/50 rounded-lg p-3 text-white outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/30 text-lg font-bold">
+                </div>
+                <div>
+                    <label class="block text-sm text-blue-200 mb-1"><i class="fa-solid fa-list-ol"></i> จำนวนข้อที่ต้องการเล่น:</label>
+                    <select id="startQuestionCount" class="w-full bg-black/50 border border-white/30 rounded-lg p-3 text-white outline-none focus:border-blue-500">
+                        <option value="5">5 ข้อ (ฝึกซ้อมไว)</option>
+                        <option value="10" selected>10 ข้อ (มาตรฐาน)</option>
+                        <option value="20">20 ข้อ (ท้าทาย)</option>
+                        <option value="999">เล่นไปเรื่อยๆ (ไม่มีที่สิ้นสุด)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left mb-8">
+                <div class="bg-blue-600/30 p-5 rounded-xl border border-blue-400/50 cursor-pointer hover:bg-blue-600/50 transition group shadow-lg" onclick="app.startGame('adventure')">
+                    <h3 class="text-xl font-bold mb-2 text-white group-hover:text-yellow-300"><i class="fa-solid fa-play mr-2"></i> เริ่มเกมแบบสุ่ม</h3>
+                    <p class="text-sm text-blue-100">สุ่มโจทย์ตั้งแต่ง่ายไปยาก เหมาะสำหรับทดสอบความไว</p>
+                </div>
+                
+                <div class="bg-white/10 p-5 rounded-xl border border-white/20">
+                    <h3 class="text-lg font-bold mb-2 text-green-300"><i class="fa-solid fa-school mr-2"></i> โหมดห้องเรียน (เลือกเรื่อง)</h3>
+                    <select id="classroomModeSelect" class="w-full bg-black/50 border border-white/30 rounded p-2 text-white mb-3 outline-none text-sm">
+                        <option value="1">โหมด 1: แสดงตัวเลข</option>
+                        <option value="2">โหมด 2: การบวกพื้นฐาน</option>
+                        <option value="3">โหมด 3: การลบ</option>
+                        <option value="4">โหมด 4: การคูณ</option>
+                        <option value="5">โหมด 5: เปรียบเทียบตัวเลข</option>
+                        <option value="6">โหมด 6: คู่หรือคี่</option>
+                    </select>
+                    <button onclick="app.startGame('classroom')" class="w-full py-2 bg-green-500/80 hover:bg-green-500 rounded-lg font-bold transition shadow-md">เริ่มฝึกซ้อมเฉพาะเรื่อง</button>
+                </div>
+            </div>
+
+            <div class="flex justify-center gap-4">
+                <button onclick="app.showLeaderboard()" class="px-8 py-3 bg-purple-600 hover:bg-purple-500 rounded-xl font-bold transition flex items-center gap-2 shadow-lg border border-purple-400">
+                    <i class="fa-solid fa-ranking-star"></i> ดูอันดับคะแนน (Leaderboard)
+                </button>
+            </div>
+            
+            <p class="mt-8 text-sm text-gray-400"><i class="fa-solid fa-camera mr-1"></i> ต้องอนุญาตให้เบราว์เซอร์ใช้กล้องเว็บแคมเพื่อเล่นเกมนี้</p>
+        </div>
+    </div>
+
+    <!-- LEADERBOARD MODAL -->
+    <div id="leaderboardModal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-md hidden-panel">
+        <div class="glass-card max-w-md w-full p-8 text-center animate-pop relative">
+            <button onclick="document.getElementById('leaderboardModal').classList.add('hidden-panel')" class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h2 class="text-3xl font-black mb-6 text-yellow-300"><i class="fa-solid fa-trophy"></i> กระดานคะแนนคนเก่ง</h2>
+            
+            <div id="leaderboardList" class="flex flex-col gap-3 mb-6 max-h-64 overflow-y-auto pr-2">
+                <!-- Injected via JS -->
+            </div>
+            
+            <button onclick="if(confirm('ต้องการล้างคะแนนทั้งหมดใช่หรือไม่?')){localStorage.removeItem('fingerMathLeaderboard'); app.loadLeaderboard();}" class="mt-4 text-xs text-red-400 hover:text-red-300 underline">ล้างประวัติคะแนน</button>
+        </div>
+    </div>
+
+    <!-- GAME OVER MODAL -->
+    <div id="gameOverModal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-md hidden-panel">
+        <div class="glass-card max-w-md w-full p-8 text-center animate-pop">
+            <h2 id="gameOverTitle" class="text-4xl font-black mb-2 text-blue-400">จบเกม!</h2>
+            <div class="bg-black/30 p-4 rounded-xl border border-white/10 mb-6">
+                <p class="text-lg text-gray-300">ผลงานของ</p>
+                <p id="finalPlayerName" class="text-2xl text-white font-bold mb-2"></p>
+                <p class="text-sm text-yellow-200">คะแนนรวม</p>
+                <p id="finalScoreText" class="text-yellow-300 font-black text-6xl drop-shadow-lg"></p>
+            </div>
+            
+            <div class="bg-white/10 rounded-xl p-4 mb-6 flex justify-around">
+                <div class="text-center">
+                    <p class="text-green-400 font-bold"><i class="fa-solid fa-check"></i> ตอบถูก</p>
+                    <p id="finalCorrect" class="text-3xl font-black text-white">0</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-red-400 font-bold"><i class="fa-solid fa-xmark"></i> ตอบผิด</p>
+                    <p id="finalWrong" class="text-3xl font-black text-white">0</p>
+                </div>
+            </div>
+
+            <p class="text-green-300 text-sm mb-4 font-bold"><i class="fa-solid fa-cloud-arrow-up"></i> บันทึกคะแนนลงกระดานอัตโนมัติแล้ว!</p>
+
+            <div class="flex gap-4">
+                <button onclick="app.returnToMenu()" class="flex-1 py-4 bg-purple-500/80 hover:bg-purple-500 rounded-xl font-bold transition flex flex-col items-center justify-center">
+                    <i class="fa-solid fa-house mb-1"></i> กลับเมนูหลัก
+                </button>
+                <button onclick="app.restartGame()" class="flex-1 py-4 bg-blue-500/80 hover:bg-blue-500 rounded-xl font-bold transition flex flex-col items-center justify-center">
+                    <i class="fa-solid fa-rotate-right mb-1"></i> เล่นอีกครั้ง
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEVEL UP OVERLAY -->
+    <div id="levelUpOverlay" class="fixed inset-0 z-[60] flex items-center justify-center pointer-events-none hidden-panel">
+        <div class="text-center animate-pop">
+            <i class="fa-solid fa-arrow-up-right-dots text-9xl text-yellow-300 mb-4 drop-shadow-[0_0_20px_rgba(253,224,71,0.8)]"></i>
+            <h1 class="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-green-400 drop-shadow-xl">เลื่อนด่าน!</h1>
+            <p class="text-3xl mt-4 font-bold text-white drop-shadow-lg">คำถามเร็วขึ้น โจทย์ยากขึ้น!</p>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APPLICATION -->
+    <script>
+        // ==========================================
+        // 1. UTILITIES & CONFIGURATION
+        // ==========================================
+        const CONFIG = {
+            colors: {
+                primary: '#2563EB',
+                secondary: '#06B6D4',
+                success: '#10B981',
+                warning: '#F59E0B',
+                danger: '#EF4444'
+            },
+            timePerQuestion: 10,
+            holdTimeRequired: 1.5, // ลดเวลาค้างไว้ลงนิดนึงเพื่อให้เด็กรู้สึกว่าเร็วขึ้น
+            pointsBase: 10,
+            pointsFast: 5, // under 3 seconds
+            levelUpScore: 100,
+            messages: ["ยอดเยี่ยม!", "ทำได้ดีมาก!", "เก่งมาก!", "สุดยอดเลย!", "ฮีโร่คณิตศาสตร์!", "อัจฉริยะนิ้วมือ!"]
+        };
+
+        const DOM = {
+            menu: document.getElementById('startMenu'),
+            ui: document.getElementById('gameUI'),
+            camStatus: document.getElementById('cameraStatus'),
+            video: document.getElementById('inputVideo'),
+            canvas: document.getElementById('outputCanvas'),
+            
+            score: document.getElementById('scoreDisplay'),
+            level: document.getElementById('levelDisplay'),
+            time: document.getElementById('timeDisplay'),
+            timerText: document.getElementById('timerText'),
+            timerBar: document.getElementById('timerBar'),
+            currentPlayerNameHeader: document.getElementById('currentPlayerNameHeader'),
+            
+            fingerCount: document.getElementById('fingerCountDisplay'),
+            questionMode: document.getElementById('questionModeText'),
+            questionText: document.getElementById('questionText'),
+            instructionText: document.getElementById('instructionText'),
+            
+            holdIndicator: document.getElementById('holdIndicator'),
+            holdFill: document.getElementById('holdFill'),
+            
+            feedbackContainer: document.getElementById('feedbackContainer'),
+            feedbackIcon: document.getElementById('feedbackIcon'),
+            feedbackText: document.getElementById('feedbackText'),
+            feedbackPoints: document.getElementById('feedbackPoints'),
+            feedbackMessage: document.getElementById('feedbackMessage'),
+            comboDisplay: document.getElementById('comboDisplay'),
+            
+            statCorrect: document.getElementById('statCorrect'),
+            statWrong: document.getElementById('statWrong'),
+            
+            badges: {
+                beginner: document.getElementById('badgeBeginner'),
+                star: document.getElementById('badgeStar'),
+                master: document.getElementById('badgeMaster'),
+                champion: document.getElementById('badgeChampion')
+            },
+            
+            gameOverModal: document.getElementById('gameOverModal'),
+            gameOverTitle: document.getElementById('gameOverTitle'),
+            finalScoreText: document.getElementById('finalScoreText'),
+            finalPlayerName: document.getElementById('finalPlayerName'),
+            finalCorrect: document.getElementById('finalCorrect'),
+            finalWrong: document.getElementById('finalWrong'),
+            startPlayerName: document.getElementById('startPlayerName'),
+            startQuestionCount: document.getElementById('startQuestionCount'),
+            leaderboardModal: document.getElementById('leaderboardModal'),
+            leaderboardList: document.getElementById('leaderboardList'),
+            levelUpOverlay: document.getElementById('levelUpOverlay'),
+            
+            btnPause: document.getElementById('btnPause'),
+            btnRestart: document.getElementById('btnRestart'),
+            btnMenu: document.getElementById('btnMenu')
+        };
+
+        // Create Background Particles
+        function initParticles() {
+            const container = document.getElementById('particles');
+            container.innerHTML = '';
+            const symbols = ['+', '-', '×', '÷', '=', '1', '2', '3', '4', '5'];
+            for(let i=0; i<20; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle font-black';
+                p.innerText = symbols[Math.floor(Math.random() * symbols.length)];
+                p.style.left = `${Math.random() * 100}vw`;
+                p.style.animationDuration = `${10 + Math.random() * 15}s`;
+                p.style.animationDelay = `${Math.random() * 5}s`;
+                p.style.fontSize = `${1.5 + Math.random() * 2}rem`;
+                container.appendChild(p);
+            }
+        }
+        initParticles();
+
+        // ==========================================
+        // 2. SOUND MANAGER (Web Audio API)
+        // ==========================================
+        class SoundManager {
+            constructor() {
+                this.ctx = null;
+                this.initialized = false;
+            }
+
+            init() {
+                if (!this.initialized) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    this.initialized = true;
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playTone(freq, type, duration, vol=0.1) {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            }
+
+            correct() {
+                if(!this.ctx) return;
+                this.playTone(523.25, 'sine', 0.1); // C5
+                setTimeout(() => this.playTone(659.25, 'sine', 0.2), 100); // E5
+            }
+
+            wrong() {
+                if(!this.ctx) return;
+                this.playTone(150, 'sawtooth', 0.3, 0.05);
+            }
+
+            levelUp() {
+                if(!this.ctx) return;
+                const notes = [261.63, 329.63, 392.00, 523.25]; // C E G C
+                notes.forEach((freq, i) => {
+                    setTimeout(() => this.playTone(freq, 'square', 0.15, 0.05), i * 150);
+                });
+            }
+        }
+
+        // ==========================================
+        // 3. HAND TRACKER (MediaPipe) - แก้ไขระบบกระจกเงาแล้ว!
+        // ==========================================
+        class HandTracker {
+            constructor(videoEl, canvasEl, onResultsCallback) {
+                this.videoEl = videoEl;
+                this.canvasEl = canvasEl;
+                this.ctx = canvasEl.getContext('2d');
+                this.onResultsCallback = onResultsCallback;
+                this.hands = null;
+                this.camera = null;
+                this.isReady = false;
+                this.lastDetectedCount = 0;
+            }
+
+            async init() {
+                this.hands = new Hands({locateFile: (file) => {
+                    return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+                }});
+
+                this.hands.setOptions({
+                    maxNumHands: 2,
+                    modelComplexity: 1,
+                    minDetectionConfidence: 0.6,
+                    minTrackingConfidence: 0.5
+                });
+
+                this.hands.onResults((results) => this.processResults(results));
+
+                this.camera = new Camera(this.videoEl, {
+                    onFrame: async () => {
+                        if (!this.isReady) {
+                            DOM.camStatus.classList.add('hidden-panel');
+                            this.isReady = true;
+                            // resize canvas to match video
+                            this.canvasEl.width = this.videoEl.videoWidth;
+                            this.canvasEl.height = this.videoEl.videoHeight;
+                        }
+                        await this.hands.send({image: this.videoEl});
+                    },
+                    width: 640,
+                    height: 480
+                });
+
+                await this.camera.start();
+            }
+
+            processResults(results) {
+                this.ctx.save();
+                this.ctx.clearRect(0, 0, this.canvasEl.width, this.canvasEl.height);
+                
+                // --- ส่วนที่แก้ไข: สร้างระบบ Mirror (กระจกเงา) ที่แท้จริง ---
+                // โดยการกลับแกน X ใน Canvas ก่อนที่จะวาดภาพวิดีโอลงไป
+                this.ctx.translate(this.canvasEl.width, 0);
+                this.ctx.scale(-1, 1);
+                
+                // วาดภาพวิดีโอ (ตอนนี้ภาพจะถูกกลับด้านซ้าย-ขวาแล้ว)
+                this.ctx.drawImage(results.image, 0, 0, this.canvasEl.width, this.canvasEl.height);
+
+                let totalFingers = 0;
+
+                if (results.multiHandLandmarks && results.multiHandedness) {
+                    for (let i = 0; i < results.multiHandLandmarks.length; i++) {
+                        const landmarks = results.multiHandLandmarks[i];
+                        
+                        // เนื่องจากเรากลับด้านแกน X แล้ว การวาดเส้นเชื่อมมือจะถูกกลับด้านตามไปด้วยพอดี!
+                        drawConnectors(this.ctx, landmarks, HAND_CONNECTIONS, {color: '#00FF00', lineWidth: 3});
+                        drawLandmarks(this.ctx, landmarks, {color: '#FF0000', lineWidth: 1, radius: 4});
+
+                        // การนับนิ้วยังคงใช้ลอจิกเดิมได้ เพราะคำนวณจากระยะห่างจุดเชื่อมต่อ (Distance)
+                        totalFingers += this.countFingers(landmarks);
+                    }
+                }
+                this.ctx.restore(); // ยกเลิกการกลับแกน X เพื่อไม่ให้กระทบ UI อื่นๆ
+                
+                this.lastDetectedCount = totalFingers;
+                if(this.onResultsCallback) this.onResultsCallback(totalFingers);
+            }
+
+            countFingers(landmarks) {
+                let count = 0;
+                
+                // Euclidean distance helper
+                const dist = (p1, p2) => Math.hypot(p1.x - p2.x, p1.y - p2.y);
+                
+                // การนับนิ้วโป้ง: เปรียบเทียบระยะห่างระหว่าง ปลายนิ้วโป้ง(4) ถึง โคนนิ้วก้อย(17) 
+                // กับ ข้อต่อนิ้วโป้ง(3) ถึง โคนนิ้วก้อย(17) ถ้าระยะปลายยาวกว่า แปลว่ากางนิ้วโป้งออก
+                // วิธีนี้แก้ปัญหาการนับนิ้วโป้งผิดพลาดเมื่อกลับด้านกล้องได้ 100%
+                if (dist(landmarks[4], landmarks[17]) > dist(landmarks[3], landmarks[17])) {
+                    count++;
+                }
+
+                // การนับนิ้วอื่นๆ: ถ้าระยะแกน y ของปลายนิ้ว น้อยกว่า ข้อต่อนิ้ว (แปลว่าชูขึ้น)
+                // 8: ชี้, 12: กลาง, 16: นาง, 20: ก้อย
+                const fingerTips = [8, 12, 16, 20];
+                const fingerPips = [6, 10, 14, 18];
+
+                for (let i = 0; i < 4; i++) {
+                    if (landmarks[fingerTips[i]].y < landmarks[fingerPips[i]].y) {
+                        count++;
+                    }
+                }
+                
+                return count;
+            }
+        }
+
+        // ==========================================
+        // 4. QUESTION MANAGER
+        // ==========================================
+        class QuestionManager {
+            constructor() {
+                this.currentQuestion = null;
+            }
+
+            generateQuestion(level, mode = 'adventure', specificMode = null) {
+                let activeMode = 1;
+
+                if (mode === 'classroom' && specificMode) {
+                    activeMode = parseInt(specificMode);
+                } else {
+                    // Adventure logic based on level
+                    if (level === 1) activeMode = 1; // 0-5
+                    else if (level === 2) activeMode = 1; // 0-10
+                    else if (level === 3) activeMode = 2; // Add
+                    else if (level === 4) activeMode = 3; // Sub
+                    else if (level === 5) activeMode = 4; // Mul
+                    else activeMode = Math.floor(Math.random() * 6) + 1; // Mixed
+                }
+
+                let q = { text: "", instruction: "", answerCheck: null, modeName: "" };
+
+                switch(activeMode) {
+                    case 1: // Show Number
+                        const maxNum = (level === 1 && mode === 'adventure') ? 5 : 10;
+                        const num = Math.floor(Math.random() * (maxNum + 1));
+                        q.modeName = "แสดงตัวเลข";
+                        q.text = `ชู ${num} นิ้ว`;
+                        q.instruction = "ชูนิ้วมือให้ตรงกับจำนวนตัวเลขนี้";
+                        q.answerCheck = (fingers) => fingers === num;
+                        break;
+                    case 2: // Basic Addition
+                        const a1 = Math.floor(Math.random() * 6);
+                        const b1 = Math.floor(Math.random() * (11 - a1)); // sum max 10
+                        q.modeName = "การบวกพื้นฐาน";
+                        q.text = `${a1} + ${b1} = ?`;
+                        q.instruction = "คิดเลขในใจ แล้วชูนิ้วเพื่อตอบ";
+                        q.answerCheck = (fingers) => fingers === (a1 + b1);
+                        break;
+                    case 3: // Subtraction
+                        const a2 = Math.floor(Math.random() * 11);
+                        const b2 = Math.floor(Math.random() * (a2 + 1)); // no negative
+                        q.modeName = "การลบ";
+                        q.text = `${a2} - ${b2} = ?`;
+                        q.instruction = "คิดเลขในใจ แล้วชูนิ้วเพื่อตอบ";
+                        q.answerCheck = (fingers) => fingers === (a2 - b2);
+                        break;
+                    case 4: // Multiplication
+                        const pairs = [[0,1], [0,2], [1,1], [1,2], [1,3], [1,4], [1,5], [1,6], [1,7], [1,8], [1,9], [1,10], 
+                                       [2,1], [2,2], [2,3], [2,4], [2,5], [3,1], [3,2], [3,3], [4,1], [4,2], [5,1], [5,2]];
+                        const pair = pairs[Math.floor(Math.random() * pairs.length)];
+                        q.modeName = "การคูณ";
+                        q.text = `${pair[0]} × ${pair[1]} = ?`;
+                        q.instruction = "คิดเลขในใจ แล้วชูนิ้วเพื่อตอบ";
+                        q.answerCheck = (fingers) => fingers === (pair[0] * pair[1]);
+                        break;
+                    case 5: // Compare
+                        const target = Math.floor(Math.random() * 9) + 1; // 1 to 9
+                        const isMore = Math.random() > 0.5;
+                        q.modeName = "เปรียบเทียบตัวเลข";
+                        q.text = isMore ? `> ${target}` : `< ${target}`;
+                        q.instruction = isMore ? `ชูนิ้วที่มีจำนวน มากกว่า ${target}` : `ชูนิ้วที่มีจำนวน น้อยกว่า ${target}`;
+                        q.answerCheck = (fingers) => isMore ? (fingers > target && fingers <=10) : (fingers < target);
+                        break;
+                    case 6: // Even/Odd
+                        const isEven = Math.random() > 0.5;
+                        q.modeName = "คู่ หรือ คี่";
+                        q.text = isEven ? "เลขคู่" : "เลขคี่";
+                        q.instruction = isEven ? "ชูนิ้ว 2, 4, 6, 8 หรือ 10" : "ชูนิ้ว 1, 3, 5, 7 หรือ 9";
+                        q.answerCheck = (fingers) => isEven ? (fingers % 2 === 0 && fingers > 0) : (fingers % 2 !== 0);
+                        break;
+                }
+                
+                this.currentQuestion = q;
+                return q;
+            }
+        }
+
+        // ==========================================
+        // 5. SCORE & ACHIEVEMENT MANAGER
+        // ==========================================
+        class ScoreAchievementManager {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.score = 0;
+                this.level = 1;
+                this.correctCount = 0;
+                this.wrongCount = 0;
+                this.combo = 0;
+                this.perfectAccuracy = true;
+                this.updateUI();
+                
+                Object.values(DOM.badges).forEach(b => b.classList.remove('unlocked'));
+            }
+
+            addScore(timeElapsed) {
+                this.correctCount++;
+                this.combo++;
+                
+                let pts = CONFIG.pointsBase;
+                let bonusMsg = "";
+
+                if (timeElapsed < 3) {
+                    pts += CONFIG.pointsFast;
+                    bonusMsg = "ตอบไวมาก! +5";
+                }
+
+                if (this.combo === 3) { pts += 20; bonusMsg = "คอมโบ 3 ข้อติด! +20"; DOM.comboDisplay.innerText="คอมโบ x3!"; DOM.comboDisplay.classList.remove('hidden'); }
+                else if (this.combo === 5) { pts += 50; bonusMsg = "คอมโบ 5 ข้อติด! ไฟลุก! +50"; DOM.comboDisplay.innerText="คอมโบ x5!"; DOM.comboDisplay.classList.remove('hidden'); }
+                else if (this.combo > 5) { pts += 10; bonusMsg = "คอมโบต่อเนื่อง! +10"; }
+                
+                if(this.combo !== 3 && this.combo !== 5 && this.combo <= 1) DOM.comboDisplay.classList.add('hidden');
+
+                this.score += pts;
+                
+                let leveledUp = false;
+                if (Math.floor(this.score / CONFIG.levelUpScore) + 1 > this.level) {
+                    this.level++;
+                    leveledUp = true;
+                }
+
+                this.checkAchievements();
+                this.updateUI();
+
+                return { points: pts, leveledUp, bonusMsg };
+            }
+
+            recordWrong() {
+                this.wrongCount++;
+                this.combo = 0;
+                this.perfectAccuracy = false;
+                DOM.comboDisplay.classList.add('hidden');
+                this.updateUI();
+            }
+
+            checkAchievements() {
+                if (this.correctCount >= 10) DOM.badges.beginner.classList.add('unlocked');
+                if (this.correctCount >= 50) DOM.badges.star.classList.add('unlocked');
+                if (this.correctCount >= 100) DOM.badges.master.classList.add('unlocked');
+                if (this.level >= 5 && this.perfectAccuracy && this.correctCount >= 20) DOM.badges.champion.classList.add('unlocked');
+            }
+
+            updateUI() {
+                DOM.score.innerText = this.score;
+                DOM.statCorrect.innerText = this.correctCount;
+                DOM.statWrong.innerText = this.wrongCount;
+            }
+        }
+
+        // ==========================================
+        // 6. GAME MANAGER
+        // ==========================================
+        class GameManager {
+            constructor() {
+                this.sound = new SoundManager();
+                this.qManager = new QuestionManager();
+                this.scoreManager = new ScoreAchievementManager();
+                this.handTracker = new HandTracker(DOM.video, DOM.canvas, (f) => this.onHandResult(f));
+                
+                this.state = 'menu'; // menu, playing, feedback, paused, gameover
+                this.gameMode = 'adventure';
+                this.classTopic = null;
+                
+                this.playerName = "ผู้เล่นนิรนาม";
+                this.totalQuestions = 10;
+                this.currentQuestionIndex = 0;
+                
+                this.questionStartTime = 0;
+                this.holdStartTime = 0;
+                this.isHolding = false;
+                this.lastUpdate = 0;
+
+                this.loopId = null;
+
+                this.setupListeners();
+                this.loadLeaderboard();
+            }
+
+            setupListeners() {
+                DOM.btnPause.addEventListener('click', () => this.togglePause());
+                DOM.btnRestart.addEventListener('click', () => this.startSession(this.gameMode, this.classTopic));
+                DOM.btnMenu.addEventListener('click', () => {
+                    this.state = 'menu';
+                    DOM.ui.classList.add('hidden-panel');
+                    DOM.menu.classList.remove('hidden-panel');
+                });
+            }
+
+            async startGame(mode) {
+                // บังคับให้กรอกชื่อก่อนเล่น (เว้นแต่จะปล่อยว่างจริงๆ ก็จะใช้ชื่อว่า ผู้เล่นนิรนาม)
+                let inputName = DOM.startPlayerName.value.trim();
+                if(!inputName) {
+                    inputName = "เพื่อนคนเก่ง";
+                }
+                this.playerName = inputName;
+                
+                // อ่านจำนวนข้อที่เลือก
+                this.totalQuestions = parseInt(DOM.startQuestionCount.value) || 10;
+                
+                this.sound.init();
+                this.gameMode = mode;
+                if(mode === 'classroom') {
+                    this.classTopic = document.getElementById('classroomModeSelect').value;
+                }
+                
+                DOM.currentPlayerNameHeader.innerText = this.playerName;
+                
+                DOM.menu.classList.add('hidden-panel');
+                DOM.ui.classList.remove('hidden-panel');
+                DOM.gameOverModal.classList.add('hidden-panel');
+                
+                if (!this.handTracker.isReady) {
+                    await this.handTracker.init();
+                }
+
+                this.startSession(mode, this.classTopic);
+            }
+
+            startSession(mode, topic) {
+                this.scoreManager.reset();
+                this.state = 'playing';
+                this.currentQuestionIndex = 0;
+                this.nextQuestion();
+                
+                if (this.loopId) cancelAnimationFrame(this.loopId);
+                this.lastUpdate = performance.now();
+                this.gameLoop(performance.now());
+            }
+
+            nextQuestion() {
+                this.currentQuestionIndex++;
+                
+                // --- ตรวจสอบการจบเกม (ถึงข้อที่กำหนดไว้) ---
+                if (this.totalQuestions !== 999 && this.currentQuestionIndex > this.totalQuestions) {
+                    this.endGame();
+                    return;
+                }
+
+                if (this.totalQuestions === 999) {
+                    DOM.level.innerText = `${this.currentQuestionIndex}`;
+                } else {
+                    DOM.level.innerText = `${this.currentQuestionIndex}/${this.totalQuestions}`;
+                }
+
+                const q = this.qManager.generateQuestion(this.scoreManager.level, this.gameMode, this.classTopic);
+                DOM.questionMode.innerText = q.modeName;
+                DOM.questionText.innerText = q.text;
+                DOM.instructionText.innerText = q.instruction;
+                
+                this.questionStartTime = performance.now();
+                this.isHolding = false;
+                this.holdStartTime = 0;
+                DOM.holdIndicator.classList.remove('active');
+                
+                DOM.questionText.classList.remove('animate-pop');
+                void DOM.questionText.offsetWidth;
+                DOM.questionText.classList.add('animate-pop');
+            }
+
+            onHandResult(fingers) {
+                if (this.state !== 'playing') {
+                    DOM.fingerCount.innerText = fingers;
+                    return;
+                }
+                
+                DOM.fingerCount.innerText = fingers;
+
+                const isCorrect = this.qManager.currentQuestion.answerCheck(fingers);
+
+                if (isCorrect) {
+                    if (!this.isHolding) {
+                        this.isHolding = true;
+                        this.holdStartTime = performance.now();
+                        DOM.holdIndicator.classList.add('active');
+                    }
+                } else {
+                    this.isHolding = false;
+                    DOM.holdIndicator.classList.remove('active');
+                    DOM.holdFill.style.transform = `rotate(-45deg)`;
+                }
+            }
+
+            gameLoop(timestamp) {
+                if (this.state === 'playing') {
+                    const elapsedQuestion = (timestamp - this.questionStartTime) / 1000;
+                    const timeLeft = Math.max(0, CONFIG.timePerQuestion - elapsedQuestion);
+                    
+                    DOM.time.innerText = timeLeft.toFixed(1) + 's';
+                    DOM.timerText.innerText = timeLeft.toFixed(1) + 's';
+                    const pct = (timeLeft / CONFIG.timePerQuestion) * 100;
+                    DOM.timerBar.style.width = pct + '%';
+                    
+                    if (timeLeft <= 3) DOM.timerBar.classList.replace('bg-blue-400', 'bg-red-500');
+                    else DOM.timerBar.classList.replace('bg-red-500', 'bg-blue-400');
+
+                    if (timeLeft <= 0) {
+                        this.handleWrong("หมดเวลา!");
+                    }
+
+                    if (this.isHolding) {
+                        const holdElapsed = (timestamp - this.holdStartTime) / 1000;
+                        const holdPct = Math.min(1, holdElapsed / CONFIG.holdTimeRequired);
+                        
+                        const deg = -45 + (holdPct * 360);
+                        DOM.holdFill.style.transform = `rotate(${deg}deg)`;
+
+                        if (holdElapsed >= CONFIG.holdTimeRequired) {
+                            this.handleCorrect(elapsedQuestion);
+                        }
+                    }
+                }
+
+                this.loopId = requestAnimationFrame((ts) => this.gameLoop(ts));
+            }
+
+            handleCorrect(timeTaken) {
+                this.state = 'feedback';
+                this.sound.correct();
+                DOM.holdIndicator.classList.remove('active');
+
+                const res = this.scoreManager.addScore(timeTaken);
+                
+                this.showFeedback(true, `+${res.points} คะแนน`, res.bonusMsg || CONFIG.messages[Math.floor(Math.random()*CONFIG.messages.length)]);
+
+                if (res.leveledUp && this.gameMode === 'adventure') {
+                    this.sound.levelUp();
+                    DOM.levelUpOverlay.classList.remove('hidden-panel');
+                    setTimeout(() => DOM.levelUpOverlay.classList.add('hidden-panel'), 2000);
+                }
+
+                setTimeout(() => {
+                    if(this.state !== 'gameover' && this.state !== 'menu') {
+                        this.state = 'playing';
+                        DOM.feedbackContainer.classList.add('hidden-panel');
+                        this.nextQuestion();
+                    }
+                }, 1500);
+            }
+
+            handleWrong(reason) {
+                this.state = 'feedback';
+                this.sound.wrong();
+                this.scoreManager.recordWrong();
+                DOM.holdIndicator.classList.remove('active');
+                
+                DOM.questionText.classList.add('animate-shake');
+                setTimeout(()=>DOM.questionText.classList.remove('animate-shake'), 500);
+
+                this.showFeedback(false, "0 คะแนน", reason || "ลองใหม่นะ ข้อถัดไป!");
+
+                setTimeout(() => {
+                    if(this.state !== 'gameover' && this.state !== 'menu') {
+                        this.state = 'playing';
+                        DOM.feedbackContainer.classList.add('hidden-panel');
+                        this.nextQuestion();
+                    }
+                }, 1500);
+            }
+
+            showFeedback(isCorrect, points, msg) {
+                DOM.feedbackContainer.classList.remove('hidden-panel');
+                DOM.feedbackIcon.className = isCorrect ? "fa-solid fa-check-circle text-7xl mb-4 text-green-400" : "fa-solid fa-circle-xmark text-7xl mb-4 text-red-500";
+                DOM.feedbackText.innerText = isCorrect ? "ถูกต้อง!" : "ผิดจ้า!";
+                DOM.feedbackText.className = isCorrect ? "feedback-text drop-shadow-lg mb-2 text-green-400" : "feedback-text drop-shadow-lg mb-2 text-red-500";
+                DOM.feedbackPoints.innerText = points;
+                DOM.feedbackMessage.innerText = msg;
+            }
+
+            togglePause() {
+                if(this.state === 'playing') {
+                    this.state = 'paused';
+                    DOM.btnPause.innerHTML = '<i class="fa-solid fa-play"></i> เล่นต่อ';
+                } else if (this.state === 'paused') {
+                    this.state = 'playing';
+                    this.questionStartTime = performance.now() - ((CONFIG.timePerQuestion - parseFloat(DOM.time.innerText))*1000);
+                    DOM.btnPause.innerHTML = '<i class="fa-solid fa-pause"></i> พัก';
+                }
+            }
+
+            endGame(title = "จบเกมแล้ว!") {
+                this.state = 'gameover';
+                DOM.ui.classList.add('hidden-panel');
+                DOM.gameOverModal.classList.remove('hidden-panel');
+                
+                DOM.gameOverTitle.innerText = title;
+                DOM.finalPlayerName.innerText = this.playerName;
+                DOM.finalScoreText.innerText = this.scoreManager.score;
+                DOM.finalCorrect.innerText = this.scoreManager.correctCount;
+                DOM.finalWrong.innerText = this.scoreManager.wrongCount;
+
+                // --- บันทึกคะแนนลง Local Storage อัตโนมัติทันทีที่จบเกม ---
+                if (this.scoreManager.score > 0 || this.scoreManager.correctCount > 0) {
+                    const data = JSON.parse(localStorage.getItem('fingerMathLeaderboard')) || [];
+                    data.push({ 
+                        name: this.playerName, 
+                        score: this.scoreManager.score, 
+                        date: new Date().toISOString() 
+                    });
+                    localStorage.setItem('fingerMathLeaderboard', JSON.stringify(data));
+                    this.loadLeaderboard(); // โหลดข้อมูลอัปเดตหน้า Leaderboard ทันที
+                }
+            }
+
+            loadLeaderboard() {
+                const data = JSON.parse(localStorage.getItem('fingerMathLeaderboard')) || [];
+                DOM.leaderboardList.innerHTML = '';
+                if (data.length === 0) {
+                    DOM.leaderboardList.innerHTML = '<p class="text-gray-400 mt-4">ยังไม่มีสถิติคนเก่งเลย ลองเล่นเป็นคนแรกดูสิ!</p>';
+                    return;
+                }
+                
+                // เรียงคะแนนจากมากไปน้อย และดึงมาแค่ 10 อันดับแรก
+                data.sort((a,b) => b.score - a.score).slice(0, 10).forEach((entry, idx) => {
+                    const el = document.createElement('div');
+                    el.className = "flex justify-between items-center bg-white/10 p-3 rounded-lg border border-white/5";
+                    
+                    let medal = '';
+                    if(idx === 0) medal = '<i class="fa-solid fa-medal text-yellow-400 text-xl mr-2"></i>';
+                    else if(idx === 1) medal = '<i class="fa-solid fa-medal text-gray-300 text-xl mr-2"></i>';
+                    else if(idx === 2) medal = '<i class="fa-solid fa-medal text-orange-400 text-xl mr-2"></i>';
+                    else medal = `<span class="w-8 inline-block text-gray-400 font-bold">${idx+1}.</span>`;
+
+                    el.innerHTML = `
+                        <div class="flex items-center">
+                            ${medal}
+                            <span class="font-semibold text-lg truncate w-32 text-left">${entry.name}</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-yellow-300 font-bold text-xl">${entry.score}</span>
+                        </div>
+                    `;
+                    DOM.leaderboardList.appendChild(el);
+                });
+            }
+
+            returnToMenu() {
+                DOM.gameOverModal.classList.add('hidden-panel');
+                DOM.menu.classList.remove('hidden-panel');
+            }
+
+            restartGame() {
+                DOM.gameOverModal.classList.add('hidden-panel');
+                DOM.ui.classList.remove('hidden-panel');
+                this.startSession(this.gameMode, this.classTopic);
+            }
+
+            showLeaderboard() {
+                this.loadLeaderboard();
+                DOM.leaderboardModal.classList.remove('hidden-panel');
+            }
+        }
+
+        // Initialize App
+        let app;
+        window.onload = () => {
+            app = new GameManager();
+            
+            // Allow ending game from UI for testing/flow
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && app.state === 'playing') {
+                    app.endGame("ขอยอมแพ้!");
+                }
+            });
+        };
+    </script>
+</body>
+</html>
