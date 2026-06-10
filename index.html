@@ -3,244 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FingerMath AI - นวัตกรรมเรียนรู้คณิตศาสตร์ด้วยเทคโนโลยีการมองเห็น</title>
+    <title>Finger Math - สนุกกับคณิตศาสตร์ด้วยนิ้วมือ!</title>
     
-    <!-- Tailwind CSS for rapid modern styling -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- MediaPipe Hands & Dependencies (The Core AI) -->
+    <!-- MediaPipe Hands & Dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
-    <!-- Font Awesome for Icons -->
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Google Fonts: Prompt (Professional & Modern Thai Font) -->
+    <!-- Google Fonts: Kanit (Friendly & Readable Thai Font) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            /* Corporate/EdTech Color Palette */
-            --primary: #4F46E5; /* Indigo 600 */
-            --primary-hover: #4338CA; /* Indigo 700 */
-            --secondary: #0EA5E9; /* Sky 500 */
-            --background: #F8FAFC; /* Slate 50 */
-            --surface: #FFFFFF;
-            --text-main: #0F172A; /* Slate 900 */
-            --text-muted: #64748B; /* Slate 500 */
-            --success: #10B981; /* Emerald 500 */
-            --danger: #EF4444; /* Red 500 */
-            --warning: #F59E0B; /* Amber 500 */
+            --primary: #3B82F6; /* Bright Blue */
+            --primary-shadow: #2563EB;
+            --secondary: #F43F5E; /* Vibrant Rose */
+            --secondary-shadow: #E11D48;
+            --accent: #FBBF24; /* Sunny Yellow */
+            --accent-shadow: #D97706;
+            --success: #22C55E; /* Happy Green */
+            --success-shadow: #16A34A;
+            --text-dark: #1E293B;
+            --bg-color: #F0F9FF; /* Sky Blue background */
         }
 
         body {
-            font-family: 'Prompt', sans-serif;
-            background-color: var(--background);
+            font-family: 'Kanit', sans-serif;
+            background-color: var(--bg-color);
             background-image: 
-                radial-gradient(at 0% 0%, hsla(253,16%,7%,0.03) 0, transparent 50%), 
-                radial-gradient(at 50% 0%, hsla(225,39%,30%,0.03) 0, transparent 50%), 
-                radial-gradient(at 100% 0%, hsla(339,49%,30%,0.03) 0, transparent 50%);
-            color: var(--text-main);
+                radial-gradient(circle at 15% 50%, rgba(253, 230, 138, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(167, 243, 208, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 50% 80%, rgba(191, 219, 254, 0.6) 0%, transparent 50%);
+            color: var(--text-dark);
             overflow-x: hidden;
             min-height: 100vh;
             touch-action: manipulation;
-            letter-spacing: -0.01em;
         }
 
-        /* Abstract Clean Background for Research Presentation */
-        .bg-grid-pattern {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-image: linear-gradient(to right, #e2e8f0 1px, transparent 1px),
-                              linear-gradient(to bottom, #e2e8f0 1px, transparent 1px);
-            background-size: 40px 40px;
-            mask-image: radial-gradient(ellipse 80% 50% at 50% 0%, #000 70%, transparent 110%);
-            -webkit-mask-image: radial-gradient(ellipse 80% 50% at 50% 0%, #000 70%, transparent 110%);
-            opacity: 0.4;
-            z-index: -1;
-            pointer-events: none;
+        /* Animated Floating Clouds/Blobs */
+        .floating-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; pointer-events: none; overflow: hidden;
+        }
+        .blob {
+            position: absolute; border-radius: 50%; opacity: 0.5; filter: blur(40px);
+            animation: float 20s infinite ease-in-out alternate;
+        }
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(30px, 50px) scale(1.1); }
         }
 
-        /* Premium Dashboard Card Style */
-        .premium-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            border-radius: 1.5rem;
-            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0,0,0,0.02);
-            transition: box-shadow 0.3s ease;
+        /* Playful 3D Cards */
+        .card-3d {
+            background: #ffffff;
+            border-radius: 2rem;
+            border: 4px solid #E2E8F0;
+            box-shadow: 0 10px 0 #CBD5E1;
+            transition: transform 0.2s;
         }
 
-        /* Modern Sleek Buttons */
-        .btn-modern {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        .btn-3d {
             position: relative;
-            overflow: hidden;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+            border-radius: 1.5rem;
+            transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none; cursor: pointer;
         }
-        .btn-modern:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px -10px rgba(0,0,0,0.15);
-        }
-        .btn-modern:active {
-            transform: translateY(1px);
-            box-shadow: 0 2px 5px -2px rgba(0,0,0,0.1);
+        .btn-3d:active {
+            transform: translateY(6px);
+            box-shadow: 0 0 0 transparent !important;
         }
         
-        .btn-primary { background-color: var(--primary); color: white; }
-        .btn-primary:hover { background-color: var(--primary-hover); }
-        .btn-outline { background-color: transparent; border: 2px solid var(--text-muted); color: var(--text-muted); }
-        .btn-outline:hover { background-color: #F1F5F9; color: var(--text-main); border-color: var(--text-main); }
-        .btn-danger-soft { background-color: #FEF2F2; color: var(--danger); border: 1px solid #FCA5A5; }
-        .btn-danger-soft:hover { background-color: var(--danger); color: white; }
+        .btn-primary { background-color: var(--primary); color: white; border: 3px solid var(--primary-shadow); box-shadow: 0 6px 0 var(--primary-shadow); }
+        .btn-secondary { background-color: var(--secondary); color: white; border: 3px solid var(--secondary-shadow); box-shadow: 0 6px 0 var(--secondary-shadow); }
+        .btn-accent { background-color: var(--accent); color: #78350F; border: 3px solid var(--accent-shadow); box-shadow: 0 6px 0 var(--accent-shadow); }
+        .btn-success { background-color: var(--success); color: white; border: 3px solid var(--success-shadow); box-shadow: 0 6px 0 var(--success-shadow); }
 
-        /* High-Tech Camera Container */
+        /* Camera Container (Looking like a cute tablet) */
         .video-container {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 4/3;
-            border-radius: 1rem;
-            overflow: hidden;
-            background-color: #000;
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+            position: relative; width: 100%; aspect-ratio: 4/3;
+            border-radius: 1.5rem; overflow: hidden;
+            background-color: #0F172A;
+            border: 8px solid #E2E8F0;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
         }
         .video-container video { display: none; }
-        .video-container canvas {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            object-fit: cover;
-        }
+        .video-container canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
 
-        /* AI Scanner Overlay for visual effect */
-        .ai-scanner-corners::before, .ai-scanner-corners::after,
-        .ai-scanner-corners .bottom-corners::before, .ai-scanner-corners .bottom-corners::after {
-            content: ''; position: absolute; width: 30px; height: 30px; border-color: rgba(79, 70, 229, 0.8); border-style: solid; z-index: 10;
-        }
-        .ai-scanner-corners::before { top: 15px; left: 15px; border-width: 3px 0 0 3px; border-top-left-radius: 8px; }
-        .ai-scanner-corners::after { top: 15px; right: 15px; border-width: 3px 3px 0 0; border-top-right-radius: 8px; }
-        .ai-scanner-corners .bottom-corners::before { bottom: 15px; left: 15px; border-width: 0 0 3px 3px; border-bottom-left-radius: 8px; }
-        .ai-scanner-corners .bottom-corners::after { bottom: 15px; right: 15px; border-width: 0 3px 3px 0; border-bottom-right-radius: 8px; }
-
-        /* Sleek Progress Bar */
+        /* Chunky Progress Bar */
         .progress-bar-bg {
-            background-color: #F1F5F9;
-            border-radius: 999px;
-            overflow: hidden;
-            height: 8px;
-            width: 100%;
+            background-color: #E2E8F0; border-radius: 999px; height: 1.5rem; width: 100%;
+            border: 3px solid #CBD5E1; overflow: hidden; position: relative;
+            box-shadow: inset 0 3px 6px rgba(0,0,0,0.1);
         }
         .progress-bar-fill {
-            height: 100%;
-            transition: width 0.1s linear, background-color 0.3s ease;
-            border-radius: 999px;
-            box-shadow: 0 0 10px rgba(79, 70, 229, 0.4);
+            height: 100%; transition: width 0.1s linear, background-color 0.3s;
+            border-radius: 999px; position: relative;
+        }
+        .progress-bar-fill::after {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 50%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.4), rgba(255,255,255,0));
         }
 
-        /* Smooth Animations */
-        @keyframes fadeInScale {
-            0% { transform: scale(0.95); opacity: 0; }
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.1); opacity: 1; }
             100% { transform: scale(1); opacity: 1; }
         }
-        .animate-fade-in { animation: fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-
-        @keyframes pulse-border {
-            0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(79, 70, 229, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+        .animate-pop { animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px) rotate(-5deg); }
+            75% { transform: translateX(10px) rotate(5deg); }
         }
+        .animate-shake { animation: shake 0.4s ease-in-out; }
 
-        /* Circular Hold Indicator (Modern Spinner Style) */
+        .hidden-panel { display: none !important; }
+
+        /* Hold Indicator (Smiley/Loading Ring) */
         .hold-indicator {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 120px; height: 120px;
-            border-radius: 50%;
-            border: 4px solid rgba(255,255,255,0.1);
-            pointer-events: none;
-            display: none;
-            backdrop-filter: blur(2px);
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 140px; height: 140px; border-radius: 50%;
+            border: 12px solid rgba(255,255,255,0.3); pointer-events: none; display: none;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2); z-index: 10;
         }
         .hold-indicator.active { display: block; }
         .hold-indicator-fill {
-            position: absolute;
-            top: -4px; left: -4px; right: -4px; bottom: -4px;
-            border-radius: 50%;
-            border: 4px solid var(--success);
-            border-color: var(--success) transparent transparent transparent;
-            transform: rotate(-45deg);
-            transition: transform 0.1s linear;
+            position: absolute; top: -12px; left: -12px; right: -12px; bottom: -12px;
+            border-radius: 50%; border: 12px solid var(--accent);
+            border-color: var(--accent) transparent transparent transparent;
+            transform: rotate(-45deg); transition: transform 0.1s linear;
         }
 
-        /* Utility Classes */
-        .hidden-panel { display: none !important; }
-        
-        .question-text { 
-            font-size: clamp(3rem, 7vw, 6rem); 
-            font-weight: 700; 
-            line-height: 1.1;
-            color: var(--text-main);
-            letter-spacing: -0.02em;
-        }
-        
-        .stat-value { font-family: 'Inter', sans-serif; /* For clean numbers */ }
+        /* Badges */
+        .badge-icon { filter: grayscale(100%); opacity: 0.4; transition: all 0.4s; transform: scale(0.8); }
+        .badge-icon.unlocked { filter: grayscale(0%); opacity: 1; transform: scale(1.1); animation: popIn 0.6s; }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+        .question-text { font-size: clamp(3.5rem, 8vw, 6.5rem); font-weight: 900; line-height: 1.1; letter-spacing: -1px; }
         
-        /* Dashboard Input Focus */
-        .form-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        /* Custom Input */
+        .fun-input {
+            width: 100%; border: 4px solid #CBD5E1; border-radius: 1.5rem; padding: 1rem 1.5rem;
+            font-size: 1.25rem; font-weight: 700; color: #1E293B; outline: none; transition: all 0.2s;
         }
+        .fun-input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2); }
     </style>
 </head>
-<body class="flex flex-col">
+<body class="flex flex-col relative">
 
-    <div class="bg-grid-pattern"></div>
+    <div class="floating-bg">
+        <div class="blob bg-blue-300 w-96 h-96 -top-20 -left-20"></div>
+        <div class="blob bg-yellow-200 w-80 h-80 top-1/3 right-10"></div>
+        <div class="blob bg-pink-300 w-72 h-72 bottom-10 left-1/4"></div>
+    </div>
 
     <!-- MAIN APPLICATION DASHBOARD -->
-    <div id="gameUI" class="hidden-panel flex-col flex-grow p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto w-full gap-6">
+    <div id="gameUI" class="hidden-panel flex-col flex-grow p-3 md:p-6 lg:p-8 max-w-7xl mx-auto w-full gap-6 z-10">
         
-        <!-- Header Ribbon -->
-        <header class="flex flex-wrap justify-between items-center gap-4 animate-fade-in">
+        <!-- Header HUD -->
+        <header class="bg-white rounded-[2rem] p-3 px-4 md:px-8 flex flex-wrap justify-between items-center border-4 border-slate-200 shadow-sm gap-4">
             <div class="flex items-center gap-4">
-                <div class="bg-indigo-600 text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
-                    <i class="fa-solid fa-brain text-xl"></i>
+                <div class="bg-blue-100 w-14 h-14 rounded-full flex items-center justify-center border-4 border-blue-200 text-blue-500">
+                    <i class="fa-solid fa-gamepad text-2xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">FingerMath<span class="text-indigo-600 font-light">.AI</span></h1>
-                    <div class="flex items-center gap-2 mt-0.5">
-                        <span class="relative flex h-2.5 w-2.5">
-                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                        </span>
-                        <p class="text-xs font-medium text-slate-500">Session Active : <span id="currentPlayerNameHeader" class="text-slate-700 font-semibold"></span></p>
-                    </div>
+                    <h1 class="text-xl md:text-2xl font-black text-slate-800 tracking-wide">FINGER MATH</h1>
+                    <p class="text-sm font-bold text-slate-500">ผู้เล่น: <span id="currentPlayerNameHeader" class="text-blue-600"></span></p>
                 </div>
             </div>
             
-            <div class="flex items-center gap-3 bg-white p-2 pr-4 rounded-full border border-slate-200 shadow-sm">
-                <div class="bg-slate-100 rounded-full px-4 py-1.5 flex items-center gap-2">
-                    <i class="fa-solid fa-layer-group text-slate-400 text-xs"></i>
-                    <p class="text-xs font-semibold text-slate-600 uppercase tracking-wider">โจทย์ข้อที่ <span id="levelDisplay" class="text-indigo-600 stat-value text-sm ml-1">1/10</span></p>
+            <div class="flex items-center gap-3 md:gap-6">
+                <div class="text-center bg-slate-100 px-4 py-2 rounded-2xl border-4 border-slate-200 min-w-[80px]">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase leading-none">ด่านที่</p>
+                    <p id="levelDisplay" class="text-xl md:text-2xl font-black text-slate-700 leading-none mt-1">1/10</p>
                 </div>
-                <div class="px-2">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center leading-none mb-1">Time Left</p>
-                    <p id="timeDisplay" class="text-lg font-bold text-slate-800 stat-value leading-none">10.0s</p>
+                <div class="text-center bg-yellow-100 px-4 py-2 rounded-2xl border-4 border-yellow-200 min-w-[80px]">
+                    <p class="text-[10px] font-bold text-yellow-700 uppercase leading-none">คะแนน</p>
+                    <p id="scoreDisplay" class="text-xl md:text-2xl font-black text-yellow-600 leading-none mt-1">0</p>
                 </div>
             </div>
         </header>
@@ -249,130 +200,139 @@
         <div class="flex flex-col lg:flex-row gap-6 flex-grow">
             
             <!-- Left Panel: Computer Vision Terminal -->
-            <div class="lg:w-[45%] flex flex-col gap-4">
-                <div class="premium-card p-4 relative flex-grow flex flex-col">
+            <div class="lg:w-[45%] flex flex-col gap-5">
+                <div class="card-3d p-4 relative flex flex-col">
                     
-                    <div class="flex justify-between items-center mb-3 px-2">
-                        <h3 class="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                            <i class="fa-solid fa-video text-indigo-500"></i> AI Vision Module
-                        </h3>
-                        <span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded-md font-semibold tracking-wide border border-emerald-200">
-                            TRACKING: <span id="fingerCountDisplay">0</span> FINGERS
-                        </span>
-                    </div>
-
-                    <div id="cameraStatus" class="absolute inset-0 flex items-center justify-center z-20 bg-slate-900/5 backdrop-blur-sm rounded-xl m-4">
-                        <div class="text-center bg-white/90 p-6 rounded-2xl shadow-lg border border-slate-100">
-                            <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 text-indigo-600"></i>
-                            <p class="text-sm font-medium text-slate-600">Initializing MediaPipe...</p>
+                    <!-- Top Info Badge -->
+                    <div class="flex justify-between items-center mb-4 px-2">
+                        <div class="flex items-center gap-2">
+                            <span class="flex h-3 w-3 relative">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                            </span>
+                            <span class="text-sm font-bold text-slate-600">กล้อง AI จับภาพ</span>
+                        </div>
+                        <div class="bg-indigo-100 border-2 border-indigo-200 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2 shadow-sm">
+                            <i class="fa-solid fa-hand-sparkles"></i> นิ้วที่เห็น: <span id="fingerCountDisplay" class="text-lg">0</span>
                         </div>
                     </div>
 
-                    <div class="video-container flex-grow ai-scanner-corners">
-                        <div class="bottom-corners"></div>
+                    <div id="cameraStatus" class="absolute inset-0 flex items-center justify-center z-20 bg-slate-900/60 backdrop-blur-sm rounded-[1.5rem] m-4">
+                        <div class="text-center bg-white p-6 rounded-3xl shadow-xl animate-pop border-4 border-slate-200">
+                            <i class="fa-solid fa-robot fa-bounce text-5xl mb-4 text-blue-500"></i>
+                            <p class="text-xl font-bold text-slate-700">กำลังปลุกหุ่นยนต์ AI...</p>
+                        </div>
+                    </div>
+
+                    <div class="video-container flex-grow">
                         <video id="inputVideo" autoplay playsinline></video>
                         <canvas id="outputCanvas"></canvas>
                         
-                        <!-- Overlay Tech UI -->
-                        <div class="absolute top-4 left-4 flex gap-2 z-10 pointer-events-none opacity-70">
-                            <div class="w-1 h-8 bg-indigo-500 rounded-full"></div>
-                            <div class="flex flex-col justify-between">
-                                <div class="w-12 h-1 bg-indigo-500 rounded-full"></div>
-                                <div class="w-8 h-1 bg-indigo-500 rounded-full"></div>
-                            </div>
-                        </div>
-
-                        <!-- Hold Indicator (Minimalist) -->
                         <div id="holdIndicator" class="hold-indicator">
                             <div id="holdFill" class="hold-indicator-fill"></div>
-                            <div class="absolute inset-0 flex items-center justify-center text-white/50 text-xs font-semibold">HOLD</div>
+                            <div class="absolute inset-0 flex items-center justify-center"><i class="fa-solid fa-face-smile text-white/50 text-4xl"></i></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Control Console -->
                 <div class="flex gap-3">
-                    <button id="btnPause" class="flex-1 py-3 px-4 rounded-xl text-sm btn-modern btn-outline flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-pause"></i> <span>Pause System</span>
+                    <button id="btnPause" class="flex-1 py-4 px-2 text-sm md:text-base btn-3d bg-slate-200 text-slate-700 border-3 border-slate-300 box-shadow-[0_6px_0_#CBD5E1] gap-2">
+                        <i class="fa-solid fa-pause"></i> พักก่อน
                     </button>
-                    <button id="btnRestart" class="flex-1 py-3 px-4 rounded-xl text-sm btn-modern btn-danger-soft flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-rotate-right"></i> Reset
+                    <button id="btnRestart" class="flex-1 py-4 px-2 text-sm md:text-base btn-3d btn-secondary gap-2">
+                        <i class="fa-solid fa-rotate-right"></i> เริ่มใหม่
                     </button>
-                    <button id="btnMenu" class="flex-1 py-3 px-4 rounded-xl text-sm btn-modern bg-slate-800 text-white hover:bg-slate-700 flex items-center justify-center gap-2 shadow-md">
-                        <i class="fa-solid fa-bars"></i> Menu
+                    <button id="btnMenu" class="flex-1 py-4 px-2 text-sm md:text-base btn-3d bg-slate-800 text-white border-3 border-slate-900 box-shadow-[0_6px_0_#0F172A] gap-2">
+                        <i class="fa-solid fa-house"></i> เมนู
                     </button>
                 </div>
             </div>
 
             <!-- Right Panel: Problem Interface & Analytics -->
-            <div class="lg:w-[55%] flex flex-col gap-6">
+            <div class="lg:w-[55%] flex flex-col gap-5">
                 
                 <!-- Active Problem Area -->
-                <div class="premium-card flex-grow flex flex-col justify-center items-center relative overflow-hidden text-center min-h-[300px] bg-gradient-to-br from-white to-slate-50">
+                <div class="card-3d flex-grow flex flex-col justify-center items-center relative overflow-hidden text-center min-h-[320px] bg-white border-4 border-blue-200">
                     
-                    <!-- Top Ribbon info -->
-                    <div class="absolute top-0 left-0 right-0 p-4 flex justify-between items-start">
-                        <div class="bg-indigo-50 text-indigo-700 border border-indigo-100 py-1.5 px-3 rounded-lg text-xs font-semibold tracking-wide flex items-center gap-2">
-                            <i class="fa-solid fa-code-branch"></i> <span id="questionModeText">Algorithm 1.0</span>
-                        </div>
-                        
-                        <div class="text-right">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Score Metric</p>
-                            <div class="flex items-baseline gap-1 justify-end">
-                                <p id="scoreDisplay" class="text-2xl font-bold text-indigo-600 stat-value leading-none">0</p>
-                                <p class="text-xs text-slate-400">pts</p>
-                            </div>
-                            <div id="comboDisplay" class="text-[10px] font-bold text-amber-500 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 mt-1 hidden animate-fade-in inline-block">Streak x3</div>
+                    <!-- Background decoration -->
+                    <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(#3B82F6 2px, transparent 2px); background-size: 20px 20px;"></div>
+
+                    <div class="absolute top-4 left-4 z-10">
+                        <div class="bg-blue-500 text-white border-2 border-blue-600 py-1.5 px-4 rounded-full text-sm font-bold tracking-wide shadow-sm transform -rotate-2">
+                            <i class="fa-solid fa-star"></i> <span id="questionModeText">โหมดการบวก</span>
                         </div>
                     </div>
                     
-                    <!-- Progress Bar (Thin, precise) -->
-                    <div class="absolute bottom-0 left-0 right-0 h-1.5 bg-slate-100">
-                        <div id="timerBar" class="h-full bg-indigo-500 transition-all duration-100 ease-linear" style="width: 100%"></div>
+                    <div id="comboDisplay" class="absolute top-4 right-4 bg-secondary text-white text-sm font-black px-4 py-1.5 rounded-full border-2 border-white shadow-md hidden animate-pop transform rotate-3 z-10">
+                        🔥 คอมโบ x3!
                     </div>
                     
                     <!-- Content -->
-                    <div id="questionContainer" class="w-full px-6 py-12 flex flex-col items-center">
-                        <p id="instructionText" class="text-sm font-medium text-slate-500 mb-4 tracking-wide">Evaluate and provide input via vision module</p>
-                        <h2 id="questionText" class="question-text">3 + 4 = ?</h2>
+                    <div id="questionContainer" class="w-full px-4 py-8 flex flex-col items-center relative z-10 mt-6">
+                        <h2 id="questionText" class="question-text text-slate-800 drop-shadow-sm">3 + 4 = ?</h2>
+                        <div class="mt-4 bg-slate-100 border-2 border-slate-200 px-6 py-2 rounded-full">
+                            <p id="instructionText" class="text-lg md:text-xl font-bold text-slate-600">ชูนิ้วหน้ากล้องเพื่อตอบ</p>
+                        </div>
                     </div>
 
                     <!-- Evaluation Feedback Overlay -->
-                    <div id="feedbackContainer" class="absolute inset-0 bg-white/95 backdrop-blur-md flex flex-col items-center justify-center hidden-panel z-20">
-                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-center shadow-xl shadow-slate-200/50 transform scale-95 transition-transform duration-300" id="feedbackBox">
-                            <i id="feedbackIcon" class="fa-solid fa-circle-check text-5xl mb-3 text-emerald-500"></i>
-                            <h2 id="feedbackText" class="text-2xl font-bold text-slate-800 mb-1">Correct Evaluation</h2>
-                            <div class="inline-block bg-emerald-50 text-emerald-700 px-4 py-1 rounded-full border border-emerald-200 text-sm font-semibold mb-3">
-                                <span id="feedbackPoints"></span>
+                    <div id="feedbackContainer" class="absolute inset-0 bg-white/95 flex flex-col items-center justify-center hidden-panel z-20 backdrop-blur-sm rounded-[1.5rem]">
+                        <div id="feedbackBox" class="text-center animate-pop">
+                            <div id="feedbackIconWrapper" class="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 border-8">
+                                <i id="feedbackIcon" class="fa-solid fa-check text-5xl"></i>
                             </div>
-                            <p id="feedbackMessage" class="text-sm text-slate-500"></p>
+                            <h2 id="feedbackText" class="text-4xl font-black mb-2">เก่งมาก!</h2>
+                            <div class="inline-block bg-slate-100 px-6 py-2 rounded-full border-2 border-slate-200 mb-2">
+                                <span id="feedbackPoints" class="text-2xl font-black text-slate-700">+10 คะแนน</span>
+                            </div>
+                            <p id="feedbackMessage" class="text-lg font-bold text-slate-500"></p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Performance Metrics Dashboard -->
-                <div class="premium-card p-5 bg-white">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-chart-simple"></i> Performance Analytics
-                    </h3>
+                <!-- Timer and Stats -->
+                <div class="card-3d p-5">
+                    <div class="flex justify-between items-end mb-2 px-1">
+                        <span class="text-sm font-black text-slate-500 uppercase"><i class="fa-regular fa-clock"></i> เวลาที่เหลือ</span>
+                        <span id="timerText" class="text-2xl font-black text-blue-500 leading-none">10.0s</span>
+                    </div>
+                    <div class="progress-bar-bg mb-6">
+                        <div id="timerBar" class="progress-bar-fill bg-blue-500" style="width: 100%"></div>
+                    </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="flex items-center gap-4 p-3 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors">
-                            <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg">
-                                <i class="fa-solid fa-check"></i>
-                            </div>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="bg-green-50 border-2 border-green-200 rounded-2xl p-3 flex items-center gap-3">
+                            <div class="bg-green-100 w-10 h-10 rounded-xl flex items-center justify-center text-green-500 text-xl"><i class="fa-solid fa-check"></i></div>
                             <div>
-                                <p class="text-[10px] font-semibold text-slate-500 uppercase">Accuracy (Hit)</p>
-                                <p id="statCorrect" class="text-xl font-bold text-slate-800 stat-value leading-none mt-1">0</p>
+                                <p class="text-[10px] font-bold text-green-600 uppercase">ตอบถูก</p>
+                                <p id="statCorrect" class="text-2xl font-black text-green-700 leading-none">0</p>
                             </div>
                         </div>
-                        <div class="flex items-center gap-4 p-3 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors">
-                            <div class="w-10 h-10 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center text-lg">
-                                <i class="fa-solid fa-xmark"></i>
-                            </div>
+                        <div class="bg-red-50 border-2 border-red-200 rounded-2xl p-3 flex items-center gap-3">
+                            <div class="bg-red-100 w-10 h-10 rounded-xl flex items-center justify-center text-red-500 text-xl"><i class="fa-solid fa-xmark"></i></div>
                             <div>
-                                <p class="text-[10px] font-semibold text-slate-500 uppercase">Errors (Miss)</p>
-                                <p id="statWrong" class="text-xl font-bold text-slate-800 stat-value leading-none mt-1">0</p>
+                                <p class="text-[10px] font-bold text-red-600 uppercase">ตอบผิด</p>
+                                <p id="statWrong" class="text-2xl font-black text-red-700 leading-none">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Badges -->
+                    <div class="bg-slate-50 rounded-2xl p-3 border-2 border-slate-100">
+                        <h3 class="text-center font-bold text-xs text-slate-400 uppercase mb-3"><i class="fa-solid fa-medal"></i> ถ้วยรางวัลแห่งความพยายาม</h3>
+                        <div class="flex justify-around">
+                            <div class="text-center badge-icon" id="badgeBeginner" title="ตอบถูก 10 ข้อ">
+                                <i class="fa-solid fa-egg text-3xl text-slate-400 mb-1"></i><p class="text-[10px] font-bold">ลูกเจี๊ยบ</p>
+                            </div>
+                            <div class="text-center badge-icon" id="badgeStar" title="ตอบถูก 50 ข้อ">
+                                <i class="fa-solid fa-star text-3xl text-yellow-400 mb-1"></i><p class="text-[10px] font-bold">ดาวเด่น</p>
+                            </div>
+                            <div class="text-center badge-icon" id="badgeMaster" title="ตอบถูก 100 ข้อ">
+                                <i class="fa-solid fa-fire text-3xl text-orange-500 mb-1"></i><p class="text-[10px] font-bold">ไฟแรง</p>
+                            </div>
+                            <div class="text-center badge-icon" id="badgeChampion" title="แม่นยำ 100% (ด่าน 5)">
+                                <i class="fa-solid fa-crown text-3xl text-purple-500 mb-1"></i><p class="text-[10px] font-bold">แชมป์เปี้ยน</p>
                             </div>
                         </div>
                     </div>
@@ -382,166 +342,175 @@
         </div>
     </div>
 
-    <!-- ONBOARDING / START MENU -->
-    <div id="startMenu" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-        <div class="premium-card max-w-[800px] w-full p-0 overflow-hidden animate-fade-in flex flex-col md:flex-row">
+    <!-- START MENU -->
+    <div id="startMenu" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div class="card-3d max-w-3xl w-full p-6 md:p-10 text-center animate-pop relative overflow-hidden">
             
-            <!-- Branding Sidebar -->
-            <div class="bg-indigo-600 text-white p-8 md:w-2/5 flex flex-col justify-between relative overflow-hidden">
-                <div class="absolute inset-0 bg-gradient-to-b from-indigo-500/20 to-transparent"></div>
-                <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-indigo-500 rounded-full blur-3xl opacity-50"></div>
-                
-                <div class="relative z-10">
-                    <i class="fa-solid fa-brain text-4xl mb-4 text-indigo-200"></i>
-                    <h1 class="text-3xl font-bold tracking-tight mb-2">FingerMath<span class="font-light">.AI</span></h1>
-                    <p class="text-indigo-200 text-sm font-light">Interactive Mathematics Learning through Advanced Computer Vision.</p>
+            <!-- Deco -->
+            <div class="absolute -top-10 -right-10 text-9xl opacity-10"><i class="fa-solid fa-calculator"></i></div>
+            <div class="absolute -bottom-10 -left-10 text-9xl opacity-10"><i class="fa-solid fa-shapes"></i></div>
+
+            <div class="relative z-10">
+                <div class="inline-block bg-blue-100 p-5 rounded-full border-4 border-blue-200 mb-4 transform -rotate-6">
+                    <i class="fa-solid fa-hands-asl-interpreting text-6xl text-blue-500"></i>
                 </div>
                 
-                <div class="relative z-10 mt-12 md:mt-0">
-                    <div class="flex gap-2 items-center text-xs text-indigo-300 font-medium">
-                        <i class="fa-solid fa-shield-halved"></i> Research & Demo Build
-                    </div>
-                </div>
-            </div>
+                <h1 class="text-5xl md:text-6xl font-black mb-2 text-slate-800 tracking-tight">FINGER <span class="text-primary">MATH</span></h1>
+                <p class="text-lg md:text-xl font-bold text-slate-500 mb-8">สนุกกับการคิดเลขด้วยนิ้วมือ! ✌️🖐️</p>
 
-            <!-- Configuration Form -->
-            <div class="p-8 md:w-3/5 bg-white">
-                <h2 class="text-xl font-bold text-slate-800 mb-6">Session Configuration</h2>
-
-                <div class="space-y-5 mb-8">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Participant Identifier</label>
-                        <input type="text" id="startPlayerName" placeholder="Enter Subject Name / ID" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-700 form-input text-sm transition-all">
+                <!-- Configuration Form -->
+                <div class="bg-slate-50 p-6 rounded-[2rem] border-4 border-slate-200 mb-8 text-left max-w-lg mx-auto shadow-sm">
+                    <div class="mb-5">
+                        <label class="block text-sm font-black text-slate-600 mb-2"><i class="fa-solid fa-user-astronaut text-blue-500"></i> ชื่อนักผจญภัย (ชื่อผู้เล่น):</label>
+                        <input type="text" id="startPlayerName" placeholder="พิมพ์ชื่อตรงนี้เลย..." class="fun-input">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Assessment Length</label>
-                        <select id="startQuestionCount" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-700 form-input text-sm appearance-none cursor-pointer">
-                            <option value="5">Short Trial (5 Modules)</option>
-                            <option value="10" selected>Standard Assessment (10 Modules)</option>
-                            <option value="20">Extended Test (20 Modules)</option>
-                            <option value="999">Infinite Loop (Endurance Mode)</option>
+                        <label class="block text-sm font-black text-slate-600 mb-2"><i class="fa-solid fa-map-location-dot text-green-500"></i> ภารกิจ (จำนวนข้อ):</label>
+                        <select id="startQuestionCount" class="fun-input cursor-pointer appearance-none bg-white">
+                            <option value="5">5 ข้อ (ซ้อมมือ)</option>
+                            <option value="10" selected>10 ข้อ (ด่านมาตรฐาน)</option>
+                            <option value="20">20 ข้อ (ภารกิจท้าทาย)</option>
+                            <option value="999">เล่นไปเรื่อยๆ (ไม่มีที่สิ้นสุด)</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="space-y-3">
-                    <button onclick="app.startGame('adventure')" class="w-full py-3.5 rounded-xl btn-modern btn-primary shadow-lg shadow-indigo-200 flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-bolt"></i> Initialize Dynamic Assessment
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left mb-8 max-w-2xl mx-auto">
+                    <button onclick="app.startGame('adventure')" class="btn-3d btn-primary p-6 rounded-3xl flex flex-col items-center justify-center text-center group">
+                        <i class="fa-solid fa-play text-4xl mb-2 text-white group-hover:scale-110 transition-transform"></i>
+                        <h3 class="text-2xl font-black">ลุยด่านแบบสุ่ม!</h3>
+                        <p class="text-sm text-blue-200 font-bold mt-1">เจอโจทย์หลากสไตล์</p>
                     </button>
                     
-                    <div class="relative flex items-center py-2">
-                        <div class="flex-grow border-t border-slate-200"></div>
-                        <span class="flex-shrink-0 mx-4 text-xs text-slate-400 uppercase tracking-widest">Or Select Specific Module</span>
-                        <div class="flex-grow border-t border-slate-200"></div>
-                    </div>
-
-                    <div class="flex gap-2">
-                        <select id="classroomModeSelect" class="flex-grow bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-600 outline-none text-sm focus:border-slate-400">
-                            <option value="1">Algorithm 1: Number Recognition</option>
-                            <option value="2">Algorithm 2: Basic Addition</option>
-                            <option value="3">Algorithm 3: Subtraction</option>
-                            <option value="4">Algorithm 4: Multiplication</option>
-                            <option value="5">Algorithm 5: Magnitude Comparison</option>
-                            <option value="6">Algorithm 6: Parity (Even/Odd)</option>
+                    <div class="bg-white p-5 rounded-3xl border-4 border-slate-200">
+                        <h3 class="text-lg font-black mb-2 text-slate-700"><i class="fa-solid fa-school text-orange-500 mr-2"></i> ฝึกฝนเฉพาะเรื่อง</h3>
+                        <select id="classroomModeSelect" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-3 text-slate-600 mb-4 outline-none font-bold text-sm">
+                            <option value="1">1. ชูนิ้วตามตัวเลข</option>
+                            <option value="2">2. การบวกเลข</option>
+                            <option value="3">3. การลบเลข</option>
+                            <option value="4">4. การคูณเลข</option>
+                            <option value="5">5. มากกว่า / น้อยกว่า</option>
+                            <option value="6">6. เลขคู่ / เลขคี่</option>
                         </select>
-                        <button onclick="app.startGame('classroom')" class="px-5 rounded-xl btn-modern bg-slate-800 text-white hover:bg-slate-700 text-sm">
-                            Execute
-                        </button>
+                        <button onclick="app.startGame('classroom')" class="w-full py-3 btn-3d bg-slate-200 text-slate-700 border-3 border-slate-300 box-shadow-[0_6px_0_#CBD5E1] rounded-xl text-lg">เลือกภารกิจนี้</button>
                     </div>
                 </div>
 
-                <div class="mt-6 flex justify-between items-center">
-                    <p class="text-[10px] text-slate-400"><i class="fa-solid fa-camera mr-1"></i> Camera permission required.</p>
-                    <button onclick="app.showLeaderboard()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
-                        View Analytics Database &rarr;
+                <div class="flex justify-center gap-4">
+                    <button onclick="app.showLeaderboard()" class="px-8 py-4 btn-3d btn-accent rounded-2xl text-lg flex items-center gap-2">
+                        <i class="fa-solid fa-trophy text-2xl"></i> ตารางคนเก่ง
                     </button>
                 </div>
+                
+                <p class="mt-8 text-xs md:text-sm font-bold text-slate-400 bg-slate-50 inline-block px-4 py-2 rounded-full border-2 border-slate-100">
+                    <i class="fa-solid fa-camera mr-1"></i> อย่าลืมกดอนุญาตให้ใช้กล้องด้วยนะ!
+                </p>
             </div>
         </div>
     </div>
 
-    <!-- LEADERBOARD / ANALYTICS DATABASE -->
-    <div id="leaderboardModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm hidden-panel">
-        <div class="premium-card max-w-lg w-full p-6 animate-fade-in relative bg-white">
-            <button onclick="document.getElementById('leaderboardModal').classList.add('hidden-panel')" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 flex items-center justify-center transition-colors">
+    <!-- LEADERBOARD MODAL -->
+    <div id="leaderboardModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md hidden-panel">
+        <div class="card-3d max-w-md w-full p-8 text-center animate-pop relative bg-white border-4 border-yellow-300">
+            <button onclick="document.getElementById('leaderboardModal').classList.add('hidden-panel')" class="absolute -top-4 -right-4 w-12 h-12 bg-white border-4 border-slate-200 rounded-full text-xl text-slate-400 hover:text-red-500 hover:border-red-200 flex items-center justify-center transition-colors btn-3d">
                 <i class="fa-solid fa-xmark"></i>
             </button>
             
-            <div class="flex items-center gap-3 mb-6">
-                <div class="bg-indigo-100 text-indigo-600 p-2 rounded-lg"><i class="fa-solid fa-database"></i></div>
-                <h2 class="text-lg font-bold text-slate-800">Top Performance Records</h2>
-            </div>
+            <i class="fa-solid fa-trophy text-6xl text-yellow-400 mb-4 drop-shadow-sm"></i>
+            <h2 class="text-3xl font-black mb-6 text-slate-800">ทำเนียบคนเก่ง</h2>
             
-            <div id="leaderboardList" class="flex flex-col gap-2 mb-4 max-h-72 overflow-y-auto pr-2">
+            <div id="leaderboardList" class="flex flex-col gap-3 mb-6 max-h-72 overflow-y-auto pr-2">
                 <!-- Injected via JS -->
             </div>
             
-            <div class="border-t border-slate-100 pt-4 text-right">
-                <button onclick="app.clearLeaderboard()" class="text-xs font-medium text-rose-500 hover:text-rose-700 border border-rose-100 bg-rose-50 px-3 py-1.5 rounded-lg transition-colors">Clear Database</button>
+            <!-- Replace confirm() with custom action trigger -->
+            <button onclick="app.requestClearLeaderboard()" class="mt-2 text-sm font-bold text-slate-400 hover:text-red-500 underline">ล้างประวัติคะแนนทั้งหมด</button>
+        </div>
+    </div>
+
+    <!-- GAME OVER MODAL -->
+    <div id="gameOverModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md hidden-panel">
+        <div class="card-3d max-w-md w-full p-8 text-center animate-pop border-4 border-blue-300">
+            
+            <div class="absolute -top-12 left-1/2 transform -translate-x-1/2">
+                <div class="w-24 h-24 bg-white rounded-full border-4 border-blue-300 flex items-center justify-center shadow-lg">
+                    <i class="fa-solid fa-flag-checkered text-4xl text-blue-500"></i>
+                </div>
+            </div>
+
+            <h2 id="gameOverTitle" class="text-4xl font-black mt-8 mb-2 text-slate-800">จบภารกิจ!</h2>
+            
+            <div class="bg-slate-50 p-6 rounded-3xl border-4 border-slate-200 mb-6 shadow-inner text-slate-700">
+                <p class="text-sm font-bold text-slate-400 uppercase">ผลงานของนักผจญภัย</p>
+                <p id="finalPlayerName" class="text-2xl font-black mb-4 text-blue-600"></p>
+                <div class="bg-white rounded-2xl p-4 border-2 border-slate-100">
+                    <p class="text-sm font-bold text-yellow-600 uppercase">คะแนนสะสม</p>
+                    <p id="finalScoreText" class="text-yellow-500 font-black text-6xl drop-shadow-sm">0</p>
+                </div>
+            </div>
+            
+            <div class="flex gap-4 mb-6">
+                <div class="flex-1 bg-green-50 rounded-2xl p-4 border-2 border-green-200">
+                    <p class="text-green-600 font-black text-sm uppercase"><i class="fa-solid fa-check"></i> ตอบถูก</p>
+                    <p id="finalCorrect" class="text-3xl font-black text-green-600">0</p>
+                </div>
+                <div class="flex-1 bg-red-50 rounded-2xl p-4 border-2 border-red-200">
+                    <p class="text-red-600 font-black text-sm uppercase"><i class="fa-solid fa-xmark"></i> ตอบผิด</p>
+                    <p id="finalWrong" class="text-3xl font-black text-red-600">0</p>
+                </div>
+            </div>
+
+            <p class="text-blue-500 text-sm mb-6 font-bold bg-blue-50 py-2 rounded-full border-2 border-blue-100"><i class="fa-solid fa-cloud-arrow-up"></i> บันทึกคะแนนอัตโนมัติแล้ว!</p>
+
+            <div class="flex gap-3">
+                <button onclick="app.returnToMenu()" class="flex-1 py-4 btn-3d bg-slate-200 text-slate-700 border-3 border-slate-300 box-shadow-[0_6px_0_#CBD5E1] rounded-2xl text-lg">
+                    <i class="fa-solid fa-house mb-1"></i> เมนูหลัก
+                </button>
+                <button onclick="app.restartGame()" class="flex-1 py-4 btn-3d btn-primary rounded-2xl text-lg">
+                    <i class="fa-solid fa-rotate-right mb-1"></i> เล่นอีกรอบ
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- GAME OVER / SESSION SUMMARY -->
-    <div id="gameOverModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md hidden-panel">
-        <div class="premium-card max-w-md w-full p-8 text-center animate-fade-in">
-            
-            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner">
-                <i class="fa-solid fa-flag-checkered text-2xl"></i>
+    <!-- CUSTOM CONFIRM MODAL (To avoid browser alert/confirm) -->
+    <div id="customConfirmModal" class="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden-panel">
+        <div class="card-3d max-w-sm w-full p-6 text-center animate-pop border-4 border-red-300">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-red-200">
+                <i class="fa-solid fa-triangle-exclamation text-3xl text-red-500"></i>
             </div>
-
-            <h2 id="gameOverTitle" class="text-2xl font-bold text-slate-800 mb-6">Session Complete</h2>
-            
-            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 mb-6 text-left">
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Subject Profile</p>
-                <p id="finalPlayerName" class="text-lg font-semibold text-slate-700 mb-4 pb-3 border-b border-slate-200"></p>
-                
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Final Metric Score</p>
-                <p id="finalScoreText" class="text-4xl font-bold text-indigo-600 stat-value"></p>
-            </div>
-            
-            <div class="flex gap-3 mb-6">
-                <div class="flex-1 bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
-                    <p class="text-slate-400 font-semibold text-[10px] uppercase">Hits</p>
-                    <p id="finalCorrect" class="text-xl font-bold text-emerald-600 stat-value">0</p>
-                </div>
-                <div class="flex-1 bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
-                    <p class="text-slate-400 font-semibold text-[10px] uppercase">Misses</p>
-                    <p id="finalWrong" class="text-xl font-bold text-rose-500 stat-value">0</p>
-                </div>
-            </div>
-
-            <p class="text-[10px] text-emerald-600 bg-emerald-50 py-1.5 rounded-lg mb-6 border border-emerald-100"><i class="fa-solid fa-check-circle"></i> Data saved to local registry</p>
-
+            <h2 class="text-2xl font-black mb-2 text-slate-800">แน่ใจนะ?</h2>
+            <p class="text-slate-500 font-bold mb-6">คะแนนทั้งหมดจะหายไปและกู้คืนไม่ได้เลยนะ!</p>
             <div class="flex gap-3">
-                <button onclick="app.returnToMenu()" class="flex-1 py-3 btn-modern btn-outline rounded-xl text-sm">
-                    Main Menu
+                <button onclick="document.getElementById('customConfirmModal').classList.add('hidden-panel')" class="flex-1 py-3 btn-3d bg-slate-200 text-slate-700 border-3 border-slate-300 box-shadow-[0_6px_0_#CBD5E1] rounded-xl text-sm">
+                    ยกเลิก
                 </button>
-                <button onclick="app.restartGame()" class="flex-1 py-3 btn-modern btn-primary rounded-xl text-sm">
-                    Run Again
+                <button onclick="app.confirmClearLeaderboard()" class="flex-1 py-3 btn-3d btn-secondary rounded-xl text-sm">
+                    ใช่, ล้างเลย!
                 </button>
             </div>
         </div>
     </div>
 
     <!-- LEVEL UP OVERLAY -->
-    <div id="levelUpOverlay" class="fixed inset-0 z-[60] flex items-center justify-center pointer-events-none hidden-panel bg-white/20 backdrop-blur-sm">
-        <div class="text-center animate-fade-in bg-white/90 p-8 rounded-3xl shadow-2xl border border-slate-100">
-            <i class="fa-solid fa-arrow-up-right-dots text-5xl text-indigo-600 mb-4"></i>
-            <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Level Increased</h1>
-            <p class="text-sm text-slate-500 mt-2">Algorithm complexity updated.</p>
+    <div id="levelUpOverlay" class="fixed inset-0 z-[60] flex items-center justify-center pointer-events-none hidden-panel bg-white/60 backdrop-blur-sm">
+        <div class="text-center animate-pop">
+            <i class="fa-solid fa-rocket text-8xl text-primary mb-6 drop-shadow-md"></i>
+            <h1 class="text-6xl md:text-8xl font-black text-primary drop-shadow-lg" style="-webkit-text-stroke: 4px white;">เลื่อนด่าน!</h1>
+            <div class="bg-white px-8 py-3 rounded-full border-4 border-blue-200 mt-6 inline-block shadow-sm">
+                <p class="text-2xl font-black text-slate-700">คำถามจะเร็วและท้าทายขึ้นนะ!</p>
+            </div>
         </div>
     </div>
 
-    <!-- JAVASCRIPT APPLICATION -->
     <script>
         const CONFIG = {
             timePerQuestion: 10,
-            holdTimeRequired: 1.5, // 1.5s is standard for stability in vision tasks
+            holdTimeRequired: 1.2, // ลดให้เร็วขึ้นอีกนิด เด็กจะได้ไม่เมื่อยแขน
             pointsBase: 10,
             pointsFast: 5, 
             levelUpScore: 100,
-            messages: ["Optimal Result", "Accurate", "Precision Confirmed", "Valid Input", "Correct Evaluation"]
+            messages: ["สุดยอดเลย!", "เก่งมากๆ!", "ทำได้ดีมาก!", "เจ๋งสุดๆ!", "ฮีโร่ตัวจริง!", "ไวปานสายฟ้า!"]
         };
 
         const DOM = {
@@ -554,6 +523,7 @@
             score: document.getElementById('scoreDisplay'),
             level: document.getElementById('levelDisplay'),
             time: document.getElementById('timeDisplay'),
+            timerText: document.getElementById('timerText'),
             timerBar: document.getElementById('timerBar'),
             currentPlayerNameHeader: document.getElementById('currentPlayerNameHeader'),
             
@@ -567,6 +537,7 @@
             
             feedbackContainer: document.getElementById('feedbackContainer'),
             feedbackBox: document.getElementById('feedbackBox'),
+            feedbackIconWrapper: document.getElementById('feedbackIconWrapper'),
             feedbackIcon: document.getElementById('feedbackIcon'),
             feedbackText: document.getElementById('feedbackText'),
             feedbackPoints: document.getElementById('feedbackPoints'),
@@ -576,6 +547,13 @@
             statCorrect: document.getElementById('statCorrect'),
             statWrong: document.getElementById('statWrong'),
             
+            badges: {
+                beginner: document.getElementById('badgeBeginner'),
+                star: document.getElementById('badgeStar'),
+                master: document.getElementById('badgeMaster'),
+                champion: document.getElementById('badgeChampion')
+            },
+            
             gameOverModal: document.getElementById('gameOverModal'),
             gameOverTitle: document.getElementById('gameOverTitle'),
             finalScoreText: document.getElementById('finalScoreText'),
@@ -584,8 +562,10 @@
             finalWrong: document.getElementById('finalWrong'),
             startPlayerName: document.getElementById('startPlayerName'),
             startQuestionCount: document.getElementById('startQuestionCount'),
+            
             leaderboardModal: document.getElementById('leaderboardModal'),
             leaderboardList: document.getElementById('leaderboardList'),
+            customConfirmModal: document.getElementById('customConfirmModal'),
             levelUpOverlay: document.getElementById('levelUpOverlay'),
             
             btnPause: document.getElementById('btnPause'),
@@ -593,73 +573,47 @@
             btnMenu: document.getElementById('btnMenu')
         };
 
-        // Smooth Synth Beeps for Professional App
+        // 1. Sound Manager
         class SoundManager {
             constructor() { this.ctx = null; this.initialized = false; }
             init() {
                 if (!this.initialized) { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); this.initialized = true; }
                 if (this.ctx.state === 'suspended') this.ctx.resume();
             }
-            playTone(freq, type, duration, vol=0.05) {
+            playTone(freq, type, duration, vol=0.1) {
                 if (!this.ctx) return;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = type;
-                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+                osc.type = type; osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
                 gain.gain.setValueAtTime(vol, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start();
-                osc.stop(this.ctx.currentTime + duration);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + duration);
             }
-            correct() {
-                if(!this.ctx) return;
-                this.playTone(880, 'sine', 0.1); // High pitch short beep (Success)
-            }
-            wrong() {
-                if(!this.ctx) return;
-                this.playTone(200, 'triangle', 0.3, 0.1); // Low soft buzz
-            }
-            levelUp() {
-                if(!this.ctx) return;
-                [440, 554, 659, 880].forEach((freq, i) => { setTimeout(() => this.playTone(freq, 'sine', 0.15, 0.05), i * 100); });
-            }
+            correct() { if(!this.ctx) return; this.playTone(523.25, 'sine', 0.1); setTimeout(() => this.playTone(659.25, 'sine', 0.2), 100); }
+            wrong() { if(!this.ctx) return; this.playTone(150, 'sawtooth', 0.3, 0.05); }
+            levelUp() { if(!this.ctx) return; [261.63, 329.63, 392.00, 523.25].forEach((freq, i) => { setTimeout(() => this.playTone(freq, 'square', 0.15, 0.05), i * 150); }); }
         }
 
+        // 2. Hand Tracker (with Mirror Fix)
         class HandTracker {
             constructor(videoEl, canvasEl, onResultsCallback) {
-                this.videoEl = videoEl;
-                this.canvasEl = canvasEl;
-                this.ctx = canvasEl.getContext('2d');
-                this.onResultsCallback = onResultsCallback;
-                this.hands = null;
-                this.camera = null;
-                this.isReady = false;
+                this.videoEl = videoEl; this.canvasEl = canvasEl; this.ctx = canvasEl.getContext('2d');
+                this.onResultsCallback = onResultsCallback; this.hands = null; this.camera = null; this.isReady = false;
             }
-
             async init() {
-                this.hands = new Hands({locateFile: (file) => { return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`; }});
+                this.hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
                 this.hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5 });
                 this.hands.onResults((results) => this.processResults(results));
-
                 this.camera = new Camera(this.videoEl, {
                     onFrame: async () => {
-                        if (!this.isReady) {
-                            DOM.camStatus.classList.add('hidden-panel');
-                            this.isReady = true;
-                            this.canvasEl.width = this.videoEl.videoWidth;
-                            this.canvasEl.height = this.videoEl.videoHeight;
-                        }
+                        if (!this.isReady) { DOM.camStatus.classList.add('hidden-panel'); this.isReady = true; this.canvasEl.width = this.videoEl.videoWidth; this.canvasEl.height = this.videoEl.videoHeight; }
                         await this.hands.send({image: this.videoEl});
                     }, width: 640, height: 480
                 });
                 await this.camera.start();
             }
-
             processResults(results) {
-                this.ctx.save();
-                this.ctx.clearRect(0, 0, this.canvasEl.width, this.canvasEl.height);
+                this.ctx.save(); this.ctx.clearRect(0, 0, this.canvasEl.width, this.canvasEl.height);
                 this.ctx.translate(this.canvasEl.width, 0); this.ctx.scale(-1, 1); // Mirror
                 this.ctx.drawImage(results.image, 0, 0, this.canvasEl.width, this.canvasEl.height);
 
@@ -667,123 +621,108 @@
                 if (results.multiHandLandmarks && results.multiHandedness) {
                     for (let i = 0; i < results.multiHandLandmarks.length; i++) {
                         const landmarks = results.multiHandLandmarks[i];
-                        // High-tech skeletal drawing
-                        drawConnectors(this.ctx, landmarks, HAND_CONNECTIONS, {color: 'rgba(79, 70, 229, 0.8)', lineWidth: 3});
-                        drawLandmarks(this.ctx, landmarks, {color: 'rgba(16, 185, 129, 0.9)', lineWidth: 1, radius: 3});
+                        drawConnectors(this.ctx, landmarks, HAND_CONNECTIONS, {color: '#3B82F6', lineWidth: 5}); // Blue bones
+                        drawLandmarks(this.ctx, landmarks, {color: '#FBBF24', lineWidth: 2, radius: 6}); // Yellow joints
                         totalFingers += this.countFingers(landmarks);
                     }
                 }
                 this.ctx.restore(); 
                 if(this.onResultsCallback) this.onResultsCallback(totalFingers);
             }
-
             countFingers(landmarks) {
-                let count = 0;
-                const dist = (p1, p2) => Math.hypot(p1.x - p2.x, p1.y - p2.y);
+                let count = 0; const dist = (p1, p2) => Math.hypot(p1.x - p2.x, p1.y - p2.y);
                 if (dist(landmarks[4], landmarks[17]) > dist(landmarks[3], landmarks[17])) count++;
-                const fingerTips = [8, 12, 16, 20];
-                const fingerPips = [6, 10, 14, 18];
+                const fingerTips = [8, 12, 16, 20]; const fingerPips = [6, 10, 14, 18];
                 for (let i = 0; i < 4; i++) { if (landmarks[fingerTips[i]].y < landmarks[fingerPips[i]].y) count++; }
                 return count;
             }
         }
 
+        // 3. Question Manager
         class QuestionManager {
             constructor() { this.currentQuestion = null; }
             generateQuestion(level, mode = 'adventure', specificMode = null) {
-                let activeMode = specificMode ? parseInt(specificMode) : (level <= 5 ? level : Math.floor(Math.random() * 6) + 1);
-                if(level === 1 && !specificMode) activeMode = 1;
-                else if (level === 2 && !specificMode) activeMode = 1;
-
-                let q = { text: "", instruction: "", answerCheck: null, modeName: "", correctAnswerValue: "" };
+                let activeMode = specificMode ? parseInt(specificMode) : (level <= 2 ? 1 : (level === 3 ? 2 : (level === 4 ? 3 : (level === 5 ? 4 : Math.floor(Math.random() * 6) + 1))));
+                let q = { text: "", instruction: "", answerCheck: null, modeName: "", answerText: "" };
 
                 switch(activeMode) {
                     case 1:
                         const num = Math.floor(Math.random() * ((level === 1 && mode === 'adventure') ? 6 : 11));
-                        q.modeName = "Number Recognition"; q.text = `Input: ${num}`; q.instruction = "Provide visual representation of target integer";
-                        q.correctAnswerValue = num; q.answerCheck = (f) => f === num; break;
+                        q.modeName = "แสดงตัวเลข"; q.text = `ชู ${num} นิ้ว`; q.instruction = "ชูนิ้วให้ครบตามตัวเลขเลย!";
+                        q.answerCheck = (f) => f === num; q.answerText = num; break;
                     case 2:
                         const a1 = Math.floor(Math.random() * 6), b1 = Math.floor(Math.random() * (11 - a1)); 
-                        q.modeName = "Basic Addition"; q.text = `${a1} + ${b1} = ?`; q.instruction = "Compute sum and provide visual input";
-                        q.correctAnswerValue = a1 + b1; q.answerCheck = (f) => f === (a1 + b1); break;
+                        q.modeName = "การบวก"; q.text = `${a1} + ${b1} = ?`; q.instruction = "บวกเลขแล้วชูนิ้วตอบเลย!";
+                        q.answerCheck = (f) => f === (a1 + b1); q.answerText = a1+b1; break;
                     case 3:
                         const a2 = Math.floor(Math.random() * 11), b2 = Math.floor(Math.random() * (a2 + 1)); 
-                        q.modeName = "Subtraction"; q.text = `${a2} - ${b2} = ?`; q.instruction = "Compute difference and provide visual input";
-                        q.correctAnswerValue = a2 - b2; q.answerCheck = (f) => f === (a2 - b2); break;
+                        q.modeName = "การลบ"; q.text = `${a2} - ${b2} = ?`; q.instruction = "ลบเลขแล้วชูนิ้วตอบเลย!";
+                        q.answerCheck = (f) => f === (a2 - b2); q.answerText = a2-b2; break;
                     case 4:
                         const pairs = [[0,1], [0,2], [1,1], [1,2], [1,3], [1,4], [1,5], [1,6], [1,7], [1,8], [1,9], [1,10], [2,1], [2,2], [2,3], [2,4], [2,5], [3,1], [3,2], [3,3], [4,1], [4,2], [5,1], [5,2]];
                         const pair = pairs[Math.floor(Math.random() * pairs.length)];
-                        q.modeName = "Multiplication"; q.text = `${pair[0]} × ${pair[1]} = ?`; q.instruction = "Compute product and provide visual input";
-                        q.correctAnswerValue = pair[0] * pair[1]; q.answerCheck = (f) => f === (pair[0] * pair[1]); break;
+                        q.modeName = "การคูณ"; q.text = `${pair[0]} × ${pair[1]} = ?`; q.instruction = "คูณเลขแล้วชูนิ้วตอบเลย!";
+                        q.answerCheck = (f) => f === (pair[0] * pair[1]); q.answerText = pair[0]*pair[1]; break;
                     case 5:
-                        const target = Math.floor(Math.random() * 9) + 1; const isMore = Math.random() > 0.5;
-                        q.modeName = "Magnitude Comparison"; q.text = isMore ? `> ${target}` : `< ${target}`; q.instruction = isMore ? `Provide input greater than ${target}` : `Provide input less than ${target}`;
-                        q.correctAnswerValue = isMore ? `> ${target}` : `< ${target}`; q.answerCheck = (f) => isMore ? (f > target && f <=10) : (f < target); break;
+                        const target = Math.floor(Math.random() * 9) + 1, isMore = Math.random() > 0.5;
+                        q.modeName = "เปรียบเทียบ"; q.text = isMore ? `> ${target}` : `< ${target}`; q.instruction = isMore ? `ชูนิ้วให้ มากกว่า ${target}` : `ชูนิ้วให้ น้อยกว่า ${target}`;
+                        q.answerCheck = (f) => isMore ? (f > target && f <=10) : (f < target); q.answerText = isMore ? `จำนวนที่มากกว่า ${target}` : `จำนวนที่น้อยกว่า ${target}`; break;
                     case 6:
                         const isEven = Math.random() > 0.5;
-                        q.modeName = "Parity Identification"; q.text = isEven ? "Even [2n]" : "Odd [2n+1]"; q.instruction = isEven ? "Provide any even integer (2,4,6...)" : "Provide any odd integer (1,3,5...)";
-                        q.correctAnswerValue = isEven ? "Even Number" : "Odd Number"; q.answerCheck = (f) => isEven ? (f % 2 === 0 && f > 0) : (f % 2 !== 0); break;
+                        q.modeName = "คู่ หรือ คี่"; q.text = isEven ? "เลขคู่" : "เลขคี่"; q.instruction = isEven ? "ชูนิ้วจำนวนคู่ (2,4,6...)" : "ชูนิ้วจำนวนคี่ (1,3,5...)";
+                        q.answerCheck = (f) => isEven ? (f % 2 === 0 && f > 0) : (f % 2 !== 0); q.answerText = isEven ? "2, 4, 6, 8 หรือ 10" : "1, 3, 5, 7 หรือ 9"; break;
                 }
                 this.currentQuestion = q; return q;
             }
         }
 
+        // 4. Score Manager
         class ScoreAchievementManager {
             constructor() { this.reset(); }
-            reset() { this.score = 0; this.level = 1; this.correctCount = 0; this.wrongCount = 0; this.combo = 0; this.updateUI(); }
+            reset() { this.score = 0; this.level = 1; this.correctCount = 0; this.wrongCount = 0; this.combo = 0; this.perfectAccuracy = true; this.updateUI(); Object.values(DOM.badges).forEach(b => b.classList.remove('unlocked')); }
             addScore(timeElapsed) {
-                this.correctCount++; this.combo++;
-                let pts = CONFIG.pointsBase; let bonusMsg = "";
-                if (timeElapsed < 3) { pts += CONFIG.pointsFast; bonusMsg = "High Speed Bonus"; }
-                if (this.combo === 3) { pts += 20; DOM.comboDisplay.innerText="Streak x3"; DOM.comboDisplay.classList.remove('hidden'); }
-                else if (this.combo === 5) { pts += 50; DOM.comboDisplay.innerText="Streak x5"; DOM.comboDisplay.classList.remove('hidden'); }
+                this.correctCount++; this.combo++; let pts = CONFIG.pointsBase; let bonusMsg = "";
+                if (timeElapsed < 3) { pts += CONFIG.pointsFast; bonusMsg = "ไวปานสายฟ้า! +5"; }
+                if (this.combo === 3) { pts += 20; DOM.comboDisplay.innerText="🔥 คอมโบ x3!"; DOM.comboDisplay.classList.remove('hidden'); }
+                else if (this.combo === 5) { pts += 50; DOM.comboDisplay.innerText="🔥 คอมโบ x5!"; DOM.comboDisplay.classList.remove('hidden'); }
                 else if (this.combo > 5) { pts += 10; }
                 if(this.combo !== 3 && this.combo !== 5 && this.combo <= 1) DOM.comboDisplay.classList.add('hidden');
                 
-                this.score += pts;
-                let leveledUp = false;
+                this.score += pts; let leveledUp = false;
                 if (Math.floor(this.score / CONFIG.levelUpScore) + 1 > this.level) { this.level++; leveledUp = true; }
+                
+                if (this.correctCount >= 10) DOM.badges.beginner.classList.add('unlocked');
+                if (this.correctCount >= 50) DOM.badges.star.classList.add('unlocked');
+                if (this.correctCount >= 100) DOM.badges.master.classList.add('unlocked');
+                if (this.level >= 5 && this.perfectAccuracy && this.correctCount >= 20) DOM.badges.champion.classList.add('unlocked');
+                
                 this.updateUI(); return { points: pts, leveledUp, bonusMsg };
             }
-            recordWrong() { this.wrongCount++; this.combo = 0; DOM.comboDisplay.classList.add('hidden'); this.updateUI(); }
+            recordWrong() { this.wrongCount++; this.combo = 0; this.perfectAccuracy = false; DOM.comboDisplay.classList.add('hidden'); this.updateUI(); }
             updateUI() { DOM.score.innerText = this.score; DOM.statCorrect.innerText = this.correctCount; DOM.statWrong.innerText = this.wrongCount; }
         }
 
+        // 5. Game Manager
         class GameManager {
             constructor() {
-                this.sound = new SoundManager();
-                this.qManager = new QuestionManager();
-                this.scoreManager = new ScoreAchievementManager();
+                this.sound = new SoundManager(); this.qManager = new QuestionManager(); this.scoreManager = new ScoreAchievementManager();
                 this.handTracker = new HandTracker(DOM.video, DOM.canvas, (f) => this.onHandResult(f));
-                
-                this.state = 'menu';
-                this.gameMode = 'adventure';
-                this.classTopic = null;
-                this.playerName = "Subject-01";
-                this.totalQuestions = 10;
-                this.currentQuestionIndex = 0;
-                
-                this.questionStartTime = 0;
-                this.holdStartTime = 0;
-                this.isHolding = false;
-                this.savedElapsed = 0;
-                this.loopId = null;
+                this.state = 'menu'; this.gameMode = 'adventure'; this.classTopic = null; this.playerName = "นักผจญภัยน้อย";
+                this.totalQuestions = 10; this.currentQuestionIndex = 0; this.questionStartTime = 0; this.holdStartTime = 0;
+                this.isHolding = false; this.savedTimeLeft = CONFIG.timePerQuestion; this.loopId = null;
 
-                this.setupListeners();
-                this.loadLeaderboard();
+                this.setupListeners(); this.loadLeaderboard();
             }
 
             setupListeners() {
                 DOM.btnPause.addEventListener('click', () => this.togglePause());
                 DOM.btnRestart.addEventListener('click', () => this.startSession(this.gameMode, this.classTopic));
-                DOM.btnMenu.addEventListener('click', () => {
-                    this.state = 'menu'; DOM.ui.classList.add('hidden-panel'); DOM.menu.classList.remove('hidden-panel');
-                });
+                DOM.btnMenu.addEventListener('click', () => { this.state = 'menu'; DOM.ui.classList.add('hidden-panel'); DOM.menu.classList.remove('hidden-panel'); });
             }
 
             async startGame(mode) {
                 let inputName = DOM.startPlayerName.value.trim();
-                this.playerName = inputName || "Subject-Anonymous";
+                this.playerName = inputName || "นักผจญภัยน้อย";
                 this.totalQuestions = parseInt(DOM.startQuestionCount.value) || 10;
                 this.sound.init(); this.gameMode = mode;
                 if(mode === 'classroom') this.classTopic = document.getElementById('classroomModeSelect').value;
@@ -799,7 +738,7 @@
                 this.scoreManager.reset(); this.state = 'playing'; this.currentQuestionIndex = 0;
                 this.nextQuestion();
                 if (this.loopId) cancelAnimationFrame(this.loopId);
-                this.gameLoop(performance.now());
+                this.lastUpdate = performance.now(); this.gameLoop(performance.now());
             }
 
             nextQuestion() {
@@ -810,11 +749,10 @@
                 const q = this.qManager.generateQuestion(this.scoreManager.level, this.gameMode, this.classTopic);
                 DOM.questionMode.innerText = q.modeName; DOM.questionText.innerText = q.text; DOM.instructionText.innerText = q.instruction;
                 
-                this.questionStartTime = performance.now(); this.savedElapsed = 0; this.isHolding = false; this.holdStartTime = 0;
-                DOM.holdIndicator.classList.remove('active');
+                this.savedTimeLeft = CONFIG.timePerQuestion; this.questionStartTime = performance.now();
+                this.isHolding = false; this.holdStartTime = 0; DOM.holdIndicator.classList.remove('active');
                 
-                DOM.questionText.style.opacity = 0;
-                setTimeout(() => { DOM.questionText.style.opacity = 1; DOM.questionText.classList.add('animate-fade-in'); }, 50);
+                DOM.questionText.classList.remove('animate-pop'); void DOM.questionText.offsetWidth; DOM.questionText.classList.add('animate-pop');
             }
 
             onHandResult(fingers) {
@@ -823,37 +761,33 @@
 
                 if (this.qManager.currentQuestion.answerCheck(fingers)) {
                     if (!this.isHolding) {
-                        this.isHolding = true; this.holdStartTime = performance.now();
-                        this.savedElapsed = (this.holdStartTime - this.questionStartTime) / 1000;
-                        DOM.holdIndicator.classList.add('active');
+                        this.isHolding = true; this.holdStartTime = performance.now(); DOM.holdIndicator.classList.add('active');
                     }
                 } else {
-                    if(this.isHolding) this.questionStartTime = performance.now() - (this.savedElapsed * 1000);
+                    if (this.isHolding) this.questionStartTime = performance.now() - ((CONFIG.timePerQuestion - this.savedTimeLeft) * 1000);
                     this.isHolding = false; DOM.holdIndicator.classList.remove('active'); DOM.holdFill.style.transform = `rotate(-45deg)`;
                 }
             }
 
             gameLoop(timestamp) {
                 if (this.state === 'playing') {
-                    let elapsedQuestion = this.isHolding ? this.savedElapsed : (timestamp - this.questionStartTime) / 1000;
-                    const timeLeft = Math.max(0, CONFIG.timePerQuestion - elapsedQuestion);
-                    
-                    DOM.time.innerText = timeLeft.toFixed(1) + 's';
-                    const pct = (timeLeft / CONFIG.timePerQuestion) * 100;
-                    DOM.timerBar.style.width = pct + '%';
-                    
-                    if (timeLeft <= 3) { DOM.timerBar.classList.replace('bg-indigo-500', 'bg-rose-500'); DOM.time.classList.replace('text-slate-800', 'text-rose-600'); }
-                    else { DOM.timerBar.classList.replace('bg-rose-500', 'bg-indigo-500'); DOM.time.classList.replace('text-rose-600', 'text-slate-800'); }
-
-                    if (timeLeft <= 0 && !this.isHolding) {
-                        this.handleWrong("Timeout Exceeded", `Expected value: ${this.qManager.currentQuestion.correctAnswerValue}`);
+                    if (!this.isHolding) {
+                        const elapsed = (timestamp - this.questionStartTime) / 1000;
+                        this.savedTimeLeft = Math.max(0, CONFIG.timePerQuestion - elapsed);
                     }
+                    
+                    DOM.time.innerText = this.savedTimeLeft.toFixed(1) + 's'; DOM.timerText.innerText = this.savedTimeLeft.toFixed(1) + 's';
+                    DOM.timerBar.style.width = ((this.savedTimeLeft / CONFIG.timePerQuestion) * 100) + '%';
+                    
+                    if (this.savedTimeLeft <= 3) { DOM.timerBar.classList.replace('bg-blue-500', 'bg-red-500'); DOM.timerText.classList.replace('text-blue-500', 'text-red-500'); }
+                    else { DOM.timerBar.classList.replace('bg-red-500', 'bg-blue-500'); DOM.timerText.classList.replace('text-red-500', 'text-blue-500'); }
+
+                    if (this.savedTimeLeft <= 0 && !this.isHolding) this.handleWrong("หมดเวลาจ้า!", `คำตอบที่ถูกต้องคือ: ${this.qManager.currentQuestion.answerText}`);
 
                     if (this.isHolding) {
                         const holdElapsed = (timestamp - this.holdStartTime) / 1000;
-                        const holdPct = Math.min(1, holdElapsed / CONFIG.holdTimeRequired);
-                        DOM.holdFill.style.transform = `rotate(${-45 + (holdPct * 360)}deg)`;
-                        if (holdElapsed >= CONFIG.holdTimeRequired) this.handleCorrect(elapsedQuestion);
+                        DOM.holdFill.style.transform = `rotate(${-45 + (Math.min(1, holdElapsed / CONFIG.holdTimeRequired) * 360)}deg)`;
+                        if (holdElapsed >= CONFIG.holdTimeRequired) this.handleCorrect(CONFIG.timePerQuestion - this.savedTimeLeft);
                     }
                 }
                 this.loopId = requestAnimationFrame((ts) => this.gameLoop(ts));
@@ -862,73 +796,84 @@
             handleCorrect(timeTaken) {
                 this.state = 'feedback'; this.sound.correct(); DOM.holdIndicator.classList.remove('active');
                 const res = this.scoreManager.addScore(timeTaken);
-                this.showFeedback(true, `+${res.points} pts`, res.bonusMsg || CONFIG.messages[Math.floor(Math.random()*CONFIG.messages.length)]);
+                this.showFeedback(true, `+${res.points} คะแนน`, res.bonusMsg || CONFIG.messages[Math.floor(Math.random()*CONFIG.messages.length)]);
 
                 if (res.leveledUp && this.gameMode === 'adventure') {
                     this.sound.levelUp(); DOM.levelUpOverlay.classList.remove('hidden-panel');
                     setTimeout(() => DOM.levelUpOverlay.classList.add('hidden-panel'), 2000);
                 }
-                setTimeout(() => { if(this.state !== 'gameover' && this.state !== 'menu') { this.state = 'playing'; DOM.feedbackContainer.classList.add('hidden-panel'); this.nextQuestion(); } }, 1200);
+                setTimeout(() => { if(this.state !== 'gameover' && this.state !== 'menu') { this.state = 'playing'; DOM.feedbackContainer.classList.add('hidden-panel'); this.nextQuestion(); } }, 1500);
             }
 
-            handleWrong(reason, correctText) {
+            handleWrong(reason, answerText) {
                 this.state = 'feedback'; this.sound.wrong(); this.scoreManager.recordWrong(); DOM.holdIndicator.classList.remove('active');
-                let waitTime = correctText ? 2500 : 1500;
-                this.showFeedback(false, "0 pts", reason + "\n" + (correctText||""));
-                setTimeout(() => { if(this.state !== 'gameover' && this.state !== 'menu') { this.state = 'playing'; DOM.feedbackContainer.classList.add('hidden-panel'); this.nextQuestion(); } }, waitTime);
+                DOM.questionText.classList.add('animate-shake'); setTimeout(()=>DOM.questionText.classList.remove('animate-shake'), 500);
+                this.showFeedback(false, "0 คะแนน", answerText || "ไม่เป็นไร ลองใหม่ข้อหน้านะ!");
+                setTimeout(() => { if(this.state !== 'gameover' && this.state !== 'menu') { this.state = 'playing'; DOM.feedbackContainer.classList.add('hidden-panel'); this.nextQuestion(); } }, 2500);
             }
 
             showFeedback(isCorrect, points, msg) {
                 DOM.feedbackContainer.classList.remove('hidden-panel');
-                DOM.feedbackBox.className = isCorrect ? "bg-white p-8 rounded-3xl border border-emerald-100 text-center shadow-xl shadow-emerald-100 transform scale-100 transition-transform duration-300" : "bg-white p-8 rounded-3xl border border-rose-100 text-center shadow-xl shadow-rose-100 transform scale-100 transition-transform duration-300";
-                DOM.feedbackIcon.className = isCorrect ? "fa-solid fa-circle-check text-6xl mb-4 text-emerald-500" : "fa-solid fa-circle-xmark text-6xl mb-4 text-rose-500";
-                DOM.feedbackText.innerText = isCorrect ? "Evaluation Correct" : "Evaluation Error";
-                DOM.feedbackPoints.innerText = points;
-                DOM.feedbackPoints.parentElement.className = isCorrect ? "inline-block bg-emerald-50 text-emerald-700 px-4 py-1.5 rounded-full border border-emerald-200 text-sm font-semibold mb-3" : "inline-block bg-rose-50 text-rose-700 px-4 py-1.5 rounded-full border border-rose-200 text-sm font-semibold mb-3";
-                DOM.feedbackMessage.innerText = msg;
+                
+                DOM.feedbackIconWrapper.className = isCorrect ? "w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 border-8 border-green-200 bg-green-100" : "w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 border-8 border-red-200 bg-red-100";
+                DOM.feedbackIcon.className = isCorrect ? "fa-solid fa-check text-5xl text-green-500" : "fa-solid fa-xmark text-5xl text-red-500";
+                DOM.feedbackText.innerText = isCorrect ? "เยี่ยมมาก!" : "ผิดจ้า!";
+                DOM.feedbackText.className = isCorrect ? "text-4xl font-black mb-2 text-green-500" : "text-4xl font-black mb-2 text-red-500";
+                DOM.feedbackPoints.innerText = points; DOM.feedbackMessage.innerText = msg;
             }
 
             togglePause() {
                 if(this.state === 'playing') {
-                    this.state = 'paused'; DOM.btnPause.innerHTML = '<i class="fa-solid fa-play"></i> <span>Resume System</span>';
+                    this.state = 'paused'; DOM.btnPause.innerHTML = '<i class="fa-solid fa-play"></i> เล่นต่อเลย';
+                    DOM.btnPause.classList.replace('bg-slate-200', 'bg-green-400'); DOM.btnPause.classList.replace('text-slate-700', 'text-white');
                 } else if (this.state === 'paused') {
-                    this.state = 'playing'; this.questionStartTime = performance.now() - ((CONFIG.timePerQuestion - parseFloat(DOM.time.innerText))*1000);
-                    DOM.btnPause.innerHTML = '<i class="fa-solid fa-pause"></i> <span>Pause System</span>';
+                    this.state = 'playing'; this.questionStartTime = performance.now() - ((CONFIG.timePerQuestion - this.savedTimeLeft)*1000);
+                    DOM.btnPause.innerHTML = '<i class="fa-solid fa-pause"></i> พักก่อน';
+                    DOM.btnPause.classList.replace('bg-green-400', 'bg-slate-200'); DOM.btnPause.classList.replace('text-white', 'text-slate-700');
                 }
             }
 
-            endGame() {
+            endGame(title = "จบภารกิจแล้วคนเก่ง!") {
                 this.state = 'gameover'; DOM.ui.classList.add('hidden-panel'); DOM.gameOverModal.classList.remove('hidden-panel');
-                DOM.finalPlayerName.innerText = this.playerName; DOM.finalScoreText.innerText = this.scoreManager.score;
-                DOM.finalCorrect.innerText = this.scoreManager.correctCount; DOM.finalWrong.innerText = this.scoreManager.wrongCount;
+                DOM.gameOverTitle.innerText = title; DOM.finalPlayerName.innerText = this.playerName;
+                DOM.finalScoreText.innerText = this.scoreManager.score; DOM.finalCorrect.innerText = this.scoreManager.correctCount; DOM.finalWrong.innerText = this.scoreManager.wrongCount;
 
                 if (this.scoreManager.score > 0 || this.scoreManager.correctCount > 0) {
-                    const data = JSON.parse(localStorage.getItem('fingerMathAI_Data')) || [];
+                    const data = JSON.parse(localStorage.getItem('fingerMathLeaderboard')) || [];
                     data.push({ name: this.playerName, score: this.scoreManager.score, date: new Date().toISOString() });
-                    localStorage.setItem('fingerMathAI_Data', JSON.stringify(data)); this.loadLeaderboard();
+                    localStorage.setItem('fingerMathLeaderboard', JSON.stringify(data)); this.loadLeaderboard();
                 }
             }
 
             loadLeaderboard() {
-                const data = JSON.parse(localStorage.getItem('fingerMathAI_Data')) || [];
+                const data = JSON.parse(localStorage.getItem('fingerMathLeaderboard')) || [];
                 DOM.leaderboardList.innerHTML = '';
-                if (data.length === 0) { DOM.leaderboardList.innerHTML = '<p class="text-slate-400 text-sm text-center py-4">No data records found in local registry.</p>'; return; }
+                if (data.length === 0) { DOM.leaderboardList.innerHTML = '<p class="text-slate-400 font-bold mt-4 bg-slate-50 py-4 rounded-xl border-2 border-slate-100">ยังไม่มีเพื่อนๆ มาทำสถิติเลย มาเป็นคนแรกกันเถอะ!</p>'; return; }
                 
                 data.sort((a,b) => b.score - a.score).slice(0, 10).forEach((entry, idx) => {
                     const el = document.createElement('div');
-                    el.className = "flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100";
-                    el.innerHTML = `<div class="flex items-center gap-3"><span class="text-slate-400 font-bold text-sm w-4 text-right">${idx+1}.</span><span class="font-semibold text-slate-700 text-sm truncate w-32">${entry.name}</span></div><span class="text-indigo-600 font-bold text-sm bg-indigo-50 px-2 py-1 rounded">${entry.score} pts</span>`;
+                    el.className = "flex justify-between items-center bg-white p-3 rounded-2xl border-2 border-slate-100 shadow-sm transition hover:scale-[1.02]";
+                    let medal = idx === 0 ? '<div class="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center mr-3 border-2 border-yellow-300"><i class="fa-solid fa-medal text-yellow-500"></i></div>' : 
+                               (idx === 1 ? '<div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center mr-3 border-2 border-slate-300"><i class="fa-solid fa-medal text-slate-400"></i></div>' : 
+                               (idx === 2 ? '<div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center mr-3 border-2 border-orange-300"><i class="fa-solid fa-medal text-orange-500"></i></div>' : 
+                               `<div class="w-8 h-8 flex items-center justify-center mr-3 text-slate-400 font-black bg-slate-50 rounded-full border-2 border-slate-100">${idx+1}</div>`));
+                    el.innerHTML = `<div class="flex items-center">${medal}<span class="font-black text-slate-700 text-lg truncate w-32 text-left">${entry.name}</span></div><div class="text-right"><span class="text-white font-black text-lg bg-blue-500 px-3 py-1 rounded-xl shadow-sm">${entry.score}</span></div>`;
                     DOM.leaderboardList.appendChild(el);
                 });
             }
 
-            clearLeaderboard() { if(confirm('Confirm deletion of all local registry records?')) { localStorage.removeItem('fingerMathAI_Data'); this.loadLeaderboard(); } }
+            requestClearLeaderboard() { DOM.customConfirmModal.classList.remove('hidden-panel'); }
+            confirmClearLeaderboard() { localStorage.removeItem('fingerMathLeaderboard'); this.loadLeaderboard(); DOM.customConfirmModal.classList.add('hidden-panel'); }
+
             returnToMenu() { DOM.gameOverModal.classList.add('hidden-panel'); DOM.menu.classList.remove('hidden-panel'); }
             restartGame() { DOM.gameOverModal.classList.add('hidden-panel'); DOM.ui.classList.remove('hidden-panel'); this.startSession(this.gameMode, this.classTopic); }
             showLeaderboard() { this.loadLeaderboard(); DOM.leaderboardModal.classList.remove('hidden-panel'); }
         }
 
-        window.onload = () => { window.app = new GameManager(); };
+        window.onload = () => {
+            window.app = new GameManager();
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && window.app.state === 'playing') window.app.endGame("ขอยอมแพ้ซะแล้ว!"); });
+        };
     </script>
 </body>
 </html>
