@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FINGER MATH - เกมนิ้วแทนจำนวน</title>
     
     <!-- Tailwind CSS for rapid modern styling -->
@@ -17,21 +17,38 @@
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    <!-- Google Fonts (Playful Font) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&display=swap" rel="stylesheet">
+
     <style>
         :root {
-            --primary: #2563EB;
-            --secondary: #06B6D4;
+            --primary: #8B5CF6; /* Violet */
+            --primary-dark: #6D28D9;
+            --secondary: #3B82F6; /* Blue */
+            --secondary-dark: #1D4ED8;
             --success: #10B981;
             --warning: #F59E0B;
             --danger: #EF4444;
+            --danger-dark: #B91C1C;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3a8a, #0891b2);
-            color: white;
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #E0E7FF, #F3E8FF, #FFE4E6);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: #1E293B;
             overflow-x: hidden;
             min-height: 100vh;
+            touch-action: manipulation; /* Disable double-tap zoom */
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         /* Animated Background Particles */
@@ -45,26 +62,63 @@
 
         .particle {
             position: absolute;
-            color: rgba(255, 255, 255, 0.15);
-            font-size: 2rem;
+            font-weight: 900;
+            opacity: 0.4;
             animation: float 15s infinite linear;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
 
         @keyframes float {
-            0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+            0% { transform: translateY(110vh) rotate(0deg) scale(0.8); opacity: 0; }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { transform: translateY(-10vh) rotate(360deg) scale(1.2); opacity: 0; }
         }
 
-        /* Glassmorphism Cards */
-        .glass-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+        /* Gamified UI Components */
+        .game-card {
+            background: white;
             border-radius: 1.5rem;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            border: 3px solid #E2E8F0;
+            box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        @media (min-width: 768px) {
+            .game-card {
+                border-radius: 2rem;
+                border-width: 4px;
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            }
+        }
+
+        /* 3D Button Style */
+        .btn-3d {
+            transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            transform: translateY(0);
+        }
+        .btn-3d:active {
+            transform: translateY(4px);
+            border-bottom-width: 0px !important;
+            margin-top: 4px;
+            margin-bottom: -4px;
+        }
+        @media (min-width: 768px) {
+            .btn-3d:active {
+                transform: translateY(6px);
+                margin-top: 6px;
+                margin-bottom: -6px;
+            }
+        }
+        
+        .btn-primary { background-color: var(--primary); color: white; border-bottom: 4px solid var(--primary-dark); }
+        .btn-secondary { background-color: var(--secondary); color: white; border-bottom: 4px solid var(--secondary-dark); }
+        .btn-danger { background-color: var(--danger); color: white; border-bottom: 4px solid var(--danger-dark); }
+        
+        @media (min-width: 768px) {
+            .btn-primary { border-bottom-width: 6px; }
+            .btn-secondary { border-bottom-width: 6px; }
+            .btn-danger { border-bottom-width: 6px; }
         }
 
         /* Video / Canvas Container */
@@ -74,43 +128,51 @@
             aspect-ratio: 4/3;
             border-radius: 1rem;
             overflow: hidden;
-            background-color: #000;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            background-color: #0F172A;
+            border: 4px solid #CBD5E1;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
+        }
+        @media (min-width: 768px) {
+            .video-container {
+                border-radius: 1.5rem;
+                border-width: 6px;
+                box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+            }
         }
 
-        .video-container video {
-            display: none; /* Hide original video, we draw on canvas */
-        }
-
+        .video-container video { display: none; }
         .video-container canvas {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            object-fit: cover;
-            /* สำคัญ: ลบ transform: scaleX(-1); ออกจาก CSS เพราะเราจะกลับด้านภาพในส่วนวาดของ Canvas แทน เพื่อให้จุดอ้างอิงตรงกัน */
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
         }
 
         /* Progress Bars */
         .progress-bar-bg {
-            background-color: rgba(255,255,255,0.2);
-            border-radius: 999px;
-            overflow: hidden;
-            height: 1rem;
-            width: 100%;
+            background-color: #E2E8F0;
+            border-radius: 999px; overflow: hidden;
+            height: 1rem; width: 100%;
+            border: 2px solid #CBD5E1;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        @media (min-width: 768px) {
+            .progress-bar-bg { height: 1.5rem; border-width: 3px; }
         }
 
         .progress-bar-fill {
-            height: 100%;
-            transition: width 0.1s linear, background-color 0.3s;
+            height: 100%; transition: width 0.1s linear, background-color 0.3s;
+            border-radius: 999px; position: relative; overflow: hidden;
+        }
+        .progress-bar-fill::after {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 50%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.3), rgba(255,255,255,0));
         }
 
         /* Animations */
         @keyframes pop {
-            0% { transform: scale(0.9); opacity: 0; }
-            50% { transform: scale(1.1); }
+            0% { transform: scale(0.8); opacity: 0; }
+            60% { transform: scale(1.1); }
             100% { transform: scale(1); opacity: 1; }
         }
-        .animate-pop { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .animate-pop { animation: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
 
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
@@ -122,91 +184,99 @@
         .hidden-panel { display: none !important; }
         
         .badge {
-            transition: all 0.3s;
-            filter: grayscale(100%);
-            opacity: 0.5;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            filter: grayscale(100%); opacity: 0.4; transform: scale(0.9);
         }
         .badge.unlocked {
-            filter: grayscale(0%);
-            opacity: 1;
-            transform: scale(1.1);
-            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+            filter: grayscale(0%); opacity: 1; transform: scale(1.1); animation: pop 0.5s;
         }
 
-        /* Hold indicator ring */
+        /* Hold indicator ring - Responsive */
         .hold-indicator {
-            position: absolute;
-            top: 50%; left: 50%;
+            position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 150px; height: 150px;
+            width: 100px; height: 100px;
             border-radius: 50%;
-            border: 8px solid rgba(255,255,255,0.2);
-            pointer-events: none;
-            display: none;
-        }
-        .hold-indicator.active {
-            display: block;
+            border: 6px solid rgba(255,255,255,0.3);
+            pointer-events: none; display: none;
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
         }
         .hold-indicator-fill {
-            position: absolute;
-            top: -8px; left: -8px; right: -8px; bottom: -8px;
-            border-radius: 50%;
-            border: 8px solid var(--success);
-            border-color: var(--success) transparent transparent transparent;
-            transform: rotate(-45deg);
-            transition: transform 0.1s linear;
+            position: absolute; top: -6px; left: -6px; right: -6px; bottom: -6px;
+            border-radius: 50%; border: 6px solid #FDE047;
+            border-color: #FDE047 transparent transparent transparent;
+            transform: rotate(-45deg); transition: transform 0.1s linear;
+            box-shadow: 0 0 10px rgba(253, 224, 71, 0.8);
         }
+        @media (min-width: 768px) {
+            .hold-indicator { width: 160px; height: 160px; border-width: 10px; }
+            .hold-indicator-fill { top: -10px; left: -10px; right: -10px; bottom: -10px; border-width: 10px; box-shadow: 0 0 15px rgba(253, 224, 71, 0.8); }
+        }
+        .hold-indicator.active { display: block; }
 
         /* Responsive Text */
-        .question-text { font-size: clamp(3rem, 8vw, 6rem); font-weight: 800; line-height: 1.1; }
-        .feedback-text { font-size: clamp(2rem, 5vw, 4rem); font-weight: 700; }
+        .question-text { 
+            font-size: clamp(2.5rem, 8vw, 7rem); 
+            font-weight: 900; line-height: 1.1; text-shadow: 3px 3px 0px rgba(0,0,0,0.1);
+        }
+        .feedback-text { 
+            font-size: clamp(2rem, 6vw, 4.5rem); 
+            font-weight: 900; text-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+        }
+
+        /* Custom Scrollbar for Leaderboard */
+        ::-webkit-scrollbar { width: 6px; }
+        @media (min-width: 768px) { ::-webkit-scrollbar { width: 8px; } }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="flex flex-col">
+<body class="flex flex-col text-slate-800">
 
-    <!-- Background Particles -->
     <div class="particles-container" id="particles"></div>
 
     <!-- MAIN GAME UI -->
-    <div id="gameUI" class="hidden-panel flex-col flex-grow p-4 md:p-8 max-w-7xl mx-auto w-full">
+    <div id="gameUI" class="hidden-panel flex-col flex-grow p-2 md:p-6 max-w-7xl mx-auto w-full gap-3 md:gap-4">
         
-        <!-- Header -->
-        <header class="glass-card p-4 flex flex-wrap justify-between items-center mb-6 gap-4">
-            <div class="flex items-center gap-3">
-                <i class="fa-solid fa-hands-asl-interpreting text-4xl text-blue-300"></i>
+        <header class="bg-white rounded-2xl md:rounded-full p-2 px-4 md:p-3 md:px-6 flex flex-row justify-between items-center shadow-md md:shadow-lg border-2 md:border-4 border-slate-100 gap-2">
+            <div class="flex items-center gap-2 md:gap-4">
+                <div class="bg-violet-100 p-2 md:p-3 rounded-full text-violet-600 hidden xs:block">
+                    <i class="fa-solid fa-hands-asl-interpreting text-xl md:text-2xl"></i>
+                </div>
                 <div>
-                    <h1 class="text-2xl font-bold tracking-wider">FINGER MATH</h1>
-                    <p class="text-sm text-blue-200">ผู้เล่น: <span id="currentPlayerNameHeader" class="font-bold text-white"></span></p>
+                    <h1 class="text-base md:text-xl font-black text-slate-800 leading-tight tracking-tight">FINGER MATH</h1>
+                    <p class="text-[10px] md:text-sm font-bold text-slate-500 truncate w-24 md:w-auto">ผู้เล่น: <span id="currentPlayerNameHeader" class="text-violet-600"></span></p>
                 </div>
             </div>
             
-            <div class="flex items-center gap-6">
-                <div class="text-center">
-                    <p class="text-xs uppercase tracking-wider text-blue-200">ข้อที่</p>
-                    <p id="levelDisplay" class="text-3xl font-black text-green-300">1/10</p>
+            <div class="flex items-center gap-2 md:gap-8">
+                <div class="text-center bg-slate-100 px-2 py-1 md:px-4 md:py-1 rounded-xl md:rounded-2xl border-2 border-slate-200">
+                    <p class="text-[8px] md:text-[10px] font-bold text-slate-500 uppercase">ข้อที่</p>
+                    <p id="levelDisplay" class="text-base md:text-2xl font-black text-slate-700 leading-none">1/10</p>
                 </div>
-                <div class="text-center bg-white/20 px-4 py-2 rounded-xl">
-                    <p class="text-xs uppercase tracking-wider">เวลา</p>
-                    <p id="timeDisplay" class="text-2xl font-bold">10s</p>
+                <div class="text-center bg-blue-100 px-2 py-1 md:px-4 md:py-1 rounded-xl md:rounded-2xl border-2 border-blue-200">
+                    <p class="text-[8px] md:text-[10px] font-bold text-blue-500 uppercase">เวลา</p>
+                    <p id="timeDisplay" class="text-base md:text-2xl font-black text-blue-600 leading-none">10s</p>
                 </div>
             </div>
         </header>
 
-        <!-- Main Content Area -->
-        <div class="flex flex-col lg:flex-row gap-6 flex-grow">
+        <div class="flex flex-col lg:flex-row gap-3 md:gap-6 flex-grow">
             
             <!-- Left Side: Webcam & Tracking -->
-            <div class="lg:w-1/2 flex flex-col gap-4">
-                <div class="glass-card p-4 relative">
-                    <div class="absolute top-6 left-6 z-10 bg-black/60 px-4 py-2 rounded-lg border border-white/20">
-                        <p class="text-sm">จำนวนนิ้วที่พบ</p>
-                        <p id="fingerCountDisplay" class="text-5xl font-black text-blue-400">0</p>
+            <div class="lg:w-1/2 flex flex-col gap-3 md:gap-4">
+                <div class="game-card p-2 md:p-3 relative bg-slate-50 border-slate-200">
+                    <!-- Finger Count Badge -->
+                    <div class="absolute -top-3 -left-3 md:-top-4 md:-left-4 z-30 bg-yellow-400 border-2 md:border-4 border-white shadow-lg w-16 h-16 md:w-24 md:h-24 rounded-full flex flex-col items-center justify-center animate-pop">
+                        <p class="text-[8px] md:text-[10px] font-black text-yellow-900 leading-none">นิ้วที่พบ</p>
+                        <p id="fingerCountDisplay" class="text-2xl md:text-4xl font-black text-white drop-shadow-md">0</p>
                     </div>
                     
-                    <div id="cameraStatus" class="absolute inset-0 flex items-center justify-center z-20 bg-black/80 rounded-xl">
-                        <div class="text-center">
-                            <i class="fa-solid fa-spinner fa-spin text-5xl mb-4 text-blue-400"></i>
-                            <p class="text-xl">กำลังเปิดกล้องและ AI...</p>
+                    <div id="cameraStatus" class="absolute inset-0 flex items-center justify-center z-20 bg-slate-900/80 rounded-xl md:rounded-2xl m-2 md:m-3 backdrop-blur-sm">
+                        <div class="text-center bg-white p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-xl">
+                            <i class="fa-solid fa-spinner fa-spin text-3xl md:text-5xl mb-2 md:mb-4 text-violet-500"></i>
+                            <p class="text-sm md:text-xl font-bold text-slate-700">กำลังเปิดกล้อง...</p>
                         </div>
                     </div>
 
@@ -222,86 +292,101 @@
                 </div>
 
                 <!-- Controls -->
-                <div class="glass-card p-4 flex justify-center gap-4">
-                    <button id="btnPause" class="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-xl font-bold transition flex items-center gap-2">
+                <div class="flex justify-center gap-2 md:gap-4">
+                    <button id="btnPause" class="flex-1 py-3 md:py-4 rounded-xl md:rounded-2xl font-black text-sm md:text-lg btn-3d bg-slate-200 text-slate-700 border-b-[4px] md:border-b-[6px] border-slate-300 hover:bg-slate-300 flex items-center justify-center gap-1 md:gap-2">
                         <i class="fa-solid fa-pause"></i> พัก
                     </button>
-                    <button id="btnRestart" class="px-6 py-3 bg-red-500/80 hover:bg-red-500 rounded-xl font-bold transition flex items-center gap-2">
+                    <button id="btnRestart" class="flex-1 py-3 md:py-4 rounded-xl md:rounded-2xl font-black text-sm md:text-lg btn-3d btn-danger flex items-center justify-center gap-1 md:gap-2">
                         <i class="fa-solid fa-rotate-right"></i> เริ่มใหม่
                     </button>
-                    <button id="btnMenu" class="px-6 py-3 bg-blue-500/80 hover:bg-blue-500 rounded-xl font-bold transition flex items-center gap-2">
-                        <i class="fa-solid fa-bars"></i> เมนูหลัก
+                    <button id="btnMenu" class="flex-1 py-3 md:py-4 rounded-xl md:rounded-2xl font-black text-sm md:text-lg btn-3d btn-secondary flex items-center justify-center gap-1 md:gap-2">
+                        <i class="fa-solid fa-bars"></i> เมนู
                     </button>
                 </div>
             </div>
 
             <!-- Right Side: Game Logic -->
-            <div class="lg:w-1/2 flex flex-col gap-6">
-                <!-- Question Card -->
-                <div class="glass-card p-8 flex-grow flex flex-col justify-center items-center relative overflow-hidden text-center min-h-[300px]">
-                    <div id="questionModeText" class="absolute top-4 left-6 text-sm text-blue-200 uppercase tracking-widest">การบวกพื้นฐาน</div>
-                    <div id="scoreDisplayContainer" class="absolute top-4 right-6 text-center">
-                        <p class="text-xs uppercase tracking-wider text-blue-200">คะแนน</p>
-                        <p id="scoreDisplay" class="text-2xl font-bold text-yellow-300">0</p>
-                        <div id="comboDisplay" class="text-sm font-bold text-yellow-300 hidden animate-pop">คอมโบ x3!</div>
+            <div class="lg:w-1/2 flex flex-col gap-3 md:gap-4">
+                
+                <div class="game-card flex-grow flex flex-col justify-center items-center relative overflow-hidden text-center min-h-[200px] md:min-h-[300px] bg-gradient-to-br from-violet-500 to-fuchsia-500 border-none shadow-[0_10px_20px_-5px_rgba(139,92,246,0.3)] md:shadow-[0_15px_30px_-5px_rgba(139,92,246,0.4)]">
+                    
+                    <div class="absolute top-0 right-0 w-32 h-32 md:w-64 md:h-64 bg-white opacity-10 rounded-full translate-x-1/2 -translate-y-1/2"></div>
+                    <div class="absolute bottom-0 left-0 w-24 h-24 md:w-48 md:h-48 bg-white opacity-10 rounded-full -translate-x-1/2 translate-y-1/2"></div>
+
+                    <div id="questionModeText" class="absolute top-2 left-3 md:top-4 md:left-6 py-1 px-2 md:px-3 bg-white/20 rounded-full text-[10px] md:text-sm font-bold text-white uppercase tracking-wider backdrop-blur-sm">การบวกพื้นฐาน</div>
+                    
+                    <div id="scoreDisplayContainer" class="absolute top-2 right-3 md:top-4 md:right-6 text-center bg-yellow-400 py-1 px-3 md:py-2 md:px-4 rounded-xl md:rounded-2xl border-2 md:border-4 border-yellow-300 shadow-md md:shadow-lg transform rotate-3">
+                        <p class="text-[8px] md:text-[10px] uppercase font-black text-yellow-800 leading-none">คะแนน</p>
+                        <p id="scoreDisplay" class="text-xl md:text-3xl font-black text-white drop-shadow-md">0</p>
+                        <div id="comboDisplay" class="absolute -bottom-3 -left-3 md:-bottom-4 md:-left-4 bg-red-500 text-white text-[10px] md:text-xs font-black px-2 py-0.5 md:py-1 rounded-full border-2 border-white shadow-md hidden animate-pop whitespace-nowrap">คอมโบ x3!</div>
                     </div>
                     
-                    
-                    <div id="questionContainer" class="w-full mt-8">
-                        <h2 id="questionText" class="question-text mb-4 drop-shadow-lg">3 + 4 = ?</h2>
-                        <p id="instructionText" class="text-xl text-blue-100">ชูนิ้วหน้ากล้องเพื่อตอบคำถาม</p>
+                    <div id="questionContainer" class="w-full mt-8 md:mt-10 z-10 p-2 md:p-4">
+                        <h2 id="questionText" class="question-text text-white mb-1 md:mb-2">3 + 4 = ?</h2>
+                        <div class="inline-block bg-white/20 px-4 md:px-6 py-1 md:py-2 rounded-full backdrop-blur-sm">
+                            <p id="instructionText" class="text-sm md:text-xl font-bold text-white drop-shadow-sm">ชูนิ้วหน้ากล้องเพื่อตอบ</p>
+                        </div>
                     </div>
 
                     <!-- Feedback Overlay -->
-                    <div id="feedbackContainer" class="absolute inset-0 bg-black/80 flex flex-col items-center justify-center hidden-panel z-10 backdrop-blur-sm">
-                        <i id="feedbackIcon" class="fa-solid fa-check-circle text-7xl mb-4"></i>
-                        <h2 id="feedbackText" class="feedback-text drop-shadow-lg mb-2">ถูกต้อง!</h2>
-                        <p id="feedbackPoints" class="text-2xl font-bold text-yellow-300"></p>
-                        <p id="feedbackMessage" class="text-lg text-white mt-2 font-medium"></p>
+                    <div id="feedbackContainer" class="absolute inset-0 bg-white flex flex-col items-center justify-center hidden-panel z-20">
+                        <i id="feedbackIcon" class="fa-solid fa-check-circle text-6xl md:text-8xl mb-2 md:mb-4"></i>
+                        <h2 id="feedbackText" class="feedback-text mb-1 md:mb-2">ถูกต้อง!</h2>
+                        <div class="bg-yellow-100 px-4 md:px-6 py-1 md:py-2 rounded-full mt-1 md:mt-2 border-2 border-yellow-300">
+                            <p id="feedbackPoints" class="text-xl md:text-3xl font-black text-yellow-600"></p>
+                        </div>
+                        <p id="feedbackMessage" class="text-sm md:text-xl font-bold text-slate-500 mt-2 md:mt-4"></p>
                     </div>
                 </div>
 
-                <!-- Stats & Progress -->
-                <div class="glass-card p-6">
-                    <div class="flex justify-between text-sm mb-2 font-semibold">
-                        <span>เวลาที่เหลือ</span>
-                        <span id="timerText">10.0s</span>
+                <div class="game-card p-3 md:p-5 bg-white">
+                    <div class="flex justify-between text-xs md:text-sm mb-1 md:mb-2 font-black text-slate-600">
+                        <span><i class="fa-regular fa-clock"></i> เวลา</span>
+                        <span id="timerText" class="text-blue-600">10.0s</span>
                     </div>
-                    <div class="progress-bar-bg mb-6">
-                        <div id="timerBar" class="progress-bar-fill bg-blue-400" style="width: 100%"></div>
+                    <div class="progress-bar-bg mb-3 md:mb-6">
+                        <div id="timerBar" class="progress-bar-fill bg-blue-500" style="width: 100%"></div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-white/10 p-4 rounded-xl text-center">
-                            <p class="text-green-400 text-sm font-bold"><i class="fa-solid fa-check"></i> ตอบถูก</p>
-                            <p id="statCorrect" class="text-3xl font-black">0</p>
+                    <div class="grid grid-cols-2 gap-2 md:gap-4">
+                        <div class="bg-green-50 p-2 md:p-3 rounded-xl md:rounded-2xl text-center border-2 border-green-200">
+                            <p class="text-green-600 text-xs md:text-sm font-black uppercase"><i class="fa-solid fa-check"></i> ถูก</p>
+                            <p id="statCorrect" class="text-xl md:text-3xl font-black text-green-500">0</p>
                         </div>
-                        <div class="bg-white/10 p-4 rounded-xl text-center">
-                            <p class="text-red-400 text-sm font-bold"><i class="fa-solid fa-xmark"></i> ตอบผิด</p>
-                            <p id="statWrong" class="text-3xl font-black">0</p>
+                        <div class="bg-red-50 p-2 md:p-3 rounded-xl md:rounded-2xl text-center border-2 border-red-200">
+                            <p class="text-red-600 text-xs md:text-sm font-black uppercase"><i class="fa-solid fa-xmark"></i> ผิด</p>
+                            <p id="statWrong" class="text-xl md:text-3xl font-black text-red-500">0</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Achievements -->
-                <div class="glass-card p-4">
-                    <h3 class="text-center font-bold mb-3 text-sm text-blue-200 uppercase tracking-widest">เหรียญรางวัล</h3>
+                <div class="game-card p-2 md:p-4 bg-white border-dashed">
+                    <h3 class="text-center font-black mb-2 md:mb-3 text-[10px] md:text-sm text-slate-400 uppercase tracking-widest"><i class="fa-solid fa-medal"></i> เหรียญรางวัล</h3>
                     <div class="flex justify-around items-center">
                         <div class="badge flex flex-col items-center" id="badgeBeginner" title="ตอบถูก 10 ข้อ">
-                            <i class="fa-solid fa-medal text-3xl text-orange-400 mb-1"></i>
-                            <span class="text-xs">ผู้เริ่มต้น</span>
+                            <div class="w-8 h-8 md:w-12 md:h-12 bg-orange-100 rounded-full flex items-center justify-center border-2 md:border-4 border-orange-300 mb-1">
+                                <i class="fa-solid fa-seedling text-base md:text-2xl text-orange-500"></i>
+                            </div>
+                            <span class="text-[8px] md:text-[10px] font-bold text-slate-500 hidden xs:block">มือใหม่</span>
                         </div>
                         <div class="badge flex flex-col items-center" id="badgeStar" title="ตอบถูก 50 ข้อ">
-                            <i class="fa-solid fa-star text-3xl text-yellow-400 mb-1"></i>
-                            <span class="text-xs">ดาวคณิตศาสตร์</span>
+                            <div class="w-8 h-8 md:w-12 md:h-12 bg-yellow-100 rounded-full flex items-center justify-center border-2 md:border-4 border-yellow-300 mb-1">
+                                <i class="fa-solid fa-star text-base md:text-2xl text-yellow-500"></i>
+                            </div>
+                            <span class="text-[8px] md:text-[10px] font-bold text-slate-500 hidden xs:block">ดาวเด่น</span>
                         </div>
                         <div class="badge flex flex-col items-center" id="badgeMaster" title="ตอบถูก 100 ข้อ">
-                            <i class="fa-solid fa-hand-sparkles text-3xl text-blue-400 mb-1"></i>
-                            <span class="text-xs">ปรมาจารย์</span>
+                            <div class="w-8 h-8 md:w-12 md:h-12 bg-blue-100 rounded-full flex items-center justify-center border-2 md:border-4 border-blue-300 mb-1">
+                                <i class="fa-solid fa-fire text-base md:text-2xl text-blue-500"></i>
+                            </div>
+                            <span class="text-[8px] md:text-[10px] font-bold text-slate-500 hidden xs:block">มาสเตอร์</span>
                         </div>
                         <div class="badge flex flex-col items-center" id="badgeChampion" title="แม่นยำ 100% (ด่าน 5)">
-                            <i class="fa-solid fa-trophy text-3xl text-purple-400 mb-1"></i>
-                            <span class="text-xs">แชมเปี้ยน</span>
+                            <div class="w-8 h-8 md:w-12 md:h-12 bg-purple-100 rounded-full flex items-center justify-center border-2 md:border-4 border-purple-300 mb-1">
+                                <i class="fa-solid fa-crown text-base md:text-2xl text-purple-500"></i>
+                            </div>
+                            <span class="text-[8px] md:text-[10px] font-bold text-slate-500 hidden xs:block">แชมเปี้ยน</span>
                         </div>
                     </div>
                 </div>
@@ -311,104 +396,124 @@
     </div>
 
     <!-- START MENU / MODAL -->
-    <div id="startMenu" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-md">
-        <div class="glass-card max-w-2xl w-full p-8 text-center animate-pop">
-            <i class="fa-solid fa-hands-asl-interpreting text-7xl text-blue-400 mb-6 drop-shadow-lg"></i>
-            <h1 class="text-5xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">FINGER MATH</h1>
-            <p class="text-xl mb-8 text-blue-200">เรียนรู้คณิตศาสตร์ผ่านการเคลื่อนไหวร่างกาย!</p>
-
-            <!-- ส่วนตั้งค่าก่อนเริ่มเกม -->
-            <div class="bg-white/10 p-5 rounded-xl border border-white/20 mb-8 text-left max-w-md mx-auto">
-                <div class="mb-4">
-                    <label class="block text-sm font-bold text-yellow-300 mb-1"><i class="fa-solid fa-user"></i> ชื่อนักเรียน (เพื่อบันทึกคะแนน):</label>
-                    <input type="text" id="startPlayerName" placeholder="กรอกชื่อของคุณที่นี่..." class="w-full bg-black/50 border border-yellow-300/50 rounded-lg p-3 text-white outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/30 text-lg font-bold">
-                </div>
-                <div>
-                    <label class="block text-sm text-blue-200 mb-1"><i class="fa-solid fa-list-ol"></i> จำนวนข้อที่ต้องการเล่น:</label>
-                    <select id="startQuestionCount" class="w-full bg-black/50 border border-white/30 rounded-lg p-3 text-white outline-none focus:border-blue-500">
-                        <option value="5">5 ข้อ (ฝึกซ้อมไว)</option>
-                        <option value="10" selected>10 ข้อ (มาตรฐาน)</option>
-                        <option value="20">20 ข้อ (ท้าทาย)</option>
-                        <option value="999">เล่นไปเรื่อยๆ (ไม่มีที่สิ้นสุด)</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left mb-8">
-                <div class="bg-blue-600/30 p-5 rounded-xl border border-blue-400/50 cursor-pointer hover:bg-blue-600/50 transition group shadow-lg" onclick="app.startGame('adventure')">
-                    <h3 class="text-xl font-bold mb-2 text-white group-hover:text-yellow-300"><i class="fa-solid fa-play mr-2"></i> เริ่มเกมแบบสุ่ม</h3>
-                    <p class="text-sm text-blue-100">สุ่มโจทย์ตั้งแต่ง่ายไปยาก เหมาะสำหรับทดสอบความไว</p>
-                </div>
-                
-                <div class="bg-white/10 p-5 rounded-xl border border-white/20">
-                    <h3 class="text-lg font-bold mb-2 text-green-300"><i class="fa-solid fa-school mr-2"></i> โหมดห้องเรียน (เลือกเรื่อง)</h3>
-                    <select id="classroomModeSelect" class="w-full bg-black/50 border border-white/30 rounded p-2 text-white mb-3 outline-none text-sm">
-                        <option value="1">โหมด 1: แสดงตัวเลข</option>
-                        <option value="2">โหมด 2: การบวกพื้นฐาน</option>
-                        <option value="3">โหมด 3: การลบ</option>
-                        <option value="4">โหมด 4: การคูณ</option>
-                        <option value="5">โหมด 5: เปรียบเทียบตัวเลข</option>
-                        <option value="6">โหมด 6: คู่หรือคี่</option>
-                    </select>
-                    <button onclick="app.startGame('classroom')" class="w-full py-2 bg-green-500/80 hover:bg-green-500 rounded-lg font-bold transition shadow-md">เริ่มฝึกซ้อมเฉพาะเรื่อง</button>
-                </div>
-            </div>
-
-            <div class="flex justify-center gap-4">
-                <button onclick="app.showLeaderboard()" class="px-8 py-3 bg-purple-600 hover:bg-purple-500 rounded-xl font-bold transition flex items-center gap-2 shadow-lg border border-purple-400">
-                    <i class="fa-solid fa-ranking-star"></i> ดูอันดับคะแนน (Leaderboard)
-                </button>
+    <div id="startMenu" class="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-4 bg-slate-900/70 backdrop-blur-md">
+        <div class="game-card max-w-2xl w-full p-5 md:p-10 text-center animate-pop max-h-[95vh] overflow-y-auto">
+            
+            <div class="inline-block bg-violet-100 p-4 md:p-6 rounded-[2rem] shadow-inner mb-3 md:mb-6 border-4 border-violet-200 transform -rotate-3">
+                <i class="fa-solid fa-hands-asl-interpreting text-5xl md:text-7xl text-violet-500"></i>
             </div>
             
-            <p class="mt-8 text-sm text-gray-400"><i class="fa-solid fa-camera mr-1"></i> ต้องอนุญาตให้เบราว์เซอร์ใช้กล้องเว็บแคมเพื่อเล่นเกมนี้</p>
+            <h1 class="text-4xl md:text-6xl font-black mb-1 md:mb-3 text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-500 drop-shadow-sm" style="-webkit-text-stroke: 1px white;">FINGER MATH</h1>
+            <p class="text-sm md:text-xl mb-4 md:mb-8 font-bold text-slate-500">สนุกกับการคิดเลขด้วยนิ้วมือ! ✌️</p>
+
+            <div class="bg-slate-50 p-4 md:p-6 rounded-2xl md:rounded-3xl border-2 md:border-4 border-slate-200 mb-4 md:mb-8 text-left max-w-md mx-auto shadow-sm">
+                <div class="mb-3 md:mb-5">
+                    <label class="block text-xs md:text-sm font-black text-slate-700 mb-1 md:mb-2 uppercase"><i class="fa-solid fa-user text-violet-500"></i> ชื่อนักเรียน:</label>
+                    <input type="text" id="startPlayerName" placeholder="พิมพ์ชื่อตรงนี้เลย..." class="w-full bg-white border-2 md:border-4 border-slate-200 rounded-xl md:rounded-2xl p-2 md:p-4 text-slate-700 outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100 text-sm md:text-lg font-bold transition-all placeholder-slate-300">
+                </div>
+                <div>
+                    <label class="block text-xs md:text-sm font-black text-slate-700 mb-1 md:mb-2 uppercase"><i class="fa-solid fa-list-ol text-blue-500"></i> จำนวนข้อ:</label>
+                    <select id="startQuestionCount" class="w-full bg-white border-2 md:border-4 border-slate-200 rounded-xl md:rounded-2xl p-2 md:p-4 text-slate-700 outline-none focus:border-blue-400 font-bold text-sm md:text-base">
+                        <option value="5">5 ข้อ (ฝึกซ้อมไวๆ)</option>
+                        <option value="10" selected>10 ข้อ (มาตรฐาน)</option>
+                        <option value="20">20 ข้อ (ท้าทายสุดๆ)</option>
+                        <option value="999">เล่นไปเรื่อยๆ</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 text-left mb-4 md:mb-6">
+                <!-- Play Button 1 -->
+                <button onclick="app.startGame('adventure')" class="btn-3d btn-primary p-4 md:p-6 rounded-2xl md:rounded-3xl flex flex-row md:flex-col items-center justify-center text-center group gap-3 md:gap-0">
+                    <div class="bg-white/20 p-2 md:p-3 rounded-full mb-0 md:mb-2 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-play text-2xl md:text-3xl text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg md:text-2xl font-black text-white">เริ่มเกมแบบสุ่ม</h3>
+                        <p class="text-xs md:text-sm text-violet-200 font-bold mt-1 hidden md:block">ลุยโจทย์หลากสไตล์</p>
+                    </div>
+                </button>
+                
+                <!-- Play Button 2 -->
+                <div class="bg-blue-50 p-3 md:p-5 rounded-2xl md:rounded-3xl border-2 md:border-4 border-blue-200 flex flex-col justify-center">
+                    <h3 class="text-sm md:text-lg font-black mb-1 md:mb-2 text-blue-700"><i class="fa-solid fa-school mr-1"></i> โหมดห้องเรียน</h3>
+                    <select id="classroomModeSelect" class="w-full bg-white border-2 border-blue-200 rounded-xl p-2 md:p-3 text-slate-600 mb-2 md:mb-4 outline-none font-bold text-xs md:text-sm">
+                        <option value="1">1: แสดงตัวเลข</option>
+                        <option value="2">2: การบวก</option>
+                        <option value="3">3: การลบ</option>
+                        <option value="4">4: การคูณ</option>
+                        <option value="5">5: เปรียบเทียบ</option>
+                        <option value="6">6: คู่หรือคี่</option>
+                    </select>
+                    <button onclick="app.startGame('classroom')" class="w-full py-2 md:py-3 btn-3d btn-secondary rounded-xl font-black text-sm md:text-lg">เลือกหัวข้อนี้</button>
+                </div>
+            </div>
+
+            <div class="flex justify-center">
+                <button onclick="app.showLeaderboard()" class="px-6 py-3 md:px-8 md:py-4 btn-3d bg-yellow-400 text-yellow-900 border-b-4 md:border-b-6 border-yellow-500 rounded-xl md:rounded-2xl font-black text-sm md:text-lg flex items-center gap-2 hover:bg-yellow-300">
+                    <i class="fa-solid fa-ranking-star text-lg md:text-2xl"></i> ตารางคนเก่ง
+                </button>
+            </div>
         </div>
     </div>
 
     <!-- LEADERBOARD MODAL -->
-    <div id="leaderboardModal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-md hidden-panel">
-        <div class="glass-card max-w-md w-full p-8 text-center animate-pop relative">
-            <button onclick="document.getElementById('leaderboardModal').classList.add('hidden-panel')" class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white">
+    <div id="leaderboardModal" class="fixed inset-0 z-[60] flex items-center justify-center p-3 md:p-4 bg-slate-900/60 backdrop-blur-md hidden-panel">
+        <div class="game-card max-w-md w-full p-5 md:p-8 text-center animate-pop relative border-4 border-yellow-300 bg-amber-50 max-h-[90vh] flex flex-col">
+            <button onclick="document.getElementById('leaderboardModal').classList.add('hidden-panel')" class="absolute -top-3 -right-3 md:-top-4 md:-right-4 w-10 h-10 md:w-12 md:h-12 bg-white border-2 md:border-4 border-slate-200 rounded-full text-lg md:text-xl text-slate-400 hover:text-red-500 hover:border-red-200 flex items-center justify-center transition-colors btn-3d">
                 <i class="fa-solid fa-xmark"></i>
             </button>
-            <h2 class="text-3xl font-black mb-6 text-yellow-300"><i class="fa-solid fa-trophy"></i> กระดานคะแนนคนเก่ง</h2>
             
-            <div id="leaderboardList" class="flex flex-col gap-3 mb-6 max-h-64 overflow-y-auto pr-2">
+            <i class="fa-solid fa-trophy text-4xl md:text-6xl text-yellow-500 mb-2 md:mb-4 drop-shadow-md"></i>
+            <h2 class="text-2xl md:text-3xl font-black mb-4 md:mb-6 text-yellow-600">ตารางคนเก่ง</h2>
+            
+            <div id="leaderboardList" class="flex flex-col gap-2 md:gap-3 mb-4 md:mb-6 overflow-y-auto pr-2 flex-grow">
                 <!-- Injected via JS -->
             </div>
             
-            <button onclick="if(confirm('ต้องการล้างคะแนนทั้งหมดใช่หรือไม่?')){localStorage.removeItem('fingerMathLeaderboard'); app.loadLeaderboard();}" class="mt-4 text-xs text-red-400 hover:text-red-300 underline">ล้างประวัติคะแนน</button>
+            <button onclick="if(confirm('ต้องการล้างคะแนนทั้งหมดใช่หรือไม่?')){localStorage.removeItem('fingerMathLeaderboard'); app.loadLeaderboard();}" class="mt-2 text-xs md:text-sm font-bold text-red-400 hover:text-red-600 bg-red-50 px-3 py-1 md:px-4 md:py-1 rounded-full w-max mx-auto">ล้างประวัติคะแนน</button>
         </div>
     </div>
 
     <!-- GAME OVER MODAL -->
-    <div id="gameOverModal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-md hidden-panel">
-        <div class="glass-card max-w-md w-full p-8 text-center animate-pop">
-            <h2 id="gameOverTitle" class="text-4xl font-black mb-2 text-blue-400">จบเกม!</h2>
-            <div class="bg-black/30 p-4 rounded-xl border border-white/10 mb-6">
-                <p class="text-lg text-gray-300">ผลงานของ</p>
-                <p id="finalPlayerName" class="text-2xl text-white font-bold mb-2"></p>
-                <p class="text-sm text-yellow-200">คะแนนรวม</p>
-                <p id="finalScoreText" class="text-yellow-300 font-black text-6xl drop-shadow-lg"></p>
+    <div id="gameOverModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-4 bg-slate-900/80 backdrop-blur-md hidden-panel">
+        <div class="game-card max-w-md w-full p-6 md:p-8 text-center animate-pop border-4 border-violet-300 mt-10">
+            
+            <div class="absolute -top-10 md:-top-12 left-1/2 transform -translate-x-1/2">
+                <div class="w-20 h-20 md:w-24 md:h-24 bg-white rounded-full border-4 border-violet-300 flex items-center justify-center shadow-xl">
+                    <i class="fa-solid fa-flag-checkered text-3xl md:text-4xl text-violet-500"></i>
+                </div>
+            </div>
+
+            <h2 id="gameOverTitle" class="text-3xl md:text-4xl font-black mt-6 md:mt-8 mb-2 text-slate-800">จบเกม!</h2>
+            
+            <div class="bg-gradient-to-br from-violet-500 to-fuchsia-500 p-4 md:p-6 rounded-2xl md:rounded-3xl border-2 md:border-4 border-violet-200 mb-4 md:mb-6 shadow-lg text-white">
+                <p class="text-xs md:text-sm font-bold text-violet-200 uppercase tracking-wider">ผลงานของ</p>
+                <p id="finalPlayerName" class="text-xl md:text-2xl font-black mb-3 md:mb-4 truncate"></p>
+                <div class="bg-white/20 rounded-xl md:rounded-2xl p-3 md:p-4 backdrop-blur-sm">
+                    <p class="text-xs md:text-sm font-bold text-violet-100 uppercase">คะแนนรวม</p>
+                    <p id="finalScoreText" class="text-yellow-300 font-black text-5xl md:text-6xl drop-shadow-md" style="-webkit-text-stroke: 1px rgba(0,0,0,0.2);">0</p>
+                </div>
             </div>
             
-            <div class="bg-white/10 rounded-xl p-4 mb-6 flex justify-around">
-                <div class="text-center">
-                    <p class="text-green-400 font-bold"><i class="fa-solid fa-check"></i> ตอบถูก</p>
-                    <p id="finalCorrect" class="text-3xl font-black text-white">0</p>
+            <div class="flex gap-2 md:gap-4 mb-4 md:mb-6">
+                <div class="flex-1 bg-green-50 rounded-xl md:rounded-2xl p-2 md:p-4 border-2 border-green-200">
+                    <p class="text-green-600 font-black text-[10px] md:text-sm uppercase"><i class="fa-solid fa-check"></i> ถูก</p>
+                    <p id="finalCorrect" class="text-2xl md:text-3xl font-black text-green-500">0</p>
                 </div>
-                <div class="text-center">
-                    <p class="text-red-400 font-bold"><i class="fa-solid fa-xmark"></i> ตอบผิด</p>
-                    <p id="finalWrong" class="text-3xl font-black text-white">0</p>
+                <div class="flex-1 bg-red-50 rounded-xl md:rounded-2xl p-2 md:p-4 border-2 border-red-200">
+                    <p class="text-red-600 font-black text-[10px] md:text-sm uppercase"><i class="fa-solid fa-xmark"></i> ผิด</p>
+                    <p id="finalWrong" class="text-2xl md:text-3xl font-black text-red-500">0</p>
                 </div>
             </div>
 
-            <p class="text-green-300 text-sm mb-4 font-bold"><i class="fa-solid fa-cloud-arrow-up"></i> บันทึกคะแนนลงกระดานอัตโนมัติแล้ว!</p>
+            <p class="text-blue-500 text-xs md:text-sm mb-4 md:mb-6 font-bold bg-blue-50 py-1 md:py-2 rounded-full px-2"><i class="fa-solid fa-cloud-arrow-up"></i> บันทึกคะแนนลงกระดานอัตโนมัติแล้ว!</p>
 
-            <div class="flex gap-4">
-                <button onclick="app.returnToMenu()" class="flex-1 py-4 bg-purple-500/80 hover:bg-purple-500 rounded-xl font-bold transition flex flex-col items-center justify-center">
-                    <i class="fa-solid fa-house mb-1"></i> กลับเมนูหลัก
+            <div class="flex gap-2 md:gap-4">
+                <button onclick="app.returnToMenu()" class="flex-1 py-3 md:py-4 btn-3d bg-slate-200 text-slate-700 border-b-[4px] md:border-b-6 border-slate-300 rounded-xl md:rounded-2xl font-black text-sm md:text-lg flex flex-col items-center justify-center">
+                    <i class="fa-solid fa-house mb-1"></i> เมนูหลัก
                 </button>
-                <button onclick="app.restartGame()" class="flex-1 py-4 bg-blue-500/80 hover:bg-blue-500 rounded-xl font-bold transition flex flex-col items-center justify-center">
+                <button onclick="app.restartGame()" class="flex-1 py-3 md:py-4 btn-3d btn-primary rounded-xl md:rounded-2xl font-black text-sm md:text-lg flex flex-col items-center justify-center">
                     <i class="fa-solid fa-rotate-right mb-1"></i> เล่นอีกครั้ง
                 </button>
             </div>
@@ -416,33 +521,34 @@
     </div>
 
     <!-- LEVEL UP OVERLAY -->
-    <div id="levelUpOverlay" class="fixed inset-0 z-[60] flex items-center justify-center pointer-events-none hidden-panel">
+    <div id="levelUpOverlay" class="fixed inset-0 z-[60] flex items-center justify-center pointer-events-none hidden-panel bg-white/40 backdrop-blur-sm">
         <div class="text-center animate-pop">
-            <i class="fa-solid fa-arrow-up-right-dots text-9xl text-yellow-300 mb-4 drop-shadow-[0_0_20px_rgba(253,224,71,0.8)]"></i>
-            <h1 class="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-green-400 drop-shadow-xl">เลื่อนด่าน!</h1>
-            <p class="text-3xl mt-4 font-bold text-white drop-shadow-lg">คำถามเร็วขึ้น โจทย์ยากขึ้น!</p>
+            <i class="fa-solid fa-rocket text-6xl md:text-8xl text-violet-600 mb-4 md:mb-6 drop-shadow-lg"></i>
+            <h1 class="text-5xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-500 drop-shadow-xl" style="-webkit-text-stroke: 2px white;">เลื่อนด่าน!</h1>
+            <div class="bg-white px-4 py-2 md:px-8 md:py-3 rounded-full border-2 md:border-4 border-violet-200 mt-4 md:mt-6 inline-block shadow-lg">
+                <p class="text-base md:text-2xl font-black text-slate-700">คำถามเร็วขึ้น โจทย์ยากขึ้น!</p>
+            </div>
         </div>
     </div>
 
-    <!-- JAVASCRIPT APPLICATION -->
     <script>
         // ==========================================
         // 1. UTILITIES & CONFIGURATION
         // ==========================================
         const CONFIG = {
             colors: {
-                primary: '#2563EB',
-                secondary: '#06B6D4',
+                primary: '#8B5CF6',
+                secondary: '#3B82F6',
                 success: '#10B981',
                 warning: '#F59E0B',
                 danger: '#EF4444'
             },
             timePerQuestion: 10,
-            holdTimeRequired: 1.5, // ลดเวลาค้างไว้ลงนิดนึงเพื่อให้เด็กรู้สึกว่าเร็วขึ้น
+            holdTimeRequired: 1.5,
             pointsBase: 10,
             pointsFast: 5, // under 3 seconds
             levelUpScore: 100,
-            messages: ["ยอดเยี่ยม!", "ทำได้ดีมาก!", "เก่งมาก!", "สุดยอดเลย!", "ฮีโร่คณิตศาสตร์!", "อัจฉริยะนิ้วมือ!"]
+            messages: ["ยอดเยี่ยม!", "ทำได้ดีมาก!", "เก่งมาก!", "สุดยอดเลย!", "ฮีโร่คณิตศาสตร์!", "เยี่ยมไปเลย!"]
         };
 
         const DOM = {
@@ -501,18 +607,20 @@
             btnMenu: document.getElementById('btnMenu')
         };
 
-        // Create Background Particles
+        // Create Playful Background Particles
         function initParticles() {
             const container = document.getElementById('particles');
             container.innerHTML = '';
             const symbols = ['+', '-', '×', '÷', '=', '1', '2', '3', '4', '5'];
+            const colors = ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EC4899'];
             for(let i=0; i<20; i++) {
                 const p = document.createElement('div');
-                p.className = 'particle font-black';
+                p.className = 'particle';
                 p.innerText = symbols[Math.floor(Math.random() * symbols.length)];
+                p.style.color = colors[Math.floor(Math.random() * colors.length)];
                 p.style.left = `${Math.random() * 100}vw`;
-                p.style.animationDuration = `${10 + Math.random() * 15}s`;
-                p.style.animationDelay = `${Math.random() * 5}s`;
+                p.style.animationDuration = `${10 + Math.random() * 20}s`;
+                p.style.animationDelay = `${Math.random() * 10}s`;
                 p.style.fontSize = `${1.5 + Math.random() * 2}rem`;
                 container.appendChild(p);
             }
@@ -556,8 +664,8 @@
 
             correct() {
                 if(!this.ctx) return;
-                this.playTone(523.25, 'sine', 0.1); // C5
-                setTimeout(() => this.playTone(659.25, 'sine', 0.2), 100); // E5
+                this.playTone(523.25, 'sine', 0.1); 
+                setTimeout(() => this.playTone(659.25, 'sine', 0.2), 100); 
             }
 
             wrong() {
@@ -567,7 +675,7 @@
 
             levelUp() {
                 if(!this.ctx) return;
-                const notes = [261.63, 329.63, 392.00, 523.25]; // C E G C
+                const notes = [261.63, 329.63, 392.00, 523.25]; 
                 notes.forEach((freq, i) => {
                     setTimeout(() => this.playTone(freq, 'square', 0.15, 0.05), i * 150);
                 });
@@ -575,7 +683,7 @@
         }
 
         // ==========================================
-        // 3. HAND TRACKER (MediaPipe) - แก้ไขระบบกระจกเงาแล้ว!
+        // 3. HAND TRACKER (MediaPipe)
         // ==========================================
         class HandTracker {
             constructor(videoEl, canvasEl, onResultsCallback) {
@@ -608,7 +716,6 @@
                         if (!this.isReady) {
                             DOM.camStatus.classList.add('hidden-panel');
                             this.isReady = true;
-                            // resize canvas to match video
                             this.canvasEl.width = this.videoEl.videoWidth;
                             this.canvasEl.height = this.videoEl.videoHeight;
                         }
@@ -625,12 +732,10 @@
                 this.ctx.save();
                 this.ctx.clearRect(0, 0, this.canvasEl.width, this.canvasEl.height);
                 
-                // --- ส่วนที่แก้ไข: สร้างระบบ Mirror (กระจกเงา) ที่แท้จริง ---
-                // โดยการกลับแกน X ใน Canvas ก่อนที่จะวาดภาพวิดีโอลงไป
+                // Mirror effect
                 this.ctx.translate(this.canvasEl.width, 0);
                 this.ctx.scale(-1, 1);
                 
-                // วาดภาพวิดีโอ (ตอนนี้ภาพจะถูกกลับด้านซ้าย-ขวาแล้ว)
                 this.ctx.drawImage(results.image, 0, 0, this.canvasEl.width, this.canvasEl.height);
 
                 let totalFingers = 0;
@@ -639,15 +744,13 @@
                     for (let i = 0; i < results.multiHandLandmarks.length; i++) {
                         const landmarks = results.multiHandLandmarks[i];
                         
-                        // เนื่องจากเรากลับด้านแกน X แล้ว การวาดเส้นเชื่อมมือจะถูกกลับด้านตามไปด้วยพอดี!
-                        drawConnectors(this.ctx, landmarks, HAND_CONNECTIONS, {color: '#00FF00', lineWidth: 3});
-                        drawLandmarks(this.ctx, landmarks, {color: '#FF0000', lineWidth: 1, radius: 4});
+                        drawConnectors(this.ctx, landmarks, HAND_CONNECTIONS, {color: '#8B5CF6', lineWidth: 4});
+                        drawLandmarks(this.ctx, landmarks, {color: '#FDE047', lineWidth: 2, radius: 4});
 
-                        // การนับนิ้วยังคงใช้ลอจิกเดิมได้ เพราะคำนวณจากระยะห่างจุดเชื่อมต่อ (Distance)
                         totalFingers += this.countFingers(landmarks);
                     }
                 }
-                this.ctx.restore(); // ยกเลิกการกลับแกน X เพื่อไม่ให้กระทบ UI อื่นๆ
+                this.ctx.restore(); 
                 
                 this.lastDetectedCount = totalFingers;
                 if(this.onResultsCallback) this.onResultsCallback(totalFingers);
@@ -655,26 +758,15 @@
 
             countFingers(landmarks) {
                 let count = 0;
-                
-                // Euclidean distance helper
                 const dist = (p1, p2) => Math.hypot(p1.x - p2.x, p1.y - p2.y);
                 
-                // การนับนิ้วโป้ง: เปรียบเทียบระยะห่างระหว่าง ปลายนิ้วโป้ง(4) ถึง โคนนิ้วก้อย(17) 
-                // กับ ข้อต่อนิ้วโป้ง(3) ถึง โคนนิ้วก้อย(17) ถ้าระยะปลายยาวกว่า แปลว่ากางนิ้วโป้งออก
-                // วิธีนี้แก้ปัญหาการนับนิ้วโป้งผิดพลาดเมื่อกลับด้านกล้องได้ 100%
-                if (dist(landmarks[4], landmarks[17]) > dist(landmarks[3], landmarks[17])) {
-                    count++;
-                }
+                if (dist(landmarks[4], landmarks[17]) > dist(landmarks[3], landmarks[17])) count++;
 
-                // การนับนิ้วอื่นๆ: ถ้าระยะแกน y ของปลายนิ้ว น้อยกว่า ข้อต่อนิ้ว (แปลว่าชูขึ้น)
-                // 8: ชี้, 12: กลาง, 16: นาง, 20: ก้อย
                 const fingerTips = [8, 12, 16, 20];
                 const fingerPips = [6, 10, 14, 18];
 
                 for (let i = 0; i < 4; i++) {
-                    if (landmarks[fingerTips[i]].y < landmarks[fingerPips[i]].y) {
-                        count++;
-                    }
+                    if (landmarks[fingerTips[i]].y < landmarks[fingerPips[i]].y) count++;
                 }
                 
                 return count;
@@ -695,64 +787,63 @@
                 if (mode === 'classroom' && specificMode) {
                     activeMode = parseInt(specificMode);
                 } else {
-                    // Adventure logic based on level
-                    if (level === 1) activeMode = 1; // 0-5
-                    else if (level === 2) activeMode = 1; // 0-10
-                    else if (level === 3) activeMode = 2; // Add
-                    else if (level === 4) activeMode = 3; // Sub
-                    else if (level === 5) activeMode = 4; // Mul
-                    else activeMode = Math.floor(Math.random() * 6) + 1; // Mixed
+                    if (level === 1) activeMode = 1; 
+                    else if (level === 2) activeMode = 1; 
+                    else if (level === 3) activeMode = 2; 
+                    else if (level === 4) activeMode = 3; 
+                    else if (level === 5) activeMode = 4; 
+                    else activeMode = Math.floor(Math.random() * 6) + 1; 
                 }
 
                 let q = { text: "", instruction: "", answerCheck: null, modeName: "" };
 
                 switch(activeMode) {
-                    case 1: // Show Number
+                    case 1:
                         const maxNum = (level === 1 && mode === 'adventure') ? 5 : 10;
                         const num = Math.floor(Math.random() * (maxNum + 1));
                         q.modeName = "แสดงตัวเลข";
                         q.text = `ชู ${num} นิ้ว`;
-                        q.instruction = "ชูนิ้วมือให้ตรงกับจำนวนตัวเลขนี้";
+                        q.instruction = "ชูนิ้วมือให้ตรงกับตัวเลข";
                         q.answerCheck = (fingers) => fingers === num;
                         break;
-                    case 2: // Basic Addition
+                    case 2:
                         const a1 = Math.floor(Math.random() * 6);
-                        const b1 = Math.floor(Math.random() * (11 - a1)); // sum max 10
-                        q.modeName = "การบวกพื้นฐาน";
+                        const b1 = Math.floor(Math.random() * (11 - a1)); 
+                        q.modeName = "การบวก";
                         q.text = `${a1} + ${b1} = ?`;
-                        q.instruction = "คิดเลขในใจ แล้วชูนิ้วเพื่อตอบ";
+                        q.instruction = "คิดในใจ แล้วชูนิ้วตอบ";
                         q.answerCheck = (fingers) => fingers === (a1 + b1);
                         break;
-                    case 3: // Subtraction
+                    case 3:
                         const a2 = Math.floor(Math.random() * 11);
-                        const b2 = Math.floor(Math.random() * (a2 + 1)); // no negative
+                        const b2 = Math.floor(Math.random() * (a2 + 1)); 
                         q.modeName = "การลบ";
                         q.text = `${a2} - ${b2} = ?`;
-                        q.instruction = "คิดเลขในใจ แล้วชูนิ้วเพื่อตอบ";
+                        q.instruction = "คิดในใจ แล้วชูนิ้วตอบ";
                         q.answerCheck = (fingers) => fingers === (a2 - b2);
                         break;
-                    case 4: // Multiplication
+                    case 4:
                         const pairs = [[0,1], [0,2], [1,1], [1,2], [1,3], [1,4], [1,5], [1,6], [1,7], [1,8], [1,9], [1,10], 
                                        [2,1], [2,2], [2,3], [2,4], [2,5], [3,1], [3,2], [3,3], [4,1], [4,2], [5,1], [5,2]];
                         const pair = pairs[Math.floor(Math.random() * pairs.length)];
                         q.modeName = "การคูณ";
                         q.text = `${pair[0]} × ${pair[1]} = ?`;
-                        q.instruction = "คิดเลขในใจ แล้วชูนิ้วเพื่อตอบ";
+                        q.instruction = "คิดในใจ แล้วชูนิ้วตอบ";
                         q.answerCheck = (fingers) => fingers === (pair[0] * pair[1]);
                         break;
-                    case 5: // Compare
-                        const target = Math.floor(Math.random() * 9) + 1; // 1 to 9
+                    case 5:
+                        const target = Math.floor(Math.random() * 9) + 1; 
                         const isMore = Math.random() > 0.5;
-                        q.modeName = "เปรียบเทียบตัวเลข";
+                        q.modeName = "เปรียบเทียบ";
                         q.text = isMore ? `> ${target}` : `< ${target}`;
-                        q.instruction = isMore ? `ชูนิ้วที่มีจำนวน มากกว่า ${target}` : `ชูนิ้วที่มีจำนวน น้อยกว่า ${target}`;
+                        q.instruction = isMore ? `ชูให้ มากกว่า ${target}` : `ชูให้ น้อยกว่า ${target}`;
                         q.answerCheck = (fingers) => isMore ? (fingers > target && fingers <=10) : (fingers < target);
                         break;
-                    case 6: // Even/Odd
+                    case 6:
                         const isEven = Math.random() > 0.5;
                         q.modeName = "คู่ หรือ คี่";
                         q.text = isEven ? "เลขคู่" : "เลขคี่";
-                        q.instruction = isEven ? "ชูนิ้ว 2, 4, 6, 8 หรือ 10" : "ชูนิ้ว 1, 3, 5, 7 หรือ 9";
+                        q.instruction = isEven ? "ชูนิ้วจำนวนคู่ (2,4...)" : "ชูนิ้วจำนวนคี่ (1,3...)";
                         q.answerCheck = (fingers) => isEven ? (fingers % 2 === 0 && fingers > 0) : (fingers % 2 !== 0);
                         break;
                 }
@@ -791,11 +882,11 @@
 
                 if (timeElapsed < 3) {
                     pts += CONFIG.pointsFast;
-                    bonusMsg = "ตอบไวมาก! +5";
+                    bonusMsg = "ไวปานสายฟ้า! +5";
                 }
 
-                if (this.combo === 3) { pts += 20; bonusMsg = "คอมโบ 3 ข้อติด! +20"; DOM.comboDisplay.innerText="คอมโบ x3!"; DOM.comboDisplay.classList.remove('hidden'); }
-                else if (this.combo === 5) { pts += 50; bonusMsg = "คอมโบ 5 ข้อติด! ไฟลุก! +50"; DOM.comboDisplay.innerText="คอมโบ x5!"; DOM.comboDisplay.classList.remove('hidden'); }
+                if (this.combo === 3) { pts += 20; bonusMsg = "คอมโบ 3 ติด! +20"; DOM.comboDisplay.innerText="คอมโบ x3!"; DOM.comboDisplay.classList.remove('hidden'); }
+                else if (this.combo === 5) { pts += 50; bonusMsg = "คอมโบ 5 ติด! ไฟลุก! +50"; DOM.comboDisplay.innerText="คอมโบ x5!"; DOM.comboDisplay.classList.remove('hidden'); }
                 else if (this.combo > 5) { pts += 10; bonusMsg = "คอมโบต่อเนื่อง! +10"; }
                 
                 if(this.combo !== 3 && this.combo !== 5 && this.combo <= 1) DOM.comboDisplay.classList.add('hidden');
@@ -846,11 +937,11 @@
                 this.scoreManager = new ScoreAchievementManager();
                 this.handTracker = new HandTracker(DOM.video, DOM.canvas, (f) => this.onHandResult(f));
                 
-                this.state = 'menu'; // menu, playing, feedback, paused, gameover
+                this.state = 'menu';
                 this.gameMode = 'adventure';
                 this.classTopic = null;
                 
-                this.playerName = "ผู้เล่นนิรนาม";
+                this.playerName = "น้องคนเก่ง";
                 this.totalQuestions = 10;
                 this.currentQuestionIndex = 0;
                 
@@ -876,14 +967,10 @@
             }
 
             async startGame(mode) {
-                // บังคับให้กรอกชื่อก่อนเล่น (เว้นแต่จะปล่อยว่างจริงๆ ก็จะใช้ชื่อว่า ผู้เล่นนิรนาม)
                 let inputName = DOM.startPlayerName.value.trim();
-                if(!inputName) {
-                    inputName = "เพื่อนคนเก่ง";
-                }
+                if(!inputName) inputName = "น้องคนเก่ง";
                 this.playerName = inputName;
                 
-                // อ่านจำนวนข้อที่เลือก
                 this.totalQuestions = parseInt(DOM.startQuestionCount.value) || 10;
                 
                 this.sound.init();
@@ -919,17 +1006,13 @@
             nextQuestion() {
                 this.currentQuestionIndex++;
                 
-                // --- ตรวจสอบการจบเกม (ถึงข้อที่กำหนดไว้) ---
                 if (this.totalQuestions !== 999 && this.currentQuestionIndex > this.totalQuestions) {
                     this.endGame();
                     return;
                 }
 
-                if (this.totalQuestions === 999) {
-                    DOM.level.innerText = `${this.currentQuestionIndex}`;
-                } else {
-                    DOM.level.innerText = `${this.currentQuestionIndex}/${this.totalQuestions}`;
-                }
+                if (this.totalQuestions === 999) DOM.level.innerText = `${this.currentQuestionIndex}`;
+                else DOM.level.innerText = `${this.currentQuestionIndex}/${this.totalQuestions}`;
 
                 const q = this.qManager.generateQuestion(this.scoreManager.level, this.gameMode, this.classTopic);
                 DOM.questionMode.innerText = q.modeName;
@@ -979,8 +1062,13 @@
                     const pct = (timeLeft / CONFIG.timePerQuestion) * 100;
                     DOM.timerBar.style.width = pct + '%';
                     
-                    if (timeLeft <= 3) DOM.timerBar.classList.replace('bg-blue-400', 'bg-red-500');
-                    else DOM.timerBar.classList.replace('bg-red-500', 'bg-blue-400');
+                    if (timeLeft <= 3) {
+                        DOM.timerBar.classList.replace('bg-blue-500', 'bg-red-500');
+                        DOM.timerText.classList.replace('text-blue-600', 'text-red-600');
+                    } else {
+                        DOM.timerBar.classList.replace('bg-red-500', 'bg-blue-500');
+                        DOM.timerText.classList.replace('text-red-600', 'text-blue-600');
+                    }
 
                     if (timeLeft <= 0) {
                         this.handleWrong("หมดเวลา!");
@@ -1035,7 +1123,7 @@
                 DOM.questionText.classList.add('animate-shake');
                 setTimeout(()=>DOM.questionText.classList.remove('animate-shake'), 500);
 
-                this.showFeedback(false, "0 คะแนน", reason || "ลองใหม่นะ ข้อถัดไป!");
+                this.showFeedback(false, "0 คะแนน", reason || "ไม่เป็นไร ลองใหม่นะ!");
 
                 setTimeout(() => {
                     if(this.state !== 'gameover' && this.state !== 'menu') {
@@ -1048,9 +1136,17 @@
 
             showFeedback(isCorrect, points, msg) {
                 DOM.feedbackContainer.classList.remove('hidden-panel');
-                DOM.feedbackIcon.className = isCorrect ? "fa-solid fa-check-circle text-7xl mb-4 text-green-400" : "fa-solid fa-circle-xmark text-7xl mb-4 text-red-500";
-                DOM.feedbackText.innerText = isCorrect ? "ถูกต้อง!" : "ผิดจ้า!";
-                DOM.feedbackText.className = isCorrect ? "feedback-text drop-shadow-lg mb-2 text-green-400" : "feedback-text drop-shadow-lg mb-2 text-red-500";
+                
+                if (isCorrect) {
+                    DOM.feedbackIcon.className = "fa-solid fa-circle-check text-5xl md:text-8xl mb-2 md:mb-4 text-green-500";
+                    DOM.feedbackText.innerText = "ถูกต้อง!";
+                    DOM.feedbackText.className = "feedback-text text-green-500 mb-1 md:mb-2";
+                } else {
+                    DOM.feedbackIcon.className = "fa-solid fa-circle-xmark text-5xl md:text-8xl mb-2 md:mb-4 text-red-500";
+                    DOM.feedbackText.innerText = "ผิดจ้า!";
+                    DOM.feedbackText.className = "feedback-text text-red-500 mb-1 md:mb-2";
+                }
+                
                 DOM.feedbackPoints.innerText = points;
                 DOM.feedbackMessage.innerText = msg;
             }
@@ -1059,14 +1155,20 @@
                 if(this.state === 'playing') {
                     this.state = 'paused';
                     DOM.btnPause.innerHTML = '<i class="fa-solid fa-play"></i> เล่นต่อ';
+                    DOM.btnPause.classList.replace('bg-slate-200', 'bg-green-200');
+                    DOM.btnPause.classList.replace('text-slate-700', 'text-green-800');
+                    DOM.btnPause.classList.replace('border-slate-300', 'border-green-300');
                 } else if (this.state === 'paused') {
                     this.state = 'playing';
                     this.questionStartTime = performance.now() - ((CONFIG.timePerQuestion - parseFloat(DOM.time.innerText))*1000);
                     DOM.btnPause.innerHTML = '<i class="fa-solid fa-pause"></i> พัก';
+                    DOM.btnPause.classList.replace('bg-green-200', 'bg-slate-200');
+                    DOM.btnPause.classList.replace('text-green-800', 'text-slate-700');
+                    DOM.btnPause.classList.replace('border-green-300', 'border-slate-300');
                 }
             }
 
-            endGame(title = "จบเกมแล้ว!") {
+            endGame(title = "เก่งมาก จบเกมแล้ว!") {
                 this.state = 'gameover';
                 DOM.ui.classList.add('hidden-panel');
                 DOM.gameOverModal.classList.remove('hidden-panel');
@@ -1077,7 +1179,6 @@
                 DOM.finalCorrect.innerText = this.scoreManager.correctCount;
                 DOM.finalWrong.innerText = this.scoreManager.wrongCount;
 
-                // --- บันทึกคะแนนลง Local Storage อัตโนมัติทันทีที่จบเกม ---
                 if (this.scoreManager.score > 0 || this.scoreManager.correctCount > 0) {
                     const data = JSON.parse(localStorage.getItem('fingerMathLeaderboard')) || [];
                     data.push({ 
@@ -1086,7 +1187,7 @@
                         date: new Date().toISOString() 
                     });
                     localStorage.setItem('fingerMathLeaderboard', JSON.stringify(data));
-                    this.loadLeaderboard(); // โหลดข้อมูลอัปเดตหน้า Leaderboard ทันที
+                    this.loadLeaderboard();
                 }
             }
 
@@ -1094,28 +1195,27 @@
                 const data = JSON.parse(localStorage.getItem('fingerMathLeaderboard')) || [];
                 DOM.leaderboardList.innerHTML = '';
                 if (data.length === 0) {
-                    DOM.leaderboardList.innerHTML = '<p class="text-gray-400 mt-4">ยังไม่มีสถิติคนเก่งเลย ลองเล่นเป็นคนแรกดูสิ!</p>';
+                    DOM.leaderboardList.innerHTML = '<p class="text-slate-400 font-bold mt-4 bg-white py-4 rounded-xl text-sm">ยังไม่มีสถิติคนเก่งเลย ลองเล่นเป็นคนแรกดูสิ!</p>';
                     return;
                 }
                 
-                // เรียงคะแนนจากมากไปน้อย และดึงมาแค่ 10 อันดับแรก
                 data.sort((a,b) => b.score - a.score).slice(0, 10).forEach((entry, idx) => {
                     const el = document.createElement('div');
-                    el.className = "flex justify-between items-center bg-white/10 p-3 rounded-lg border border-white/5";
+                    el.className = "flex justify-between items-center bg-white p-2 md:p-3 rounded-xl md:rounded-2xl border-2 border-yellow-200 shadow-sm flex-shrink-0";
                     
                     let medal = '';
-                    if(idx === 0) medal = '<i class="fa-solid fa-medal text-yellow-400 text-xl mr-2"></i>';
-                    else if(idx === 1) medal = '<i class="fa-solid fa-medal text-gray-300 text-xl mr-2"></i>';
-                    else if(idx === 2) medal = '<i class="fa-solid fa-medal text-orange-400 text-xl mr-2"></i>';
-                    else medal = `<span class="w-8 inline-block text-gray-400 font-bold">${idx+1}.</span>`;
+                    if(idx === 0) medal = '<div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-yellow-100 flex items-center justify-center mr-2 md:mr-3 border-2 border-yellow-300"><i class="fa-solid fa-medal text-yellow-500 text-xs md:text-base"></i></div>';
+                    else if(idx === 1) medal = '<div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-slate-100 flex items-center justify-center mr-2 md:mr-3 border-2 border-slate-300"><i class="fa-solid fa-medal text-slate-400 text-xs md:text-base"></i></div>';
+                    else if(idx === 2) medal = '<div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-orange-100 flex items-center justify-center mr-2 md:mr-3 border-2 border-orange-300"><i class="fa-solid fa-medal text-orange-500 text-xs md:text-base"></i></div>';
+                    else medal = `<div class="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center mr-2 md:mr-3 text-slate-400 font-black text-xs md:text-base">${idx+1}.</div>`;
 
                     el.innerHTML = `
-                        <div class="flex items-center">
+                        <div class="flex items-center min-w-0">
                             ${medal}
-                            <span class="font-semibold text-lg truncate w-32 text-left">${entry.name}</span>
+                            <span class="font-black text-slate-700 text-sm md:text-lg truncate max-w-[100px] md:max-w-[200px] text-left">${entry.name}</span>
                         </div>
-                        <div class="text-right">
-                            <span class="text-yellow-300 font-bold text-xl">${entry.score}</span>
+                        <div class="text-right flex-shrink-0 ml-2">
+                            <span class="text-violet-600 font-black text-sm md:text-xl bg-violet-50 px-2 py-1 md:px-3 md:py-1 rounded-full">${entry.score}</span>
                         </div>
                     `;
                     DOM.leaderboardList.appendChild(el);
@@ -1144,7 +1244,6 @@
         window.onload = () => {
             app = new GameManager();
             
-            // Allow ending game from UI for testing/flow
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && app.state === 'playing') {
                     app.endGame("ขอยอมแพ้!");
