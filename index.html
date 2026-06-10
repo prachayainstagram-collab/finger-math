@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FINGER MATH - เกมนิ้วแทนจำนวน</title>
     
-    <!-- Tailwind CSS for rapid modern styling -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- MediaPipe Hands & Dependencies -->
@@ -14,269 +14,228 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
-    <!-- Font Awesome for Icons -->
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Google Fonts (Playful Font) -->
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --primary: #8B5CF6; /* Violet */
-            --primary-dark: #6D28D9;
-            --secondary: #3B82F6; /* Blue */
-            --secondary-dark: #1D4ED8;
-            --success: #10B981;
-            --warning: #F59E0B;
-            --danger: #EF4444;
-            --danger-dark: #B91C1C;
+            --primary: #6366f1; /* Indigo */
+            --primary-hover: #4f46e5;
+            --secondary: #06b6d4; /* Cyan */
+            --secondary-hover: #0891b2;
+            --success: #10b981; /* Emerald */
+            --danger: #f43f5e; /* Rose */
+            --warning: #f59e0b; /* Amber */
+            --bg-color: #f8fafc;
         }
 
         body {
             font-family: 'Nunito', sans-serif;
-            background: linear-gradient(135deg, #E0E7FF, #F3E8FF, #FFE4E6);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            color: #1E293B;
+            background-color: var(--bg-color);
+            color: #1e293b;
             overflow-x: hidden;
             min-height: 100vh;
-            touch-action: manipulation; /* Disable double-tap zoom */
+            touch-action: manipulation;
         }
 
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* Animated Background Particles */
-        .particles-container {
+        /* Ambient Mesh Background */
+        .mesh-bg {
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
             z-index: -1;
             overflow: hidden;
+            background: #f1f5f9;
         }
-
-        .particle {
+        .mesh-blob {
             position: absolute;
-            font-weight: 900;
-            opacity: 0.4;
-            animation: float 15s infinite linear;
-            text-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.6;
+            animation: floatBlob 20s infinite alternate ease-in-out;
+        }
+        .blob-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: #c084fc; }
+        .blob-2 { bottom: -10%; right: -10%; width: 60vw; height: 60vw; background: #60a5fa; animation-delay: -5s; }
+        .blob-3 { top: 40%; left: 60%; width: 40vw; height: 40vw; background: #f472b6; animation-delay: -10s; }
+
+        @keyframes floatBlob {
+            0% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(10%, -15%) scale(1.1); }
+            66% { transform: translate(-10%, 15%) scale(0.9); }
+            100% { transform: translate(5%, 5%) scale(1); }
         }
 
-        @keyframes float {
-            0% { transform: translateY(110vh) rotate(0deg) scale(0.8); opacity: 0; }
-            10% { opacity: 0.6; }
-            90% { opacity: 0.6; }
-            100% { transform: translateY(-10vh) rotate(360deg) scale(1.2); opacity: 0; }
-        }
-
-        /* Gamified UI Components */
-        .game-card {
-            background: white;
+        /* Neo Soft UI Components */
+        .neo-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border-radius: 1.5rem;
-            border: 3px solid #E2E8F0;
-            box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.1);
-            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
         }
         @media (min-width: 768px) {
-            .game-card {
-                border-radius: 2rem;
-                border-width: 4px;
-                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-            }
+            .neo-card { border-radius: 2rem; }
         }
 
-        /* 3D Button Style */
-        .btn-3d {
-            transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            transform: translateY(0);
+        /* Sleek Interactive Buttons */
+        .btn-neo {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 9999px;
+            font-weight: 800;
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid transparent;
         }
-        .btn-3d:active {
-            transform: translateY(4px);
-            border-bottom-width: 0px !important;
-            margin-top: 4px;
-            margin-bottom: -4px;
+        .btn-neo:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.15);
         }
-        @media (min-width: 768px) {
-            .btn-3d:active {
-                transform: translateY(6px);
-                margin-top: 6px;
-                margin-bottom: -6px;
-            }
+        .btn-neo:active {
+            transform: translateY(1px) scale(0.97);
+            box-shadow: 0 5px 10px -5px rgba(0, 0, 0, 0.1);
         }
         
-        .btn-primary { background-color: var(--primary); color: white; border-bottom: 4px solid var(--primary-dark); }
-        .btn-secondary { background-color: var(--secondary); color: white; border-bottom: 4px solid var(--secondary-dark); }
-        .btn-danger { background-color: var(--danger); color: white; border-bottom: 4px solid var(--danger-dark); }
-        
-        @media (min-width: 768px) {
-            .btn-primary { border-bottom-width: 6px; }
-            .btn-secondary { border-bottom-width: 6px; }
-            .btn-danger { border-bottom-width: 6px; }
-        }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-hover)); color: white; box-shadow: 0 8px 20px -6px var(--primary); }
+        .btn-secondary { background: linear-gradient(135deg, var(--secondary), var(--secondary-hover)); color: white; box-shadow: 0 8px 20px -6px var(--secondary); }
+        .btn-danger { background: linear-gradient(135deg, var(--danger), #be123c); color: white; box-shadow: 0 8px 20px -6px var(--danger); }
+        .btn-white { background: white; color: #475569; border-color: #e2e8f0; }
+        .btn-white:hover { border-color: #cbd5e1; color: #1e293b; }
 
-        /* Video / Canvas Container */
+        /* Video Container */
         .video-container {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 4/3;
-            border-radius: 1rem;
-            overflow: hidden;
-            background-color: #0F172A;
-            border: 4px solid #CBD5E1;
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
+            position: relative; width: 100%; aspect-ratio: 4/3;
+            border-radius: 1.25rem; overflow: hidden;
+            background-color: #0f172a;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+            border: 4px solid #f1f5f9;
         }
-        @media (min-width: 768px) {
-            .video-container {
-                border-radius: 1.5rem;
-                border-width: 6px;
-                box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-            }
-        }
-
+        @media (min-width: 768px) { .video-container { border-radius: 1.5rem; border-width: 6px; } }
         .video-container video { display: none; }
-        .video-container canvas {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
-        }
+        .video-container canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
 
         /* Progress Bars */
         .progress-bar-bg {
-            background-color: #E2E8F0;
-            border-radius: 999px; overflow: hidden;
-            height: 1rem; width: 100%;
-            border: 2px solid #CBD5E1;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            background-color: #f1f5f9; border-radius: 999px; overflow: hidden;
+            height: 1rem; width: 100%; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
         }
-        @media (min-width: 768px) {
-            .progress-bar-bg { height: 1.5rem; border-width: 3px; }
-        }
-
         .progress-bar-fill {
             height: 100%; transition: width 0.1s linear, background-color 0.3s;
             border-radius: 999px; position: relative; overflow: hidden;
         }
-        .progress-bar-fill::after {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 50%;
-            background: linear-gradient(to bottom, rgba(255,255,255,0.3), rgba(255,255,255,0));
+        
+        /* Modern Inputs */
+        .input-neo {
+            background: #f8fafc; border: 2px solid #e2e8f0;
+            border-radius: 1rem; padding: 0.75rem 1rem; width: 100%;
+            transition: all 0.2s; color: #334155; font-weight: 700;
         }
+        .input-neo:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); background: white; }
 
         /* Animations */
         @keyframes pop {
-            0% { transform: scale(0.8); opacity: 0; }
-            60% { transform: scale(1.1); }
+            0% { transform: scale(0.9); opacity: 0; }
+            50% { transform: scale(1.05); }
             100% { transform: scale(1); opacity: 1; }
         }
-        .animate-pop { animation: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+        .animate-pop { animation: pop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-10px); }
-            40%, 80% { transform: translateX(10px); }
+        @keyframes floatUpDown {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
-        .animate-shake { animation: shake 0.5s; }
+        .animate-float { animation: floatUpDown 3s ease-in-out infinite; }
 
         .hidden-panel { display: none !important; }
         
         .badge {
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            filter: grayscale(100%); opacity: 0.4; transform: scale(0.9);
+            transition: all 0.3s ease; filter: grayscale(100%); opacity: 0.3; transform: scale(0.9);
         }
         .badge.unlocked {
-            filter: grayscale(0%); opacity: 1; transform: scale(1.1); animation: pop 0.5s;
+            filter: grayscale(0%); opacity: 1; transform: scale(1);
         }
 
-        /* Hold indicator ring - Responsive */
+        /* Sleek Hold Indicator */
         .hold-indicator {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 100px; height: 100px;
-            border-radius: 50%;
-            border: 6px solid rgba(255,255,255,0.3);
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 120px; height: 120px; border-radius: 50%;
+            border: 4px solid rgba(255,255,255,0.1);
             pointer-events: none; display: none;
-            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+            backdrop-filter: blur(2px);
         }
         .hold-indicator-fill {
-            position: absolute; top: -6px; left: -6px; right: -6px; bottom: -6px;
-            border-radius: 50%; border: 6px solid #FDE047;
-            border-color: #FDE047 transparent transparent transparent;
+            position: absolute; top: -4px; left: -4px; right: -4px; bottom: -4px;
+            border-radius: 50%; border: 4px solid var(--success);
+            border-color: var(--success) transparent transparent transparent;
             transform: rotate(-45deg); transition: transform 0.1s linear;
-            box-shadow: 0 0 10px rgba(253, 224, 71, 0.8);
         }
         @media (min-width: 768px) {
-            .hold-indicator { width: 160px; height: 160px; border-width: 10px; }
-            .hold-indicator-fill { top: -10px; left: -10px; right: -10px; bottom: -10px; border-width: 10px; box-shadow: 0 0 15px rgba(253, 224, 71, 0.8); }
+            .hold-indicator { width: 160px; height: 160px; border-width: 6px; }
+            .hold-indicator-fill { top: -6px; left: -6px; right: -6px; bottom: -6px; border-width: 6px; }
         }
         .hold-indicator.active { display: block; }
 
-        /* Responsive Text */
-        .question-text { 
-            font-size: clamp(2.5rem, 8vw, 7rem); 
-            font-weight: 900; line-height: 1.1; text-shadow: 3px 3px 0px rgba(0,0,0,0.1);
-        }
-        .feedback-text { 
-            font-size: clamp(2rem, 6vw, 4.5rem); 
-            font-weight: 900; text-shadow: 2px 2px 0px rgba(0,0,0,0.2);
-        }
-
-        /* Custom Scrollbar for Leaderboard */
-        ::-webkit-scrollbar { width: 6px; }
-        @media (min-width: 768px) { ::-webkit-scrollbar { width: 8px; } }
-        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* Typography */
+        .question-text { font-size: clamp(3rem, 8vw, 6rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.05em; }
+        .feedback-text { font-size: clamp(2rem, 6vw, 4rem); font-weight: 900; letter-spacing: -0.02em; }
     </style>
 </head>
 <body class="flex flex-col text-slate-800">
 
-    <div class="particles-container" id="particles"></div>
+    <div class="mesh-bg">
+        <div class="mesh-blob blob-1"></div>
+        <div class="mesh-blob blob-2"></div>
+        <div class="mesh-blob blob-3"></div>
+    </div>
 
     <!-- MAIN GAME UI -->
-    <div id="gameUI" class="hidden-panel flex-col flex-grow p-2 md:p-6 max-w-7xl mx-auto w-full gap-3 md:gap-4">
+    <div id="gameUI" class="hidden-panel flex-col flex-grow p-3 md:p-6 max-w-7xl mx-auto w-full gap-4 md:gap-6 relative z-10">
         
-        <header class="bg-white rounded-2xl md:rounded-full p-2 px-4 md:p-3 md:px-6 flex flex-row justify-between items-center shadow-md md:shadow-lg border-2 md:border-4 border-slate-100 gap-2">
-            <div class="flex items-center gap-2 md:gap-4">
-                <div class="bg-violet-100 p-2 md:p-3 rounded-full text-violet-600 hidden xs:block">
+        <!-- Floating Header -->
+        <header class="neo-card p-3 md:p-4 px-5 md:px-8 flex flex-row justify-between items-center w-full mx-auto shadow-md">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-100 p-2 md:p-3 rounded-full text-indigo-600 shadow-inner flex-shrink-0">
                     <i class="fa-solid fa-hands-asl-interpreting text-xl md:text-2xl"></i>
                 </div>
-                <div>
-                    <h1 class="text-base md:text-xl font-black text-slate-800 leading-tight tracking-tight">FINGER MATH</h1>
-                    <p class="text-[10px] md:text-sm font-bold text-slate-500 truncate w-24 md:w-auto">ผู้เล่น: <span id="currentPlayerNameHeader" class="text-violet-600"></span></p>
+                <div class="min-w-0">
+                    <h1 class="text-base md:text-xl font-black text-slate-800 tracking-tight leading-tight">FINGER MATH</h1>
+                    <p class="text-[10px] md:text-sm font-bold text-slate-500 truncate">ผู้เล่น: <span id="currentPlayerNameHeader" class="text-indigo-600"></span></p>
                 </div>
             </div>
             
-            <div class="flex items-center gap-2 md:gap-8">
-                <div class="text-center bg-slate-100 px-2 py-1 md:px-4 md:py-1 rounded-xl md:rounded-2xl border-2 border-slate-200">
-                    <p class="text-[8px] md:text-[10px] font-bold text-slate-500 uppercase">ข้อที่</p>
-                    <p id="levelDisplay" class="text-base md:text-2xl font-black text-slate-700 leading-none">1/10</p>
+            <div class="flex items-center gap-2 md:gap-6">
+                <div class="text-center px-3 md:px-5">
+                    <p class="text-[9px] md:text-xs font-black text-slate-400 uppercase tracking-widest">ข้อที่</p>
+                    <p id="levelDisplay" class="text-lg md:text-2xl font-black text-slate-700 leading-none">1/10</p>
                 </div>
-                <div class="text-center bg-blue-100 px-2 py-1 md:px-4 md:py-1 rounded-xl md:rounded-2xl border-2 border-blue-200">
-                    <p class="text-[8px] md:text-[10px] font-bold text-blue-500 uppercase">เวลา</p>
-                    <p id="timeDisplay" class="text-base md:text-2xl font-black text-blue-600 leading-none">10s</p>
+                <div class="w-px h-8 bg-slate-200 hidden md:block"></div>
+                <div class="text-center bg-cyan-50 px-3 md:px-5 py-1 md:py-2 rounded-2xl border border-cyan-100">
+                    <p class="text-[9px] md:text-xs font-black text-cyan-600 uppercase tracking-widest">เวลา</p>
+                    <p id="timeDisplay" class="text-lg md:text-2xl font-black text-cyan-700 leading-none">10s</p>
                 </div>
             </div>
         </header>
 
-        <div class="flex flex-col lg:flex-row gap-3 md:gap-6 flex-grow">
+        <div class="flex flex-col lg:flex-row gap-4 md:gap-6 flex-grow">
             
             <!-- Left Side: Webcam & Tracking -->
-            <div class="lg:w-1/2 flex flex-col gap-3 md:gap-4">
-                <div class="game-card p-2 md:p-3 relative bg-slate-50 border-slate-200">
-                    <!-- Finger Count Badge -->
-                    <div class="absolute -top-3 -left-3 md:-top-4 md:-left-4 z-30 bg-yellow-400 border-2 md:border-4 border-white shadow-lg w-16 h-16 md:w-24 md:h-24 rounded-full flex flex-col items-center justify-center animate-pop">
-                        <p class="text-[8px] md:text-[10px] font-black text-yellow-900 leading-none">นิ้วที่พบ</p>
-                        <p id="fingerCountDisplay" class="text-2xl md:text-4xl font-black text-white drop-shadow-md">0</p>
+            <div class="lg:w-1/2 flex flex-col gap-4">
+                <div class="neo-card p-3 md:p-4 relative">
+                    <!-- Finger Count Floating Tag -->
+                    <div class="absolute top-6 left-6 z-30 bg-white/90 backdrop-blur-md border border-slate-200 shadow-xl px-4 py-2 rounded-2xl flex flex-col items-center animate-pop">
+                        <p class="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-wider">นิ้วที่พบ</p>
+                        <p id="fingerCountDisplay" class="text-3xl md:text-4xl font-black text-indigo-600 leading-none mt-1">0</p>
                     </div>
                     
-                    <div id="cameraStatus" class="absolute inset-0 flex items-center justify-center z-20 bg-slate-900/80 rounded-xl md:rounded-2xl m-2 md:m-3 backdrop-blur-sm">
-                        <div class="text-center bg-white p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-xl">
-                            <i class="fa-solid fa-spinner fa-spin text-3xl md:text-5xl mb-2 md:mb-4 text-violet-500"></i>
-                            <p class="text-sm md:text-xl font-bold text-slate-700">กำลังเปิดกล้อง...</p>
+                    <div id="cameraStatus" class="absolute inset-0 flex items-center justify-center z-20 bg-slate-900/40 rounded-[1.25rem] md:rounded-[1.5rem] m-3 md:m-4 backdrop-blur-md">
+                        <div class="text-center bg-white p-6 md:p-8 rounded-3xl shadow-2xl animate-pop">
+                            <i class="fa-solid fa-spinner fa-spin text-4xl md:text-5xl mb-4 text-indigo-500"></i>
+                            <p class="text-sm md:text-lg font-bold text-slate-700">กำลังเชื่อมต่อ AI...</p>
                         </div>
                     </div>
 
@@ -292,101 +251,104 @@
                 </div>
 
                 <!-- Controls -->
-                <div class="flex justify-center gap-2 md:gap-4">
-                    <button id="btnPause" class="flex-1 py-3 md:py-4 rounded-xl md:rounded-2xl font-black text-sm md:text-lg btn-3d bg-slate-200 text-slate-700 border-b-[4px] md:border-b-[6px] border-slate-300 hover:bg-slate-300 flex items-center justify-center gap-1 md:gap-2">
-                        <i class="fa-solid fa-pause"></i> พัก
+                <div class="flex justify-center gap-3 md:gap-4">
+                    <button id="btnPause" class="flex-1 py-3 md:py-4 btn-neo btn-white text-sm md:text-base">
+                        <i class="fa-solid fa-pause mr-2"></i> พัก
                     </button>
-                    <button id="btnRestart" class="flex-1 py-3 md:py-4 rounded-xl md:rounded-2xl font-black text-sm md:text-lg btn-3d btn-danger flex items-center justify-center gap-1 md:gap-2">
-                        <i class="fa-solid fa-rotate-right"></i> เริ่มใหม่
+                    <button id="btnRestart" class="flex-1 py-3 md:py-4 btn-neo btn-danger text-sm md:text-base">
+                        <i class="fa-solid fa-rotate-right mr-2"></i> เริ่มใหม่
                     </button>
-                    <button id="btnMenu" class="flex-1 py-3 md:py-4 rounded-xl md:rounded-2xl font-black text-sm md:text-lg btn-3d btn-secondary flex items-center justify-center gap-1 md:gap-2">
-                        <i class="fa-solid fa-bars"></i> เมนู
+                    <button id="btnMenu" class="flex-1 py-3 md:py-4 btn-neo btn-white text-sm md:text-base">
+                        <i class="fa-solid fa-bars mr-2"></i> เมนู
                     </button>
                 </div>
             </div>
 
             <!-- Right Side: Game Logic -->
-            <div class="lg:w-1/2 flex flex-col gap-3 md:gap-4">
+            <div class="lg:w-1/2 flex flex-col gap-4">
                 
-                <div class="game-card flex-grow flex flex-col justify-center items-center relative overflow-hidden text-center min-h-[200px] md:min-h-[300px] bg-gradient-to-br from-violet-500 to-fuchsia-500 border-none shadow-[0_10px_20px_-5px_rgba(139,92,246,0.3)] md:shadow-[0_15px_30px_-5px_rgba(139,92,246,0.4)]">
+                <!-- Main Question Card -->
+                <div class="neo-card flex-grow flex flex-col justify-center items-center relative overflow-hidden text-center min-h-[250px] md:min-h-[300px]">
                     
-                    <div class="absolute top-0 right-0 w-32 h-32 md:w-64 md:h-64 bg-white opacity-10 rounded-full translate-x-1/2 -translate-y-1/2"></div>
-                    <div class="absolute bottom-0 left-0 w-24 h-24 md:w-48 md:h-48 bg-white opacity-10 rounded-full -translate-x-1/2 translate-y-1/2"></div>
+                    <!-- Decorative Soft Gradient -->
+                    <div class="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-pink-50/50 z-0"></div>
 
-                    <div id="questionModeText" class="absolute top-2 left-3 md:top-4 md:left-6 py-1 px-2 md:px-3 bg-white/20 rounded-full text-[10px] md:text-sm font-bold text-white uppercase tracking-wider backdrop-blur-sm">การบวกพื้นฐาน</div>
+                    <div id="questionModeText" class="absolute top-4 left-5 md:top-5 md:left-6 py-1 px-3 bg-indigo-100 text-indigo-700 rounded-full text-[10px] md:text-xs font-black uppercase tracking-wider z-10">การบวกพื้นฐาน</div>
                     
-                    <div id="scoreDisplayContainer" class="absolute top-2 right-3 md:top-4 md:right-6 text-center bg-yellow-400 py-1 px-3 md:py-2 md:px-4 rounded-xl md:rounded-2xl border-2 md:border-4 border-yellow-300 shadow-md md:shadow-lg transform rotate-3">
-                        <p class="text-[8px] md:text-[10px] uppercase font-black text-yellow-800 leading-none">คะแนน</p>
-                        <p id="scoreDisplay" class="text-xl md:text-3xl font-black text-white drop-shadow-md">0</p>
-                        <div id="comboDisplay" class="absolute -bottom-3 -left-3 md:-bottom-4 md:-left-4 bg-red-500 text-white text-[10px] md:text-xs font-black px-2 py-0.5 md:py-1 rounded-full border-2 border-white shadow-md hidden animate-pop whitespace-nowrap">คอมโบ x3!</div>
+                    <!-- Score Tag -->
+                    <div id="scoreDisplayContainer" class="absolute top-4 right-5 md:top-5 md:right-6 text-right z-10">
+                        <p class="text-[10px] md:text-xs uppercase font-black text-slate-400 tracking-wider">คะแนน</p>
+                        <p id="scoreDisplay" class="text-2xl md:text-3xl font-black text-amber-500">0</p>
+                        <div id="comboDisplay" class="absolute top-full right-0 mt-1 bg-rose-500 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-md hidden animate-pop whitespace-nowrap">คอมโบ x3!</div>
                     </div>
                     
-                    <div id="questionContainer" class="w-full mt-8 md:mt-10 z-10 p-2 md:p-4">
-                        <h2 id="questionText" class="question-text text-white mb-1 md:mb-2">3 + 4 = ?</h2>
-                        <div class="inline-block bg-white/20 px-4 md:px-6 py-1 md:py-2 rounded-full backdrop-blur-sm">
-                            <p id="instructionText" class="text-sm md:text-xl font-bold text-white drop-shadow-sm">ชูนิ้วหน้ากล้องเพื่อตอบ</p>
+                    <div id="questionContainer" class="w-full mt-6 z-10 p-4">
+                        <h2 id="questionText" class="question-text text-slate-800 mb-2 md:mb-4 animate-float">3 + 4 = ?</h2>
+                        <div class="inline-block bg-white/80 px-4 py-2 rounded-2xl shadow-sm border border-slate-100">
+                            <p id="instructionText" class="text-sm md:text-base font-bold text-slate-500"><i class="fa-solid fa-hand-pointer mr-1 text-indigo-400"></i> ชูนิ้วหน้ากล้องเพื่อตอบ</p>
                         </div>
                     </div>
 
                     <!-- Feedback Overlay -->
-                    <div id="feedbackContainer" class="absolute inset-0 bg-white flex flex-col items-center justify-center hidden-panel z-20">
-                        <i id="feedbackIcon" class="fa-solid fa-check-circle text-6xl md:text-8xl mb-2 md:mb-4"></i>
-                        <h2 id="feedbackText" class="feedback-text mb-1 md:mb-2">ถูกต้อง!</h2>
-                        <div class="bg-yellow-100 px-4 md:px-6 py-1 md:py-2 rounded-full mt-1 md:mt-2 border-2 border-yellow-300">
-                            <p id="feedbackPoints" class="text-xl md:text-3xl font-black text-yellow-600"></p>
+                    <div id="feedbackContainer" class="absolute inset-0 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center hidden-panel z-20 transition-all">
+                        <i id="feedbackIcon" class="fa-solid fa-check-circle text-6xl md:text-7xl mb-4"></i>
+                        <h2 id="feedbackText" class="feedback-text mb-2">ถูกต้อง!</h2>
+                        <div class="bg-slate-50 px-6 py-2 rounded-2xl mt-2 border border-slate-100">
+                            <p id="feedbackPoints" class="text-xl md:text-2xl font-black text-slate-700"></p>
                         </div>
-                        <p id="feedbackMessage" class="text-sm md:text-xl font-bold text-slate-500 mt-2 md:mt-4"></p>
+                        <p id="feedbackMessage" class="text-sm md:text-base font-bold text-slate-400 mt-3"></p>
                     </div>
                 </div>
 
-                <div class="game-card p-3 md:p-5 bg-white">
-                    <div class="flex justify-between text-xs md:text-sm mb-1 md:mb-2 font-black text-slate-600">
-                        <span><i class="fa-regular fa-clock"></i> เวลา</span>
-                        <span id="timerText" class="text-blue-600">10.0s</span>
+                <!-- Stats & Progress -->
+                <div class="neo-card p-4 md:p-5">
+                    <div class="flex justify-between text-xs md:text-sm mb-2 font-black text-slate-500">
+                        <span><i class="fa-regular fa-clock"></i> เวลาที่เหลือ</span>
+                        <span id="timerText" class="text-cyan-600">10.0s</span>
                     </div>
-                    <div class="progress-bar-bg mb-3 md:mb-6">
-                        <div id="timerBar" class="progress-bar-fill bg-blue-500" style="width: 100%"></div>
+                    <div class="progress-bar-bg mb-4 md:mb-5">
+                        <div id="timerBar" class="progress-bar-fill bg-cyan-500" style="width: 100%"></div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-2 md:gap-4">
-                        <div class="bg-green-50 p-2 md:p-3 rounded-xl md:rounded-2xl text-center border-2 border-green-200">
-                            <p class="text-green-600 text-xs md:text-sm font-black uppercase"><i class="fa-solid fa-check"></i> ถูก</p>
-                            <p id="statCorrect" class="text-xl md:text-3xl font-black text-green-500">0</p>
+                    <div class="grid grid-cols-2 gap-3 md:gap-4">
+                        <div class="bg-emerald-50/50 p-3 rounded-[1rem] md:rounded-[1.25rem] text-center border border-emerald-100">
+                            <p class="text-emerald-600 text-[10px] md:text-xs font-black uppercase tracking-wider mb-1">ตอบถูก</p>
+                            <p id="statCorrect" class="text-2xl md:text-3xl font-black text-emerald-500 leading-none">0</p>
                         </div>
-                        <div class="bg-red-50 p-2 md:p-3 rounded-xl md:rounded-2xl text-center border-2 border-red-200">
-                            <p class="text-red-600 text-xs md:text-sm font-black uppercase"><i class="fa-solid fa-xmark"></i> ผิด</p>
-                            <p id="statWrong" class="text-xl md:text-3xl font-black text-red-500">0</p>
+                        <div class="bg-rose-50/50 p-3 rounded-[1rem] md:rounded-[1.25rem] text-center border border-rose-100">
+                            <p class="text-rose-600 text-[10px] md:text-xs font-black uppercase tracking-wider mb-1">ตอบผิด</p>
+                            <p id="statWrong" class="text-2xl md:text-3xl font-black text-rose-500 leading-none">0</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Achievements -->
-                <div class="game-card p-2 md:p-4 bg-white border-dashed">
-                    <h3 class="text-center font-black mb-2 md:mb-3 text-[10px] md:text-sm text-slate-400 uppercase tracking-widest"><i class="fa-solid fa-medal"></i> เหรียญรางวัล</h3>
+                <div class="neo-card p-4">
+                    <h3 class="text-center font-black mb-3 text-[10px] md:text-xs text-slate-400 uppercase tracking-widest">ความสำเร็จ</h3>
                     <div class="flex justify-around items-center">
-                        <div class="badge flex flex-col items-center" id="badgeBeginner" title="ตอบถูก 10 ข้อ">
-                            <div class="w-8 h-8 md:w-12 md:h-12 bg-orange-100 rounded-full flex items-center justify-center border-2 md:border-4 border-orange-300 mb-1">
-                                <i class="fa-solid fa-seedling text-base md:text-2xl text-orange-500"></i>
+                        <div class="badge flex flex-col items-center gap-1" id="badgeBeginner" title="ตอบถูก 10 ข้อ">
+                            <div class="w-10 h-10 md:w-12 md:h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-500">
+                                <i class="fa-solid fa-seedling text-xl md:text-2xl"></i>
                             </div>
-                            <span class="text-[8px] md:text-[10px] font-bold text-slate-500 hidden xs:block">มือใหม่</span>
+                            <span class="text-[9px] md:text-[10px] font-bold text-slate-500">มือใหม่</span>
                         </div>
-                        <div class="badge flex flex-col items-center" id="badgeStar" title="ตอบถูก 50 ข้อ">
-                            <div class="w-8 h-8 md:w-12 md:h-12 bg-yellow-100 rounded-full flex items-center justify-center border-2 md:border-4 border-yellow-300 mb-1">
-                                <i class="fa-solid fa-star text-base md:text-2xl text-yellow-500"></i>
+                        <div class="badge flex flex-col items-center gap-1" id="badgeStar" title="ตอบถูก 50 ข้อ">
+                            <div class="w-10 h-10 md:w-12 md:h-12 bg-yellow-100 rounded-2xl flex items-center justify-center text-yellow-500">
+                                <i class="fa-solid fa-star text-xl md:text-2xl"></i>
                             </div>
-                            <span class="text-[8px] md:text-[10px] font-bold text-slate-500 hidden xs:block">ดาวเด่น</span>
+                            <span class="text-[9px] md:text-[10px] font-bold text-slate-500">ดาวเด่น</span>
                         </div>
-                        <div class="badge flex flex-col items-center" id="badgeMaster" title="ตอบถูก 100 ข้อ">
-                            <div class="w-8 h-8 md:w-12 md:h-12 bg-blue-100 rounded-full flex items-center justify-center border-2 md:border-4 border-blue-300 mb-1">
-                                <i class="fa-solid fa-fire text-base md:text-2xl text-blue-500"></i>
+                        <div class="badge flex flex-col items-center gap-1" id="badgeMaster" title="ตอบถูก 100 ข้อ">
+                            <div class="w-10 h-10 md:w-12 md:h-12 bg-cyan-100 rounded-2xl flex items-center justify-center text-cyan-500">
+                                <i class="fa-solid fa-fire text-xl md:text-2xl"></i>
                             </div>
-                            <span class="text-[8px] md:text-[10px] font-bold text-slate-500 hidden xs:block">มาสเตอร์</span>
+                            <span class="text-[9px] md:text-[10px] font-bold text-slate-500">มาสเตอร์</span>
                         </div>
-                        <div class="badge flex flex-col items-center" id="badgeChampion" title="แม่นยำ 100% (ด่าน 5)">
-                            <div class="w-8 h-8 md:w-12 md:h-12 bg-purple-100 rounded-full flex items-center justify-center border-2 md:border-4 border-purple-300 mb-1">
-                                <i class="fa-solid fa-crown text-base md:text-2xl text-purple-500"></i>
+                        <div class="badge flex flex-col items-center gap-1" id="badgeChampion" title="แม่นยำ 100% (ด่าน 5)">
+                            <div class="w-10 h-10 md:w-12 md:h-12 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-500">
+                                <i class="fa-solid fa-crown text-xl md:text-2xl"></i>
                             </div>
-                            <span class="text-[8px] md:text-[10px] font-bold text-slate-500 hidden xs:block">แชมเปี้ยน</span>
+                            <span class="text-[9px] md:text-[10px] font-bold text-slate-500">แชมเปี้ยน</span>
                         </div>
                     </div>
                 </div>
@@ -396,138 +358,129 @@
     </div>
 
     <!-- START MENU / MODAL -->
-    <div id="startMenu" class="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-4 bg-slate-900/70 backdrop-blur-md">
-        <div class="game-card max-w-2xl w-full p-5 md:p-10 text-center animate-pop max-h-[95vh] overflow-y-auto">
+    <div id="startMenu" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
+        <div class="neo-card max-w-2xl w-full p-6 md:p-10 text-center animate-pop max-h-[95vh] overflow-y-auto">
             
-            <div class="inline-block bg-violet-100 p-4 md:p-6 rounded-[2rem] shadow-inner mb-3 md:mb-6 border-4 border-violet-200 transform -rotate-3">
-                <i class="fa-solid fa-hands-asl-interpreting text-5xl md:text-7xl text-violet-500"></i>
+            <div class="inline-block bg-white p-5 rounded-[2rem] shadow-sm border border-slate-100 mb-6">
+                <i class="fa-solid fa-hands-asl-interpreting text-6xl md:text-7xl text-indigo-500"></i>
             </div>
             
-            <h1 class="text-4xl md:text-6xl font-black mb-1 md:mb-3 text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-500 drop-shadow-sm" style="-webkit-text-stroke: 1px white;">FINGER MATH</h1>
-            <p class="text-sm md:text-xl mb-4 md:mb-8 font-bold text-slate-500">สนุกกับการคิดเลขด้วยนิ้วมือ! ✌️</p>
+            <h1 class="text-4xl md:text-5xl font-black mb-2 text-slate-800 tracking-tight">FINGER MATH</h1>
+            <p class="text-sm md:text-base font-bold text-slate-400 mb-8">ฝึกคิดเลขเร็วด้วยนิ้วมือ! 🖐️</p>
 
-            <div class="bg-slate-50 p-4 md:p-6 rounded-2xl md:rounded-3xl border-2 md:border-4 border-slate-200 mb-4 md:mb-8 text-left max-w-md mx-auto shadow-sm">
-                <div class="mb-3 md:mb-5">
-                    <label class="block text-xs md:text-sm font-black text-slate-700 mb-1 md:mb-2 uppercase"><i class="fa-solid fa-user text-violet-500"></i> ชื่อนักเรียน:</label>
-                    <input type="text" id="startPlayerName" placeholder="พิมพ์ชื่อตรงนี้เลย..." class="w-full bg-white border-2 md:border-4 border-slate-200 rounded-xl md:rounded-2xl p-2 md:p-4 text-slate-700 outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100 text-sm md:text-lg font-bold transition-all placeholder-slate-300">
+            <div class="bg-slate-50 p-5 md:p-6 rounded-3xl border border-slate-100 mb-6 text-left max-w-md mx-auto">
+                <div class="mb-4">
+                    <label class="block text-xs md:text-sm font-black text-slate-500 mb-2 uppercase tracking-wider">ชื่อผู้เล่น</label>
+                    <input type="text" id="startPlayerName" placeholder="พิมพ์ชื่อตรงนี้..." class="input-neo text-sm md:text-base">
                 </div>
                 <div>
-                    <label class="block text-xs md:text-sm font-black text-slate-700 mb-1 md:mb-2 uppercase"><i class="fa-solid fa-list-ol text-blue-500"></i> จำนวนข้อ:</label>
-                    <select id="startQuestionCount" class="w-full bg-white border-2 md:border-4 border-slate-200 rounded-xl md:rounded-2xl p-2 md:p-4 text-slate-700 outline-none focus:border-blue-400 font-bold text-sm md:text-base">
+                    <label class="block text-xs md:text-sm font-black text-slate-500 mb-2 uppercase tracking-wider">จำนวนข้อ</label>
+                    <select id="startQuestionCount" class="input-neo cursor-pointer text-sm md:text-base">
                         <option value="5">5 ข้อ (ฝึกซ้อมไวๆ)</option>
                         <option value="10" selected>10 ข้อ (มาตรฐาน)</option>
-                        <option value="20">20 ข้อ (ท้าทายสุดๆ)</option>
-                        <option value="999">เล่นไปเรื่อยๆ</option>
+                        <option value="20">20 ข้อ (ท้าทาย)</option>
+                        <option value="999">เล่นไม่มีที่สิ้นสุด</option>
                     </select>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 text-left mb-4 md:mb-6">
-                <!-- Play Button 1 -->
-                <button onclick="app.startGame('adventure')" class="btn-3d btn-primary p-4 md:p-6 rounded-2xl md:rounded-3xl flex flex-row md:flex-col items-center justify-center text-center group gap-3 md:gap-0">
-                    <div class="bg-white/20 p-2 md:p-3 rounded-full mb-0 md:mb-2 group-hover:scale-110 transition-transform">
-                        <i class="fa-solid fa-play text-2xl md:text-3xl text-white"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-lg md:text-2xl font-black text-white">เริ่มเกมแบบสุ่ม</h3>
-                        <p class="text-xs md:text-sm text-violet-200 font-bold mt-1 hidden md:block">ลุยโจทย์หลากสไตล์</p>
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left mb-6">
+                <button onclick="app.startGame('adventure')" class="btn-neo btn-primary p-5 rounded-3xl flex flex-col items-center justify-center text-center group w-full h-full">
+                    <i class="fa-solid fa-play text-2xl md:text-3xl mb-2"></i>
+                    <h3 class="text-lg md:text-xl font-black">เริ่มเกมแบบสุ่ม</h3>
+                    <p class="text-[10px] md:text-xs text-indigo-200 font-bold mt-1">ลุยโจทย์หลากสไตล์</p>
                 </button>
                 
-                <!-- Play Button 2 -->
-                <div class="bg-blue-50 p-3 md:p-5 rounded-2xl md:rounded-3xl border-2 md:border-4 border-blue-200 flex flex-col justify-center">
-                    <h3 class="text-sm md:text-lg font-black mb-1 md:mb-2 text-blue-700"><i class="fa-solid fa-school mr-1"></i> โหมดห้องเรียน</h3>
-                    <select id="classroomModeSelect" class="w-full bg-white border-2 border-blue-200 rounded-xl p-2 md:p-3 text-slate-600 mb-2 md:mb-4 outline-none font-bold text-xs md:text-sm">
-                        <option value="1">1: แสดงตัวเลข</option>
-                        <option value="2">2: การบวก</option>
-                        <option value="3">3: การลบ</option>
-                        <option value="4">4: การคูณ</option>
-                        <option value="5">5: เปรียบเทียบ</option>
-                        <option value="6">6: คู่หรือคี่</option>
-                    </select>
-                    <button onclick="app.startGame('classroom')" class="w-full py-2 md:py-3 btn-3d btn-secondary rounded-xl font-black text-sm md:text-lg">เลือกหัวข้อนี้</button>
+                <div class="bg-white p-4 md:p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-sm md:text-base font-black mb-2 text-slate-700"><i class="fa-solid fa-school text-cyan-500 mr-2"></i> โหมดเลือกเรื่อง</h3>
+                        <select id="classroomModeSelect" class="input-neo mb-3 text-[11px] md:text-sm py-2">
+                            <option value="1">1: แสดงตัวเลข</option>
+                            <option value="2">2: การบวกพื้นฐาน</option>
+                            <option value="3">3: การลบ</option>
+                            <option value="4">4: การคูณ</option>
+                            <option value="5">5: เปรียบเทียบ</option>
+                            <option value="6">6: คู่หรือคี่</option>
+                        </select>
+                    </div>
+                    <button onclick="app.startGame('classroom')" class="w-full py-2 md:py-3 btn-neo btn-secondary text-sm md:text-base">เริ่มโหมดนี้</button>
                 </div>
             </div>
 
-            <div class="flex justify-center">
-                <button onclick="app.showLeaderboard()" class="px-6 py-3 md:px-8 md:py-4 btn-3d bg-yellow-400 text-yellow-900 border-b-4 md:border-b-6 border-yellow-500 rounded-xl md:rounded-2xl font-black text-sm md:text-lg flex items-center gap-2 hover:bg-yellow-300">
-                    <i class="fa-solid fa-ranking-star text-lg md:text-2xl"></i> ตารางคนเก่ง
-                </button>
-            </div>
+            <button onclick="app.showLeaderboard()" class="px-6 py-3 md:px-8 md:py-4 btn-neo btn-white text-sm md:text-base text-slate-600 mx-auto">
+                <i class="fa-solid fa-ranking-star text-amber-500 mr-2"></i> ดูตารางคะแนน
+            </button>
         </div>
     </div>
 
     <!-- LEADERBOARD MODAL -->
-    <div id="leaderboardModal" class="fixed inset-0 z-[60] flex items-center justify-center p-3 md:p-4 bg-slate-900/60 backdrop-blur-md hidden-panel">
-        <div class="game-card max-w-md w-full p-5 md:p-8 text-center animate-pop relative border-4 border-yellow-300 bg-amber-50 max-h-[90vh] flex flex-col">
-            <button onclick="document.getElementById('leaderboardModal').classList.add('hidden-panel')" class="absolute -top-3 -right-3 md:-top-4 md:-right-4 w-10 h-10 md:w-12 md:h-12 bg-white border-2 md:border-4 border-slate-200 rounded-full text-lg md:text-xl text-slate-400 hover:text-red-500 hover:border-red-200 flex items-center justify-center transition-colors btn-3d">
+    <div id="leaderboardModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md hidden-panel">
+        <div class="neo-card max-w-md w-full p-6 md:p-8 text-center animate-pop relative">
+            <button onclick="document.getElementById('leaderboardModal').classList.add('hidden-panel')" class="absolute top-4 right-4 w-8 h-8 bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors">
                 <i class="fa-solid fa-xmark"></i>
             </button>
             
-            <i class="fa-solid fa-trophy text-4xl md:text-6xl text-yellow-500 mb-2 md:mb-4 drop-shadow-md"></i>
-            <h2 class="text-2xl md:text-3xl font-black mb-4 md:mb-6 text-yellow-600">ตารางคนเก่ง</h2>
+            <div class="w-16 h-16 bg-amber-100 rounded-2xl mx-auto flex items-center justify-center mb-4">
+                <i class="fa-solid fa-trophy text-3xl text-amber-500"></i>
+            </div>
+            <h2 class="text-xl md:text-2xl font-black mb-6 text-slate-800">ตารางคนเก่ง</h2>
             
-            <div id="leaderboardList" class="flex flex-col gap-2 md:gap-3 mb-4 md:mb-6 overflow-y-auto pr-2 flex-grow">
+            <div id="leaderboardList" class="flex flex-col gap-2 md:gap-3 mb-4 md:mb-6 max-h-[50vh] overflow-y-auto pr-2">
                 <!-- Injected via JS -->
             </div>
             
-            <button onclick="if(confirm('ต้องการล้างคะแนนทั้งหมดใช่หรือไม่?')){localStorage.removeItem('fingerMathLeaderboard'); app.loadLeaderboard();}" class="mt-2 text-xs md:text-sm font-bold text-red-400 hover:text-red-600 bg-red-50 px-3 py-1 md:px-4 md:py-1 rounded-full w-max mx-auto">ล้างประวัติคะแนน</button>
+            <button onclick="if(confirm('ล้างคะแนนทั้งหมด?')){localStorage.removeItem('fingerMathLeaderboard'); app.loadLeaderboard();}" class="mt-2 text-xs font-bold text-slate-400 hover:text-rose-500 underline">ล้างประวัติ</button>
         </div>
     </div>
 
     <!-- GAME OVER MODAL -->
-    <div id="gameOverModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-4 bg-slate-900/80 backdrop-blur-md hidden-panel">
-        <div class="game-card max-w-md w-full p-6 md:p-8 text-center animate-pop border-4 border-violet-300 mt-10">
+    <div id="gameOverModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md hidden-panel">
+        <div class="neo-card max-w-md w-full p-6 md:p-8 text-center animate-pop">
             
-            <div class="absolute -top-10 md:-top-12 left-1/2 transform -translate-x-1/2">
-                <div class="w-20 h-20 md:w-24 md:h-24 bg-white rounded-full border-4 border-violet-300 flex items-center justify-center shadow-xl">
-                    <i class="fa-solid fa-flag-checkered text-3xl md:text-4xl text-violet-500"></i>
+            <div class="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-md">
+                <i class="fa-solid fa-flag-checkered text-3xl text-indigo-500"></i>
+            </div>
+
+            <h2 id="gameOverTitle" class="text-2xl md:text-3xl font-black mb-6 text-slate-800">จบเกม!</h2>
+            
+            <div class="bg-slate-50 p-5 rounded-3xl border border-slate-100 mb-6">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">ผลงานของ</p>
+                <p id="finalPlayerName" class="text-lg md:text-xl font-black text-slate-700 mb-4 truncate"></p>
+                
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+                    <p class="text-[10px] font-bold text-amber-500 uppercase tracking-wider mb-1">คะแนนรวม</p>
+                    <p id="finalScoreText" class="text-5xl md:text-6xl font-black text-slate-800 tracking-tight">0</p>
+                </div>
+            </div>
+            
+            <div class="flex gap-3 md:gap-4 mb-6">
+                <div class="flex-1 bg-emerald-50 rounded-2xl p-3 border border-emerald-100">
+                    <p class="text-emerald-600 font-black text-[10px] md:text-xs uppercase mb-1">ตอบถูก</p>
+                    <p id="finalCorrect" class="text-xl md:text-2xl font-black text-emerald-500">0</p>
+                </div>
+                <div class="flex-1 bg-rose-50 rounded-2xl p-3 border border-rose-100">
+                    <p class="text-rose-600 font-black text-[10px] md:text-xs uppercase mb-1">ตอบผิด</p>
+                    <p id="finalWrong" class="text-xl md:text-2xl font-black text-rose-500">0</p>
                 </div>
             </div>
 
-            <h2 id="gameOverTitle" class="text-3xl md:text-4xl font-black mt-6 md:mt-8 mb-2 text-slate-800">จบเกม!</h2>
-            
-            <div class="bg-gradient-to-br from-violet-500 to-fuchsia-500 p-4 md:p-6 rounded-2xl md:rounded-3xl border-2 md:border-4 border-violet-200 mb-4 md:mb-6 shadow-lg text-white">
-                <p class="text-xs md:text-sm font-bold text-violet-200 uppercase tracking-wider">ผลงานของ</p>
-                <p id="finalPlayerName" class="text-xl md:text-2xl font-black mb-3 md:mb-4 truncate"></p>
-                <div class="bg-white/20 rounded-xl md:rounded-2xl p-3 md:p-4 backdrop-blur-sm">
-                    <p class="text-xs md:text-sm font-bold text-violet-100 uppercase">คะแนนรวม</p>
-                    <p id="finalScoreText" class="text-yellow-300 font-black text-5xl md:text-6xl drop-shadow-md" style="-webkit-text-stroke: 1px rgba(0,0,0,0.2);">0</p>
-                </div>
-            </div>
-            
-            <div class="flex gap-2 md:gap-4 mb-4 md:mb-6">
-                <div class="flex-1 bg-green-50 rounded-xl md:rounded-2xl p-2 md:p-4 border-2 border-green-200">
-                    <p class="text-green-600 font-black text-[10px] md:text-sm uppercase"><i class="fa-solid fa-check"></i> ถูก</p>
-                    <p id="finalCorrect" class="text-2xl md:text-3xl font-black text-green-500">0</p>
-                </div>
-                <div class="flex-1 bg-red-50 rounded-xl md:rounded-2xl p-2 md:p-4 border-2 border-red-200">
-                    <p class="text-red-600 font-black text-[10px] md:text-sm uppercase"><i class="fa-solid fa-xmark"></i> ผิด</p>
-                    <p id="finalWrong" class="text-2xl md:text-3xl font-black text-red-500">0</p>
-                </div>
-            </div>
-
-            <p class="text-blue-500 text-xs md:text-sm mb-4 md:mb-6 font-bold bg-blue-50 py-1 md:py-2 rounded-full px-2"><i class="fa-solid fa-cloud-arrow-up"></i> บันทึกคะแนนลงกระดานอัตโนมัติแล้ว!</p>
-
-            <div class="flex gap-2 md:gap-4">
-                <button onclick="app.returnToMenu()" class="flex-1 py-3 md:py-4 btn-3d bg-slate-200 text-slate-700 border-b-[4px] md:border-b-6 border-slate-300 rounded-xl md:rounded-2xl font-black text-sm md:text-lg flex flex-col items-center justify-center">
-                    <i class="fa-solid fa-house mb-1"></i> เมนูหลัก
+            <div class="flex gap-3 md:gap-4">
+                <button onclick="app.returnToMenu()" class="flex-1 py-3 md:py-4 btn-neo btn-white text-sm md:text-base">
+                    <i class="fa-solid fa-house mr-2"></i> เมนูหลัก
                 </button>
-                <button onclick="app.restartGame()" class="flex-1 py-3 md:py-4 btn-3d btn-primary rounded-xl md:rounded-2xl font-black text-sm md:text-lg flex flex-col items-center justify-center">
-                    <i class="fa-solid fa-rotate-right mb-1"></i> เล่นอีกครั้ง
+                <button onclick="app.restartGame()" class="flex-1 py-3 md:py-4 btn-neo btn-primary text-sm md:text-base">
+                    <i class="fa-solid fa-rotate-right mr-2"></i> เล่นอีกครั้ง
                 </button>
             </div>
         </div>
     </div>
 
     <!-- LEVEL UP OVERLAY -->
-    <div id="levelUpOverlay" class="fixed inset-0 z-[60] flex items-center justify-center pointer-events-none hidden-panel bg-white/40 backdrop-blur-sm">
-        <div class="text-center animate-pop">
-            <i class="fa-solid fa-rocket text-6xl md:text-8xl text-violet-600 mb-4 md:mb-6 drop-shadow-lg"></i>
-            <h1 class="text-5xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-500 drop-shadow-xl" style="-webkit-text-stroke: 2px white;">เลื่อนด่าน!</h1>
-            <div class="bg-white px-4 py-2 md:px-8 md:py-3 rounded-full border-2 md:border-4 border-violet-200 mt-4 md:mt-6 inline-block shadow-lg">
-                <p class="text-base md:text-2xl font-black text-slate-700">คำถามเร็วขึ้น โจทย์ยากขึ้น!</p>
-            </div>
+    <div id="levelUpOverlay" class="fixed inset-0 z-[60] flex items-center justify-center pointer-events-none hidden-panel bg-white/60 backdrop-blur-sm transition-all duration-300">
+        <div class="text-center animate-pop bg-white p-8 md:p-12 rounded-[3rem] shadow-2xl border border-slate-100">
+            <i class="fa-solid fa-rocket text-5xl md:text-7xl text-indigo-500 mb-4 animate-float"></i>
+            <h1 class="text-4xl md:text-6xl font-black text-slate-800 tracking-tight mb-2">เลื่อนด่าน!</h1>
+            <p class="text-sm md:text-lg font-bold text-slate-500">คำถามจะเร็วขึ้น และท้าทายขึ้น</p>
         </div>
     </div>
 
@@ -536,19 +489,13 @@
         // 1. UTILITIES & CONFIGURATION
         // ==========================================
         const CONFIG = {
-            colors: {
-                primary: '#8B5CF6',
-                secondary: '#3B82F6',
-                success: '#10B981',
-                warning: '#F59E0B',
-                danger: '#EF4444'
-            },
+            colors: { primary: '#6366f1', secondary: '#06b6d4', success: '#10b981', warning: '#f59e0b', danger: '#f43f5e' },
             timePerQuestion: 10,
             holdTimeRequired: 1.5,
             pointsBase: 10,
-            pointsFast: 5, // under 3 seconds
+            pointsFast: 5,
             levelUpScore: 100,
-            messages: ["ยอดเยี่ยม!", "ทำได้ดีมาก!", "เก่งมาก!", "สุดยอดเลย!", "ฮีโร่คณิตศาสตร์!", "เยี่ยมไปเลย!"]
+            messages: ["เยี่ยมมาก!", "ถูกต้อง!", "ทำได้ดี!", "สุดยอด!", "แม่นยำ!", "เพอร์เฟกต์!"]
         };
 
         const DOM = {
@@ -607,108 +554,50 @@
             btnMenu: document.getElementById('btnMenu')
         };
 
-        // Create Playful Background Particles
-        function initParticles() {
-            const container = document.getElementById('particles');
-            container.innerHTML = '';
-            const symbols = ['+', '-', '×', '÷', '=', '1', '2', '3', '4', '5'];
-            const colors = ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EC4899'];
-            for(let i=0; i<20; i++) {
-                const p = document.createElement('div');
-                p.className = 'particle';
-                p.innerText = symbols[Math.floor(Math.random() * symbols.length)];
-                p.style.color = colors[Math.floor(Math.random() * colors.length)];
-                p.style.left = `${Math.random() * 100}vw`;
-                p.style.animationDuration = `${10 + Math.random() * 20}s`;
-                p.style.animationDelay = `${Math.random() * 10}s`;
-                p.style.fontSize = `${1.5 + Math.random() * 2}rem`;
-                container.appendChild(p);
-            }
-        }
-        initParticles();
-
         // ==========================================
-        // 2. SOUND MANAGER (Web Audio API)
+        // 2. SOUND MANAGER
         // ==========================================
         class SoundManager {
-            constructor() {
-                this.ctx = null;
-                this.initialized = false;
-            }
-
+            constructor() { this.ctx = null; this.initialized = false; }
             init() {
-                if (!this.initialized) {
-                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-                    this.initialized = true;
-                }
-                if (this.ctx.state === 'suspended') {
-                    this.ctx.resume();
-                }
+                if (!this.initialized) { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); this.initialized = true; }
+                if (this.ctx.state === 'suspended') this.ctx.resume();
             }
-
             playTone(freq, type, duration, vol=0.1) {
                 if (!this.ctx) return;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = type;
-                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                
+                const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+                osc.type = type; osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
                 gain.gain.setValueAtTime(vol, this.ctx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
-                
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start();
-                osc.stop(this.ctx.currentTime + duration);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + duration);
             }
-
             correct() {
                 if(!this.ctx) return;
-                this.playTone(523.25, 'sine', 0.1); 
-                setTimeout(() => this.playTone(659.25, 'sine', 0.2), 100); 
+                this.playTone(523.25, 'sine', 0.1); setTimeout(() => this.playTone(659.25, 'sine', 0.2), 100); 
             }
-
-            wrong() {
-                if(!this.ctx) return;
-                this.playTone(150, 'sawtooth', 0.3, 0.05);
-            }
-
+            wrong() { if(!this.ctx) return; this.playTone(150, 'sawtooth', 0.3, 0.05); }
             levelUp() {
                 if(!this.ctx) return;
                 const notes = [261.63, 329.63, 392.00, 523.25]; 
-                notes.forEach((freq, i) => {
-                    setTimeout(() => this.playTone(freq, 'square', 0.15, 0.05), i * 150);
-                });
+                notes.forEach((freq, i) => { setTimeout(() => this.playTone(freq, 'square', 0.15, 0.05), i * 150); });
             }
         }
 
         // ==========================================
-        // 3. HAND TRACKER (MediaPipe)
+        // 3. HAND TRACKER
         // ==========================================
         class HandTracker {
             constructor(videoEl, canvasEl, onResultsCallback) {
-                this.videoEl = videoEl;
-                this.canvasEl = canvasEl;
+                this.videoEl = videoEl; this.canvasEl = canvasEl;
                 this.ctx = canvasEl.getContext('2d');
                 this.onResultsCallback = onResultsCallback;
-                this.hands = null;
-                this.camera = null;
-                this.isReady = false;
-                this.lastDetectedCount = 0;
+                this.hands = null; this.camera = null; this.isReady = false; this.lastDetectedCount = 0;
             }
 
             async init() {
-                this.hands = new Hands({locateFile: (file) => {
-                    return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
-                }});
-
-                this.hands.setOptions({
-                    maxNumHands: 2,
-                    modelComplexity: 1,
-                    minDetectionConfidence: 0.6,
-                    minTrackingConfidence: 0.5
-                });
-
+                this.hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+                this.hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5 });
                 this.hands.onResults((results) => this.processResults(results));
 
                 this.camera = new Camera(this.videoEl, {
@@ -716,15 +605,12 @@
                         if (!this.isReady) {
                             DOM.camStatus.classList.add('hidden-panel');
                             this.isReady = true;
-                            this.canvasEl.width = this.videoEl.videoWidth;
-                            this.canvasEl.height = this.videoEl.videoHeight;
+                            this.canvasEl.width = this.videoEl.videoWidth; this.canvasEl.height = this.videoEl.videoHeight;
                         }
                         await this.hands.send({image: this.videoEl});
                     },
-                    width: 640,
-                    height: 480
+                    width: 640, height: 480
                 });
-
                 await this.camera.start();
             }
 
@@ -733,20 +619,16 @@
                 this.ctx.clearRect(0, 0, this.canvasEl.width, this.canvasEl.height);
                 
                 // Mirror effect
-                this.ctx.translate(this.canvasEl.width, 0);
-                this.ctx.scale(-1, 1);
-                
+                this.ctx.translate(this.canvasEl.width, 0); this.ctx.scale(-1, 1);
                 this.ctx.drawImage(results.image, 0, 0, this.canvasEl.width, this.canvasEl.height);
 
                 let totalFingers = 0;
-
                 if (results.multiHandLandmarks && results.multiHandedness) {
                     for (let i = 0; i < results.multiHandLandmarks.length; i++) {
                         const landmarks = results.multiHandLandmarks[i];
-                        
-                        drawConnectors(this.ctx, landmarks, HAND_CONNECTIONS, {color: '#8B5CF6', lineWidth: 4});
-                        drawLandmarks(this.ctx, landmarks, {color: '#FDE047', lineWidth: 2, radius: 4});
-
+                        // Sleek drawing style
+                        drawConnectors(this.ctx, landmarks, HAND_CONNECTIONS, {color: 'rgba(255,255,255,0.7)', lineWidth: 3});
+                        drawLandmarks(this.ctx, landmarks, {color: '#6366f1', lineWidth: 2, radius: 4});
                         totalFingers += this.countFingers(landmarks);
                     }
                 }
@@ -759,16 +641,9 @@
             countFingers(landmarks) {
                 let count = 0;
                 const dist = (p1, p2) => Math.hypot(p1.x - p2.x, p1.y - p2.y);
-                
                 if (dist(landmarks[4], landmarks[17]) > dist(landmarks[3], landmarks[17])) count++;
-
-                const fingerTips = [8, 12, 16, 20];
-                const fingerPips = [6, 10, 14, 18];
-
-                for (let i = 0; i < 4; i++) {
-                    if (landmarks[fingerTips[i]].y < landmarks[fingerPips[i]].y) count++;
-                }
-                
+                const fingerTips = [8, 12, 16, 20]; const fingerPips = [6, 10, 14, 18];
+                for (let i = 0; i < 4; i++) { if (landmarks[fingerTips[i]].y < landmarks[fingerPips[i]].y) count++; }
                 return count;
             }
         }
@@ -777,18 +652,12 @@
         // 4. QUESTION MANAGER
         // ==========================================
         class QuestionManager {
-            constructor() {
-                this.currentQuestion = null;
-            }
-
+            constructor() { this.currentQuestion = null; }
             generateQuestion(level, mode = 'adventure', specificMode = null) {
                 let activeMode = 1;
-
-                if (mode === 'classroom' && specificMode) {
-                    activeMode = parseInt(specificMode);
-                } else {
-                    if (level === 1) activeMode = 1; 
-                    else if (level === 2) activeMode = 1; 
+                if (mode === 'classroom' && specificMode) activeMode = parseInt(specificMode);
+                else {
+                    if (level === 1 || level === 2) activeMode = 1; 
                     else if (level === 3) activeMode = 2; 
                     else if (level === 4) activeMode = 3; 
                     else if (level === 5) activeMode = 4; 
@@ -801,55 +670,40 @@
                     case 1:
                         const maxNum = (level === 1 && mode === 'adventure') ? 5 : 10;
                         const num = Math.floor(Math.random() * (maxNum + 1));
-                        q.modeName = "แสดงตัวเลข";
-                        q.text = `ชู ${num} นิ้ว`;
-                        q.instruction = "ชูนิ้วมือให้ตรงกับตัวเลข";
-                        q.answerCheck = (fingers) => fingers === num;
+                        q.modeName = "แสดงตัวเลข"; q.text = `ชู ${num} นิ้ว`;
+                        q.instruction = "ชูนิ้วให้ตรงกับตัวเลข"; q.answerCheck = (fingers) => fingers === num;
                         break;
                     case 2:
-                        const a1 = Math.floor(Math.random() * 6);
-                        const b1 = Math.floor(Math.random() * (11 - a1)); 
-                        q.modeName = "การบวก";
-                        q.text = `${a1} + ${b1} = ?`;
-                        q.instruction = "คิดในใจ แล้วชูนิ้วตอบ";
-                        q.answerCheck = (fingers) => fingers === (a1 + b1);
+                        const a1 = Math.floor(Math.random() * 6); const b1 = Math.floor(Math.random() * (11 - a1)); 
+                        q.modeName = "การบวก"; q.text = `${a1} + ${b1} = ?`;
+                        q.instruction = "คิดในใจ แล้วชูนิ้วตอบ"; q.answerCheck = (fingers) => fingers === (a1 + b1);
                         break;
                     case 3:
-                        const a2 = Math.floor(Math.random() * 11);
-                        const b2 = Math.floor(Math.random() * (a2 + 1)); 
-                        q.modeName = "การลบ";
-                        q.text = `${a2} - ${b2} = ?`;
-                        q.instruction = "คิดในใจ แล้วชูนิ้วตอบ";
-                        q.answerCheck = (fingers) => fingers === (a2 - b2);
+                        const a2 = Math.floor(Math.random() * 11); const b2 = Math.floor(Math.random() * (a2 + 1)); 
+                        q.modeName = "การลบ"; q.text = `${a2} - ${b2} = ?`;
+                        q.instruction = "คิดในใจ แล้วชูนิ้วตอบ"; q.answerCheck = (fingers) => fingers === (a2 - b2);
                         break;
                     case 4:
                         const pairs = [[0,1], [0,2], [1,1], [1,2], [1,3], [1,4], [1,5], [1,6], [1,7], [1,8], [1,9], [1,10], 
                                        [2,1], [2,2], [2,3], [2,4], [2,5], [3,1], [3,2], [3,3], [4,1], [4,2], [5,1], [5,2]];
                         const pair = pairs[Math.floor(Math.random() * pairs.length)];
-                        q.modeName = "การคูณ";
-                        q.text = `${pair[0]} × ${pair[1]} = ?`;
-                        q.instruction = "คิดในใจ แล้วชูนิ้วตอบ";
-                        q.answerCheck = (fingers) => fingers === (pair[0] * pair[1]);
+                        q.modeName = "การคูณ"; q.text = `${pair[0]} × ${pair[1]} = ?`;
+                        q.instruction = "คิดในใจ แล้วชูนิ้วตอบ"; q.answerCheck = (fingers) => fingers === (pair[0] * pair[1]);
                         break;
                     case 5:
-                        const target = Math.floor(Math.random() * 9) + 1; 
-                        const isMore = Math.random() > 0.5;
-                        q.modeName = "เปรียบเทียบ";
-                        q.text = isMore ? `> ${target}` : `< ${target}`;
-                        q.instruction = isMore ? `ชูให้ มากกว่า ${target}` : `ชูให้ น้อยกว่า ${target}`;
+                        const target = Math.floor(Math.random() * 9) + 1; const isMore = Math.random() > 0.5;
+                        q.modeName = "เปรียบเทียบ"; q.text = isMore ? `> ${target}` : `< ${target}`;
+                        q.instruction = isMore ? `ชูนิ้วให้ มากกว่า ${target}` : `ชูนิ้วให้ น้อยกว่า ${target}`;
                         q.answerCheck = (fingers) => isMore ? (fingers > target && fingers <=10) : (fingers < target);
                         break;
                     case 6:
                         const isEven = Math.random() > 0.5;
-                        q.modeName = "คู่ หรือ คี่";
-                        q.text = isEven ? "เลขคู่" : "เลขคี่";
-                        q.instruction = isEven ? "ชูนิ้วจำนวนคู่ (2,4...)" : "ชูนิ้วจำนวนคี่ (1,3...)";
+                        q.modeName = "คู่ หรือ คี่"; q.text = isEven ? "เลขคู่" : "เลขคี่";
+                        q.instruction = isEven ? "ชูนิ้วจำนวนคู่ (2,4,6...)" : "ชูนิ้วจำนวนคี่ (1,3,5...)";
                         q.answerCheck = (fingers) => isEven ? (fingers % 2 === 0 && fingers > 0) : (fingers % 2 !== 0);
                         break;
                 }
-                
-                this.currentQuestion = q;
-                return q;
+                this.currentQuestion = q; return q;
             }
         }
 
@@ -857,73 +711,38 @@
         // 5. SCORE & ACHIEVEMENT MANAGER
         // ==========================================
         class ScoreAchievementManager {
-            constructor() {
-                this.reset();
-            }
-
+            constructor() { this.reset(); }
             reset() {
-                this.score = 0;
-                this.level = 1;
-                this.correctCount = 0;
-                this.wrongCount = 0;
-                this.combo = 0;
-                this.perfectAccuracy = true;
-                this.updateUI();
-                
-                Object.values(DOM.badges).forEach(b => b.classList.remove('unlocked'));
+                this.score = 0; this.level = 1; this.correctCount = 0; this.wrongCount = 0; this.combo = 0; this.perfectAccuracy = true;
+                this.updateUI(); Object.values(DOM.badges).forEach(b => b.classList.remove('unlocked'));
             }
-
             addScore(timeElapsed) {
-                this.correctCount++;
-                this.combo++;
-                
-                let pts = CONFIG.pointsBase;
-                let bonusMsg = "";
-
-                if (timeElapsed < 3) {
-                    pts += CONFIG.pointsFast;
-                    bonusMsg = "ไวปานสายฟ้า! +5";
-                }
-
-                if (this.combo === 3) { pts += 20; bonusMsg = "คอมโบ 3 ติด! +20"; DOM.comboDisplay.innerText="คอมโบ x3!"; DOM.comboDisplay.classList.remove('hidden'); }
-                else if (this.combo === 5) { pts += 50; bonusMsg = "คอมโบ 5 ติด! ไฟลุก! +50"; DOM.comboDisplay.innerText="คอมโบ x5!"; DOM.comboDisplay.classList.remove('hidden'); }
+                this.correctCount++; this.combo++;
+                let pts = CONFIG.pointsBase; let bonusMsg = "";
+                if (timeElapsed < 3) { pts += CONFIG.pointsFast; bonusMsg = "ไวปานสายฟ้า! +5"; }
+                if (this.combo === 3) { pts += 20; bonusMsg = "คอมโบ 3 ข้อติด! +20"; DOM.comboDisplay.innerText="คอมโบ x3!"; DOM.comboDisplay.classList.remove('hidden'); }
+                else if (this.combo === 5) { pts += 50; bonusMsg = "คอมโบ 5 ข้อติด! ไฟลุก! +50"; DOM.comboDisplay.innerText="คอมโบ x5!"; DOM.comboDisplay.classList.remove('hidden'); }
                 else if (this.combo > 5) { pts += 10; bonusMsg = "คอมโบต่อเนื่อง! +10"; }
-                
                 if(this.combo !== 3 && this.combo !== 5 && this.combo <= 1) DOM.comboDisplay.classList.add('hidden');
 
                 this.score += pts;
-                
                 let leveledUp = false;
-                if (Math.floor(this.score / CONFIG.levelUpScore) + 1 > this.level) {
-                    this.level++;
-                    leveledUp = true;
-                }
-
-                this.checkAchievements();
-                this.updateUI();
-
+                if (Math.floor(this.score / CONFIG.levelUpScore) + 1 > this.level) { this.level++; leveledUp = true; }
+                this.checkAchievements(); this.updateUI();
                 return { points: pts, leveledUp, bonusMsg };
             }
-
             recordWrong() {
-                this.wrongCount++;
-                this.combo = 0;
-                this.perfectAccuracy = false;
-                DOM.comboDisplay.classList.add('hidden');
-                this.updateUI();
+                this.wrongCount++; this.combo = 0; this.perfectAccuracy = false;
+                DOM.comboDisplay.classList.add('hidden'); this.updateUI();
             }
-
             checkAchievements() {
                 if (this.correctCount >= 10) DOM.badges.beginner.classList.add('unlocked');
                 if (this.correctCount >= 50) DOM.badges.star.classList.add('unlocked');
                 if (this.correctCount >= 100) DOM.badges.master.classList.add('unlocked');
                 if (this.level >= 5 && this.perfectAccuracy && this.correctCount >= 20) DOM.badges.champion.classList.add('unlocked');
             }
-
             updateUI() {
-                DOM.score.innerText = this.score;
-                DOM.statCorrect.innerText = this.correctCount;
-                DOM.statWrong.innerText = this.wrongCount;
+                DOM.score.innerText = this.score; DOM.statCorrect.innerText = this.correctCount; DOM.statWrong.innerText = this.wrongCount;
             }
         }
 
@@ -936,119 +755,59 @@
                 this.qManager = new QuestionManager();
                 this.scoreManager = new ScoreAchievementManager();
                 this.handTracker = new HandTracker(DOM.video, DOM.canvas, (f) => this.onHandResult(f));
-                
-                this.state = 'menu';
-                this.gameMode = 'adventure';
-                this.classTopic = null;
-                
-                this.playerName = "น้องคนเก่ง";
-                this.totalQuestions = 10;
-                this.currentQuestionIndex = 0;
-                
-                this.questionStartTime = 0;
-                this.holdStartTime = 0;
-                this.isHolding = false;
-                this.lastUpdate = 0;
-
-                this.loopId = null;
-
-                this.setupListeners();
-                this.loadLeaderboard();
+                this.state = 'menu'; this.gameMode = 'adventure'; this.classTopic = null;
+                this.playerName = "ผู้เล่นทั่วไป"; this.totalQuestions = 10; this.currentQuestionIndex = 0;
+                this.questionStartTime = 0; this.holdStartTime = 0; this.isHolding = false; this.lastUpdate = 0; this.loopId = null;
+                this.setupListeners(); this.loadLeaderboard();
             }
 
             setupListeners() {
                 DOM.btnPause.addEventListener('click', () => this.togglePause());
                 DOM.btnRestart.addEventListener('click', () => this.startSession(this.gameMode, this.classTopic));
-                DOM.btnMenu.addEventListener('click', () => {
-                    this.state = 'menu';
-                    DOM.ui.classList.add('hidden-panel');
-                    DOM.menu.classList.remove('hidden-panel');
-                });
+                DOM.btnMenu.addEventListener('click', () => { this.state = 'menu'; DOM.ui.classList.add('hidden-panel'); DOM.menu.classList.remove('hidden-panel'); });
             }
 
             async startGame(mode) {
                 let inputName = DOM.startPlayerName.value.trim();
-                if(!inputName) inputName = "น้องคนเก่ง";
-                this.playerName = inputName;
-                
+                this.playerName = inputName ? inputName : "เพื่อนคนเก่ง";
                 this.totalQuestions = parseInt(DOM.startQuestionCount.value) || 10;
-                
-                this.sound.init();
-                this.gameMode = mode;
-                if(mode === 'classroom') {
-                    this.classTopic = document.getElementById('classroomModeSelect').value;
-                }
+                this.sound.init(); this.gameMode = mode;
+                if(mode === 'classroom') this.classTopic = document.getElementById('classroomModeSelect').value;
                 
                 DOM.currentPlayerNameHeader.innerText = this.playerName;
+                DOM.menu.classList.add('hidden-panel'); DOM.ui.classList.remove('hidden-panel'); DOM.gameOverModal.classList.add('hidden-panel');
                 
-                DOM.menu.classList.add('hidden-panel');
-                DOM.ui.classList.remove('hidden-panel');
-                DOM.gameOverModal.classList.add('hidden-panel');
-                
-                if (!this.handTracker.isReady) {
-                    await this.handTracker.init();
-                }
-
+                if (!this.handTracker.isReady) await this.handTracker.init();
                 this.startSession(mode, this.classTopic);
             }
 
             startSession(mode, topic) {
-                this.scoreManager.reset();
-                this.state = 'playing';
-                this.currentQuestionIndex = 0;
-                this.nextQuestion();
-                
+                this.scoreManager.reset(); this.state = 'playing'; this.currentQuestionIndex = 0; this.nextQuestion();
                 if (this.loopId) cancelAnimationFrame(this.loopId);
-                this.lastUpdate = performance.now();
-                this.gameLoop(performance.now());
+                this.lastUpdate = performance.now(); this.gameLoop(performance.now());
             }
 
             nextQuestion() {
                 this.currentQuestionIndex++;
-                
-                if (this.totalQuestions !== 999 && this.currentQuestionIndex > this.totalQuestions) {
-                    this.endGame();
-                    return;
-                }
-
-                if (this.totalQuestions === 999) DOM.level.innerText = `${this.currentQuestionIndex}`;
-                else DOM.level.innerText = `${this.currentQuestionIndex}/${this.totalQuestions}`;
+                if (this.totalQuestions !== 999 && this.currentQuestionIndex > this.totalQuestions) { this.endGame(); return; }
+                DOM.level.innerText = this.totalQuestions === 999 ? `${this.currentQuestionIndex}` : `${this.currentQuestionIndex}/${this.totalQuestions}`;
 
                 const q = this.qManager.generateQuestion(this.scoreManager.level, this.gameMode, this.classTopic);
-                DOM.questionMode.innerText = q.modeName;
-                DOM.questionText.innerText = q.text;
-                DOM.instructionText.innerText = q.instruction;
+                DOM.questionMode.innerText = q.modeName; DOM.questionText.innerText = q.text; DOM.instructionText.innerHTML = `<i class="fa-solid fa-hand-pointer mr-1 text-indigo-400"></i> ${q.instruction}`;
                 
-                this.questionStartTime = performance.now();
-                this.isHolding = false;
-                this.holdStartTime = 0;
+                this.questionStartTime = performance.now(); this.isHolding = false; this.holdStartTime = 0;
                 DOM.holdIndicator.classList.remove('active');
-                
-                DOM.questionText.classList.remove('animate-pop');
-                void DOM.questionText.offsetWidth;
-                DOM.questionText.classList.add('animate-pop');
             }
 
             onHandResult(fingers) {
-                if (this.state !== 'playing') {
-                    DOM.fingerCount.innerText = fingers;
-                    return;
-                }
-                
+                if (this.state !== 'playing') { DOM.fingerCount.innerText = fingers; return; }
                 DOM.fingerCount.innerText = fingers;
-
                 const isCorrect = this.qManager.currentQuestion.answerCheck(fingers);
 
                 if (isCorrect) {
-                    if (!this.isHolding) {
-                        this.isHolding = true;
-                        this.holdStartTime = performance.now();
-                        DOM.holdIndicator.classList.add('active');
-                    }
+                    if (!this.isHolding) { this.isHolding = true; this.holdStartTime = performance.now(); DOM.holdIndicator.classList.add('active'); }
                 } else {
-                    this.isHolding = false;
-                    DOM.holdIndicator.classList.remove('active');
-                    DOM.holdFill.style.transform = `rotate(-45deg)`;
+                    this.isHolding = false; DOM.holdIndicator.classList.remove('active'); DOM.holdFill.style.transform = `rotate(-45deg)`;
                 }
             }
 
@@ -1063,192 +822,103 @@
                     DOM.timerBar.style.width = pct + '%';
                     
                     if (timeLeft <= 3) {
-                        DOM.timerBar.classList.replace('bg-blue-500', 'bg-red-500');
-                        DOM.timerText.classList.replace('text-blue-600', 'text-red-600');
+                        DOM.timerBar.classList.replace('bg-cyan-500', 'bg-rose-500');
+                        DOM.timerText.classList.replace('text-cyan-600', 'text-rose-600');
                     } else {
-                        DOM.timerBar.classList.replace('bg-red-500', 'bg-blue-500');
-                        DOM.timerText.classList.replace('text-red-600', 'text-blue-600');
+                        DOM.timerBar.classList.replace('bg-rose-500', 'bg-cyan-500');
+                        DOM.timerText.classList.replace('text-rose-600', 'text-cyan-600');
                     }
 
-                    if (timeLeft <= 0) {
-                        this.handleWrong("หมดเวลา!");
-                    }
+                    if (timeLeft <= 0) this.handleWrong("หมดเวลา!");
 
                     if (this.isHolding) {
                         const holdElapsed = (timestamp - this.holdStartTime) / 1000;
                         const holdPct = Math.min(1, holdElapsed / CONFIG.holdTimeRequired);
-                        
-                        const deg = -45 + (holdPct * 360);
-                        DOM.holdFill.style.transform = `rotate(${deg}deg)`;
-
-                        if (holdElapsed >= CONFIG.holdTimeRequired) {
-                            this.handleCorrect(elapsedQuestion);
-                        }
+                        DOM.holdFill.style.transform = `rotate(${-45 + (holdPct * 360)}deg)`;
+                        if (holdElapsed >= CONFIG.holdTimeRequired) this.handleCorrect(elapsedQuestion);
                     }
                 }
-
                 this.loopId = requestAnimationFrame((ts) => this.gameLoop(ts));
             }
 
             handleCorrect(timeTaken) {
-                this.state = 'feedback';
-                this.sound.correct();
-                DOM.holdIndicator.classList.remove('active');
-
+                this.state = 'feedback'; this.sound.correct(); DOM.holdIndicator.classList.remove('active');
                 const res = this.scoreManager.addScore(timeTaken);
-                
                 this.showFeedback(true, `+${res.points} คะแนน`, res.bonusMsg || CONFIG.messages[Math.floor(Math.random()*CONFIG.messages.length)]);
 
                 if (res.leveledUp && this.gameMode === 'adventure') {
-                    this.sound.levelUp();
-                    DOM.levelUpOverlay.classList.remove('hidden-panel');
+                    this.sound.levelUp(); DOM.levelUpOverlay.classList.remove('hidden-panel');
                     setTimeout(() => DOM.levelUpOverlay.classList.add('hidden-panel'), 2000);
                 }
-
                 setTimeout(() => {
-                    if(this.state !== 'gameover' && this.state !== 'menu') {
-                        this.state = 'playing';
-                        DOM.feedbackContainer.classList.add('hidden-panel');
-                        this.nextQuestion();
-                    }
+                    if(this.state !== 'gameover' && this.state !== 'menu') { this.state = 'playing'; DOM.feedbackContainer.classList.add('hidden-panel'); this.nextQuestion(); }
                 }, 1500);
             }
 
             handleWrong(reason) {
-                this.state = 'feedback';
-                this.sound.wrong();
-                this.scoreManager.recordWrong();
-                DOM.holdIndicator.classList.remove('active');
-                
-                DOM.questionText.classList.add('animate-shake');
-                setTimeout(()=>DOM.questionText.classList.remove('animate-shake'), 500);
-
-                this.showFeedback(false, "0 คะแนน", reason || "ไม่เป็นไร ลองใหม่นะ!");
-
+                this.state = 'feedback'; this.sound.wrong(); this.scoreManager.recordWrong(); DOM.holdIndicator.classList.remove('active');
+                DOM.questionText.classList.add('animate-shake'); setTimeout(()=>DOM.questionText.classList.remove('animate-shake'), 500);
+                this.showFeedback(false, "0 คะแนน", reason || "ไม่เป็นไร ลองข้อถัดไป!");
                 setTimeout(() => {
-                    if(this.state !== 'gameover' && this.state !== 'menu') {
-                        this.state = 'playing';
-                        DOM.feedbackContainer.classList.add('hidden-panel');
-                        this.nextQuestion();
-                    }
+                    if(this.state !== 'gameover' && this.state !== 'menu') { this.state = 'playing'; DOM.feedbackContainer.classList.add('hidden-panel'); this.nextQuestion(); }
                 }, 1500);
             }
 
             showFeedback(isCorrect, points, msg) {
                 DOM.feedbackContainer.classList.remove('hidden-panel');
-                
-                if (isCorrect) {
-                    DOM.feedbackIcon.className = "fa-solid fa-circle-check text-5xl md:text-8xl mb-2 md:mb-4 text-green-500";
-                    DOM.feedbackText.innerText = "ถูกต้อง!";
-                    DOM.feedbackText.className = "feedback-text text-green-500 mb-1 md:mb-2";
-                } else {
-                    DOM.feedbackIcon.className = "fa-solid fa-circle-xmark text-5xl md:text-8xl mb-2 md:mb-4 text-red-500";
-                    DOM.feedbackText.innerText = "ผิดจ้า!";
-                    DOM.feedbackText.className = "feedback-text text-red-500 mb-1 md:mb-2";
-                }
-                
-                DOM.feedbackPoints.innerText = points;
-                DOM.feedbackMessage.innerText = msg;
+                DOM.feedbackIcon.className = isCorrect ? "fa-solid fa-check-circle text-6xl md:text-7xl mb-4 text-emerald-500" : "fa-solid fa-circle-xmark text-6xl md:text-7xl mb-4 text-rose-500";
+                DOM.feedbackText.innerText = isCorrect ? "ถูกต้อง!" : "ผิดจ้า!";
+                DOM.feedbackText.className = isCorrect ? "feedback-text mb-2 text-emerald-500" : "feedback-text mb-2 text-rose-500";
+                DOM.feedbackPoints.innerText = points; DOM.feedbackMessage.innerText = msg;
             }
 
             togglePause() {
                 if(this.state === 'playing') {
-                    this.state = 'paused';
-                    DOM.btnPause.innerHTML = '<i class="fa-solid fa-play"></i> เล่นต่อ';
-                    DOM.btnPause.classList.replace('bg-slate-200', 'bg-green-200');
-                    DOM.btnPause.classList.replace('text-slate-700', 'text-green-800');
-                    DOM.btnPause.classList.replace('border-slate-300', 'border-green-300');
+                    this.state = 'paused'; DOM.btnPause.innerHTML = '<i class="fa-solid fa-play mr-2"></i> เล่นต่อ';
+                    DOM.btnPause.classList.replace('btn-white', 'btn-primary');
                 } else if (this.state === 'paused') {
-                    this.state = 'playing';
-                    this.questionStartTime = performance.now() - ((CONFIG.timePerQuestion - parseFloat(DOM.time.innerText))*1000);
-                    DOM.btnPause.innerHTML = '<i class="fa-solid fa-pause"></i> พัก';
-                    DOM.btnPause.classList.replace('bg-green-200', 'bg-slate-200');
-                    DOM.btnPause.classList.replace('text-green-800', 'text-slate-700');
-                    DOM.btnPause.classList.replace('border-green-300', 'border-slate-300');
+                    this.state = 'playing'; this.questionStartTime = performance.now() - ((CONFIG.timePerQuestion - parseFloat(DOM.time.innerText))*1000);
+                    DOM.btnPause.innerHTML = '<i class="fa-solid fa-pause mr-2"></i> พัก';
+                    DOM.btnPause.classList.replace('btn-primary', 'btn-white');
                 }
             }
 
-            endGame(title = "เก่งมาก จบเกมแล้ว!") {
-                this.state = 'gameover';
-                DOM.ui.classList.add('hidden-panel');
-                DOM.gameOverModal.classList.remove('hidden-panel');
-                
-                DOM.gameOverTitle.innerText = title;
-                DOM.finalPlayerName.innerText = this.playerName;
-                DOM.finalScoreText.innerText = this.scoreManager.score;
-                DOM.finalCorrect.innerText = this.scoreManager.correctCount;
-                DOM.finalWrong.innerText = this.scoreManager.wrongCount;
+            endGame(title = "จบเกมแล้ว!") {
+                this.state = 'gameover'; DOM.ui.classList.add('hidden-panel'); DOM.gameOverModal.classList.remove('hidden-panel');
+                DOM.gameOverTitle.innerText = title; DOM.finalPlayerName.innerText = this.playerName;
+                DOM.finalScoreText.innerText = this.scoreManager.score; DOM.finalCorrect.innerText = this.scoreManager.correctCount; DOM.finalWrong.innerText = this.scoreManager.wrongCount;
 
                 if (this.scoreManager.score > 0 || this.scoreManager.correctCount > 0) {
                     const data = JSON.parse(localStorage.getItem('fingerMathLeaderboard')) || [];
-                    data.push({ 
-                        name: this.playerName, 
-                        score: this.scoreManager.score, 
-                        date: new Date().toISOString() 
-                    });
-                    localStorage.setItem('fingerMathLeaderboard', JSON.stringify(data));
-                    this.loadLeaderboard();
+                    data.push({ name: this.playerName, score: this.scoreManager.score, date: new Date().toISOString() });
+                    localStorage.setItem('fingerMathLeaderboard', JSON.stringify(data)); this.loadLeaderboard();
                 }
             }
 
             loadLeaderboard() {
-                const data = JSON.parse(localStorage.getItem('fingerMathLeaderboard')) || [];
-                DOM.leaderboardList.innerHTML = '';
-                if (data.length === 0) {
-                    DOM.leaderboardList.innerHTML = '<p class="text-slate-400 font-bold mt-4 bg-white py-4 rounded-xl text-sm">ยังไม่มีสถิติคนเก่งเลย ลองเล่นเป็นคนแรกดูสิ!</p>';
-                    return;
-                }
+                const data = JSON.parse(localStorage.getItem('fingerMathLeaderboard')) || []; DOM.leaderboardList.innerHTML = '';
+                if (data.length === 0) { DOM.leaderboardList.innerHTML = '<p class="text-slate-400 text-sm py-4">ยังไม่มีข้อมูล ลองเป็นคนแรกดูสิ!</p>'; return; }
                 
                 data.sort((a,b) => b.score - a.score).slice(0, 10).forEach((entry, idx) => {
-                    const el = document.createElement('div');
-                    el.className = "flex justify-between items-center bg-white p-2 md:p-3 rounded-xl md:rounded-2xl border-2 border-yellow-200 shadow-sm flex-shrink-0";
-                    
-                    let medal = '';
-                    if(idx === 0) medal = '<div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-yellow-100 flex items-center justify-center mr-2 md:mr-3 border-2 border-yellow-300"><i class="fa-solid fa-medal text-yellow-500 text-xs md:text-base"></i></div>';
-                    else if(idx === 1) medal = '<div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-slate-100 flex items-center justify-center mr-2 md:mr-3 border-2 border-slate-300"><i class="fa-solid fa-medal text-slate-400 text-xs md:text-base"></i></div>';
-                    else if(idx === 2) medal = '<div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-orange-100 flex items-center justify-center mr-2 md:mr-3 border-2 border-orange-300"><i class="fa-solid fa-medal text-orange-500 text-xs md:text-base"></i></div>';
-                    else medal = `<div class="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center mr-2 md:mr-3 text-slate-400 font-black text-xs md:text-base">${idx+1}.</div>`;
-
-                    el.innerHTML = `
-                        <div class="flex items-center min-w-0">
-                            ${medal}
-                            <span class="font-black text-slate-700 text-sm md:text-lg truncate max-w-[100px] md:max-w-[200px] text-left">${entry.name}</span>
-                        </div>
-                        <div class="text-right flex-shrink-0 ml-2">
-                            <span class="text-violet-600 font-black text-sm md:text-xl bg-violet-50 px-2 py-1 md:px-3 md:py-1 rounded-full">${entry.score}</span>
-                        </div>
-                    `;
+                    const el = document.createElement('div'); el.className = "flex justify-between items-center bg-slate-50 p-3 rounded-2xl border border-slate-100";
+                    let medal = idx === 0 ? '<div class="w-8 h-8 rounded-full bg-amber-100 text-amber-500 flex items-center justify-center mr-3"><i class="fa-solid fa-medal"></i></div>' : 
+                                idx === 1 ? '<div class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center mr-3"><i class="fa-solid fa-medal"></i></div>' : 
+                                idx === 2 ? '<div class="w-8 h-8 rounded-full bg-orange-100 text-orange-500 flex items-center justify-center mr-3"><i class="fa-solid fa-medal"></i></div>' : 
+                                `<div class="w-8 h-8 flex items-center justify-center mr-3 text-slate-400 font-bold text-sm">${idx+1}.</div>`;
+                    el.innerHTML = `<div class="flex items-center min-w-0">${medal}<span class="font-bold text-slate-700 text-sm md:text-base truncate max-w-[120px] md:max-w-[180px]">${entry.name}</span></div><div class="text-right flex-shrink-0"><span class="text-indigo-600 font-black text-base md:text-lg bg-indigo-50 px-3 py-1 rounded-full">${entry.score}</span></div>`;
                     DOM.leaderboardList.appendChild(el);
                 });
             }
 
-            returnToMenu() {
-                DOM.gameOverModal.classList.add('hidden-panel');
-                DOM.menu.classList.remove('hidden-panel');
-            }
-
-            restartGame() {
-                DOM.gameOverModal.classList.add('hidden-panel');
-                DOM.ui.classList.remove('hidden-panel');
-                this.startSession(this.gameMode, this.classTopic);
-            }
-
-            showLeaderboard() {
-                this.loadLeaderboard();
-                DOM.leaderboardModal.classList.remove('hidden-panel');
-            }
+            returnToMenu() { DOM.gameOverModal.classList.add('hidden-panel'); DOM.menu.classList.remove('hidden-panel'); }
+            restartGame() { DOM.gameOverModal.classList.add('hidden-panel'); DOM.ui.classList.remove('hidden-panel'); this.startSession(this.gameMode, this.classTopic); }
+            showLeaderboard() { this.loadLeaderboard(); DOM.leaderboardModal.classList.remove('hidden-panel'); }
         }
 
-        // Initialize App
         let app;
         window.onload = () => {
             app = new GameManager();
-            
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && app.state === 'playing') {
-                    app.endGame("ขอยอมแพ้!");
-                }
-            });
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && app.state === 'playing') app.endGame("ขอยอมแพ้!"); });
         };
     </script>
 </body>
