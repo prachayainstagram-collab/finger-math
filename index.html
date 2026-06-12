@@ -1,812 +1,1323 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Finger Math Universe - นวัตกรรมเกมคณิตศาสตร์</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- MediaPipe Hands & Dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Finger Math Universe</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Noto+Sans+Thai:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1a1a2e;
+  --ink2: #16213e;
+  --ink3: #0f3460;
+  --gold: #e8c547;
+  --gold2: #f5a623;
+  --cyan: #00d4ff;
+  --cyan2: #0891b2;
+  --purple: #7c3aed;
+  --purple2: #a855f7;
+  --pink: #ec4899;
+  --green: #10b981;
+  --red: #ef4444;
+  --slate: rgba(255,255,255,0.06);
+  --border: rgba(255,255,255,0.12);
+  --border2: rgba(255,255,255,0.22);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{
+  font-family:'Noto Sans Thai',sans-serif;
+  background:var(--ink);
+  color:#e2e8f0;
+  touch-action:manipulation;
+  user-select:none;
+}
+.f-display{font-family:'Fredoka One',cursive;}
+.f-mono{font-family:'IBM Plex Mono',monospace;}
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+/* ── Animated Background ── */
+.bg-canvas{
+  position:fixed;inset:0;z-index:0;overflow:hidden;
+  background:linear-gradient(135deg,#0f0c29 0%,#302b63 50%,#24243e 100%);
+}
+.bg-orb{
+  position:absolute;border-radius:50%;filter:blur(80px);opacity:0.25;
+  animation:orbFloat 20s ease-in-out infinite alternate;
+}
+.bg-orb-1{width:600px;height:600px;background:#7c3aed;top:-200px;left:-100px;}
+.bg-orb-2{width:500px;height:500px;background:#0891b2;bottom:-150px;right:-80px;animation-delay:-7s;}
+.bg-orb-3{width:400px;height:400px;background:#ec4899;top:40%;left:30%;animation-delay:-12s;}
+@keyframes orbFloat{0%{transform:translate(0,0) scale(1)}100%{transform:translate(40px,30px) scale(1.1)}}
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Kanit for Thai text, Fredoka for playful Numbers and Headings -->
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+/* ── Math particles ── */
+.particle{
+  position:fixed;pointer-events:none;font-weight:700;color:rgba(255,255,255,0.05);
+  animation:rise linear infinite;z-index:1;font-size:1.5rem;
+}
+@keyframes rise{
+  0%{transform:translateY(100vh) rotate(0deg);opacity:0}
+  10%{opacity:1}90%{opacity:1}
+  100%{transform:translateY(-10vh) rotate(360deg);opacity:0}
+}
 
-    <style>
-        :root {
-            --brand-primary: #8B5CF6; /* Violet */
-            --brand-secondary: #EC4899; /* Pink */
-            --brand-accent: #06B6D4; /* Cyan */
-            --brand-warning: #F59E0B; /* Amber */
-            --brand-success: #10B981; /* Emerald */
-            --glass-bg: rgba(255, 255, 255, 0.15);
-            --glass-border: rgba(255, 255, 255, 0.3);
-        }
+/* ── Layout ── */
+.screen{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;overflow:hidden;}
+.hidden{display:none!important;}
 
-        body {
-            font-family: 'Kanit', sans-serif;
-            background: #0f172a;
-            color: white;
-            overflow-x: hidden;
-            min-height: 100vh;
-            touch-action: manipulation;
-            user-select: none;
-        }
+/* ── Glass Cards ── */
+.card{
+  background:rgba(255,255,255,0.055);
+  border:1px solid var(--border);
+  border-radius:20px;
+  backdrop-filter:blur(12px);
+}
+.card-sm{border-radius:14px;}
 
-        .font-display { font-family: 'Fredoka', 'Kanit', sans-serif; }
+/* ── Buttons ── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:0.65rem 1.25rem;border-radius:12px;font-weight:700;font-size:0.875rem;
+  border:none;cursor:pointer;transition:all 0.15s;font-family:'Noto Sans Thai',sans-serif;
+  letter-spacing:0.02em;
+}
+.btn:active{transform:scale(0.95);}
+.btn-primary{background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;box-shadow:0 4px 15px rgba(124,58,237,0.4);}
+.btn-primary:hover{background:linear-gradient(135deg,#8b5cf6,#6d28d9);}
+.btn-cyan{background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;box-shadow:0 4px 15px rgba(8,145,178,0.4);}
+.btn-cyan:hover{background:linear-gradient(135deg,#06b6d4,#0891b2);}
+.btn-green{background:linear-gradient(135deg,#059669,#047857);color:#fff;box-shadow:0 4px 15px rgba(5,150,105,0.35);}
+.btn-green:hover{background:linear-gradient(135deg,#10b981,#059669);}
+.btn-red{background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;box-shadow:0 4px 15px rgba(220,38,38,0.35);}
+.btn-red:hover{background:linear-gradient(135deg,#ef4444,#dc2626);}
+.btn-gold{background:linear-gradient(135deg,#d97706,#b45309);color:#fff;box-shadow:0 4px 15px rgba(217,119,6,0.4);}
+.btn-gold:hover{background:linear-gradient(135deg,#f59e0b,#d97706);}
+.btn-ghost{background:rgba(255,255,255,0.07);color:#e2e8f0;border:1px solid var(--border2);}
+.btn-ghost:hover{background:rgba(255,255,255,0.13);}
+.btn-lg{padding:0.9rem 1.75rem;font-size:1rem;border-radius:16px;}
+.btn-xl{padding:1.1rem 2rem;font-size:1.1rem;border-radius:18px;}
 
-        /* Magical Space Background */
-        .space-bg {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2;
-            background: radial-gradient(circle at 15% 50%, #4c1d95 0%, #0f172a 50%),
-                        radial-gradient(circle at 85% 30%, #831843 0%, #0f172a 50%),
-                        radial-gradient(circle at 50% 80%, #164e63 0%, #0f172a 50%);
-            background-size: 200% 200%;
-            animation: breathe 20s ease-in-out infinite alternate;
-        }
-        @keyframes breathe { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
+/* ── Inputs ── */
+.inp{
+  width:100%;background:rgba(0,0,0,0.3);border:1.5px solid var(--border);border-radius:12px;
+  padding:0.75rem 1rem;font-size:0.95rem;font-weight:600;color:#e2e8f0;
+  outline:none;font-family:'Noto Sans Thai',sans-serif;transition:border-color 0.2s;
+}
+.inp::placeholder{color:rgba(255,255,255,0.3);}
+.inp:focus{border-color:var(--cyan);}
+select.inp{appearance:none;cursor:pointer;}
+label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
+  text-transform:uppercase;margin-bottom:6px;opacity:0.7;}
 
-        /* Floating Math Particles */
-        .particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; overflow: hidden; }
-        .particle { position: absolute; color: rgba(255,255,255,0.1); font-weight: 800; animation: floatUp linear infinite; }
-        @keyframes floatUp { 0% { transform: translateY(100vh) rotate(0deg) scale(0.8); opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateY(-20vh) rotate(360deg) scale(1.2); opacity: 0; } }
+/* ── Camera ── */
+.cam-box{position:relative;border-radius:16px;overflow:hidden;background:#000;
+  aspect-ratio:4/3;border:2px solid var(--border);}
+.cam-box video{display:none;}
+.cam-box canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.cam-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,0.85);z-index:10;flex-direction:column;gap:12px;border-radius:14px;}
+.cam-corner{position:absolute;width:22px;height:22px;border-color:#00d4ff;border-style:solid;pointer-events:none;}
+.cam-corner.tl{top:10px;left:10px;border-width:3px 0 0 3px;border-radius:4px 0 0 0;}
+.cam-corner.tr{top:10px;right:10px;border-width:3px 3px 0 0;border-radius:0 4px 0 0;}
+.cam-corner.bl{bottom:10px;left:10px;border-width:0 0 3px 3px;border-radius:0 0 0 4px;}
+.cam-corner.br{bottom:10px;right:10px;border-width:0 3px 3px 0;border-radius:0 0 4px 0;}
+.detected .cam-corner{border-color:#10b981;}
 
-        /* Glassmorphism Panels */
-        .glass-panel {
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            border-radius: 1.5rem;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
+/* ── Timer bar ── */
+.timer-track{height:8px;background:rgba(0,0,0,0.3);border-radius:999px;overflow:hidden;border:1px solid var(--border);}
+.timer-fill{height:100%;border-radius:999px;transition:width 0.08s linear,background 0.3s;}
 
-        /* 3D Clay/Bouncy Buttons */
-        .btn-3d {
-            position: relative; display: inline-flex; align-items: center; justify-content: center;
-            border-radius: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
-            transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
-            cursor: pointer;
-        }
-        .btn-3d:active { transform: scale(0.92); }
-        .btn-primary { background: linear-gradient(135deg, #8B5CF6, #6D28D9); box-shadow: 0 6px 0 #4C1D95, 0 10px 10px rgba(0,0,0,0.3); color: white; border: 2px solid #A78BFA; }
-        .btn-primary:active { box-shadow: 0 0px 0 #4C1D95, 0 2px 5px rgba(0,0,0,0.3); transform: translateY(6px) scale(0.95); }
-        
-        .btn-accent { background: linear-gradient(135deg, #06B6D4, #0369A1); box-shadow: 0 6px 0 #0C4A6E, 0 10px 10px rgba(0,0,0,0.3); color: white; border: 2px solid #67E8F9; }
-        .btn-accent:active { box-shadow: 0 0px 0 #0C4A6E, 0 2px 5px rgba(0,0,0,0.3); transform: translateY(6px) scale(0.95); }
+/* ── Hold ring ── */
+.hold-ring{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:100px;height:100px;pointer-events:none;display:none;z-index:20;}
+.hold-ring.active{display:block;}
+.hold-ring svg{width:100%;height:100%;transform:rotate(-90deg);}
+.hold-ring-track{fill:none;stroke:rgba(0,0,0,0.4);stroke-width:8;}
+.hold-ring-fill{fill:none;stroke:#f59e0b;stroke-width:8;stroke-linecap:round;
+  stroke-dasharray:283;stroke-dashoffset:283;transition:stroke-dashoffset 0.08s linear;}
+.hold-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:1.8rem;}
 
-        .btn-danger { background: linear-gradient(135deg, #F43F5E, #BE123C); box-shadow: 0 6px 0 #881337, 0 10px 10px rgba(0,0,0,0.3); color: white; border: 2px solid #FDA4AF; }
-        .btn-danger:active { box-shadow: 0 0px 0 #881337, 0 2px 5px rgba(0,0,0,0.3); transform: translateY(6px) scale(0.95); }
+/* ── Feedback overlay ── */
+.feedback-overlay{
+  position:absolute;inset:0;border-radius:18px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(15,12,41,0.93);backdrop-filter:blur(8px);z-index:30;gap:10px;
+}
 
-        /* Custom Input */
-        .glass-input {
-            width: 100%; background: rgba(0,0,0,0.2); border: 2px solid rgba(255,255,255,0.2);
-            border-radius: 1rem; padding: 1rem 1.5rem; font-size: 1.2rem; font-weight: 600; color: white;
-            transition: all 0.3s; outline: none; text-align: center; font-family: 'Kanit', sans-serif;
-        }
-        .glass-input::placeholder { color: rgba(255,255,255,0.5); }
-        .glass-input:focus { border-color: var(--brand-accent); box-shadow: 0 0 15px rgba(6, 182, 212, 0.4); background: rgba(0,0,0,0.4); }
+/* ── Question text ── */
+.q-text{font-family:'Fredoka One',cursive;font-size:clamp(3rem,7vw,6rem);
+  line-height:1.05;color:#fff;text-align:center;}
 
-        /* AI Camera Container */
-        .cam-wrapper {
-            position: relative; width: 100%; aspect-ratio: 4/3; border-radius: 1rem; overflow: hidden;
-            background: #000; border: 4px solid rgba(255,255,255,0.1);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(0,0,0,0.8);
-        }
-        .cam-wrapper video { display: none; }
-        .cam-wrapper canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-        
-        /* Reticle Overlay (Sci-Fi Scanner) */
-        .cam-reticle { position: absolute; top: 10%; left: 10%; right: 10%; bottom: 10%; pointer-events: none; border: 2px solid rgba(6, 182, 212, 0.3); border-radius: 1rem; z-index: 10; transition: border-color 0.3s; }
-        .cam-reticle::before, .cam-reticle::after { content: ''; position: absolute; width: 20px; height: 20px; border-color: #06B6D4; border-style: solid; }
-        .cam-reticle::before { top: -2px; left: -2px; border-width: 4px 0 0 4px; }
-        .cam-reticle::after { bottom: -2px; right: -2px; border-width: 0 4px 4px 0; }
-        .cam-wrapper.detected .cam-reticle { border-color: rgba(16, 185, 129, 0.8); }
-        .cam-wrapper.detected .cam-reticle::before, .cam-wrapper.detected .cam-reticle::after { border-color: #10B981; }
+/* ── Badges ── */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:999px;
+  font-size:0.72rem;font-weight:700;letter-spacing:0.06em;}
+.badge-pre{background:rgba(8,145,178,0.2);color:#67e8f9;border:1px solid rgba(8,145,178,0.4);}
+.badge-post{background:rgba(124,58,237,0.2);color:#c4b5fd;border:1px solid rgba(124,58,237,0.4);}
+.badge-practice{background:rgba(16,185,129,0.2);color:#6ee7b7;border:1px solid rgba(16,185,129,0.4);}
+.badge-research{background:rgba(234,197,71,0.15);color:#fcd34d;border:1px solid rgba(234,197,71,0.3);}
 
-        /* Progress & Timers */
-        .timer-track { background: rgba(0,0,0,0.3); border-radius: 999px; height: 1.25rem; width: 100%; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); position: relative; }
-        .timer-fill { height: 100%; transition: width 0.1s linear, background 0.3s; border-radius: 999px; position: relative; }
-        .timer-fill::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 50%; background: linear-gradient(to bottom, rgba(255,255,255,0.3), rgba(255,255,255,0)); }
+/* ── HUD chips ── */
+.chip{background:rgba(0,0,0,0.35);border:1px solid var(--border);border-radius:10px;
+  padding:6px 12px;text-align:center;}
+.chip-val{font-family:'Fredoka One',cursive;font-size:1.25rem;line-height:1;display:block;}
+.chip-lbl{font-size:0.65rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
+  opacity:0.55;display:block;margin-top:1px;}
 
-        /* Hold Indicator Ring */
-        .hold-ring-container { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; height: 120px; z-index: 15; pointer-events: none; display: none; }
-        .hold-ring-container.active { display: block; }
-        .hold-ring-bg { position: absolute; inset: 0; border-radius: 50%; border: 8px solid rgba(0,0,0,0.3); }
-        .hold-ring-progress { position: absolute; inset: -8px; border-radius: 50%; border: 8px solid #F59E0B; border-color: #F59E0B transparent transparent transparent; transform: rotate(-45deg); transition: transform 0.1s linear; filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6)); }
+/* ── Anim ── */
+@keyframes popIn{0%{transform:scale(0.7);opacity:0}60%{transform:scale(1.07)}100%{transform:scale(1);opacity:1}}
+.anim-pop{animation:popIn 0.4s cubic-bezier(.34,1.56,.64,1) forwards;}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.anim-shake{animation:shake 0.4s;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.anim-pulse{animation:pulse 1.5s infinite;}
 
-        /* Text Sizes */
-        .text-giant { font-size: clamp(4rem, 10vw, 8rem); line-height: 1; text-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+/* ── Level up ── */
+.levelup{
+  position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+  background:rgba(124,58,237,0.35);backdrop-filter:blur(6px);pointer-events:none;
+}
 
-        /* Utility Animations */
-        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 60% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
-        .animate-pop { animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
-        .animate-shake { animation: shake 0.4s; }
-        @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 10px rgba(6,182,212,0.5); } 50% { box-shadow: 0 0 30px rgba(6,182,212,0.8); } }
-        .animate-glow { animation: pulse-glow 2s infinite; }
-        
-        .hidden-panel { display: none !important; }
+/* ── Stat bars ── */
+.sbar-track{height:6px;background:rgba(255,255,255,0.1);border-radius:3px;}
+.sbar-fill{height:100%;border-radius:3px;transition:width 0.5s ease;}
 
-        /* Badges */
-        .badge-item { transition: all 0.3s; filter: grayscale(100%) opacity(0.3); transform: scale(0.9); }
-        .badge-item.unlocked { filter: grayscale(0%) opacity(1); transform: scale(1.1); filter: drop-shadow(0 0 10px rgba(255,255,255,0.3)); }
-    </style>
+/* ── Modals ── */
+.modal-wrap{
+  position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;
+  padding:1rem;background:rgba(0,0,0,0.65);backdrop-filter:blur(8px);overflow-y:auto;
+}
+.modal-box{
+  background:rgba(22,20,50,0.96);border:1px solid var(--border2);border-radius:24px;
+  max-width:480px;width:100%;padding:1.75rem;
+  box-shadow:0 20px 60px rgba(0,0,0,0.6);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:2px;}
+
+/* ── Tab ── */
+.tab-btn{padding:0.5rem 1rem;border-radius:10px;font-weight:700;font-size:0.8rem;
+  cursor:pointer;border:1.5px solid transparent;color:rgba(255,255,255,0.4);transition:all 0.2s;}
+.tab-btn.active{background:rgba(124,58,237,0.3);border-color:#7c3aed;color:#c4b5fd;}
+.tab-btn:not(.active):hover{color:rgba(255,255,255,0.7);}
+
+/* ── Finger indicator ── */
+.finger-display{
+  width:60px;height:60px;border-radius:50%;
+  border:3px solid var(--cyan);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Fredoka One',cursive;font-size:1.8rem;color:#fff;
+  background:rgba(0,212,255,0.1);
+  box-shadow:0 0 20px rgba(0,212,255,0.3);
+}
+.finger-display.detected-good{border-color:#10b981;box-shadow:0 0 20px rgba(16,185,129,0.4);}
+
+/* ── Conf bar ── */
+.conf-bar{position:absolute;bottom:6px;left:8px;right:8px;height:4px;
+  background:rgba(0,0,0,0.4);border-radius:2px;z-index:15;}
+.conf-fill{height:100%;border-radius:2px;transition:width 0.12s,background 0.3s;}
+
+/* ── Score highlight chip ── */
+.score-chip{
+  background:linear-gradient(135deg,#d97706,#b45309);
+  border:1px solid rgba(245,158,11,0.5);
+  box-shadow:0 0 20px rgba(217,119,6,0.4);
+}
+
+/* ── Combo badge ── */
+.combo-badge{
+  background:linear-gradient(135deg,#ec4899,#be185d);
+  color:#fff;padding:4px 14px;border-radius:999px;font-weight:800;font-size:0.82rem;
+  box-shadow:0 0 15px rgba(236,72,153,0.5);display:none;
+}
+
+/* ── Mode selector cards ── */
+.mode-card{
+  background:rgba(255,255,255,0.05);border:1.5px solid var(--border);border-radius:16px;
+  padding:1rem 0.75rem;cursor:pointer;transition:all 0.2s;text-align:center;
+}
+.mode-card:hover{background:rgba(255,255,255,0.1);border-color:var(--border2);}
+.mode-card.pre{border-color:rgba(8,145,178,0.5);}
+.mode-card.pre:hover{background:rgba(8,145,178,0.12);}
+.mode-card.post{border-color:rgba(124,58,237,0.5);}
+.mode-card.post:hover{background:rgba(124,58,237,0.12);}
+.mode-card.practice{border-color:rgba(16,185,129,0.5);}
+.mode-card.practice:hover{background:rgba(16,185,129,0.12);}
+.mode-icon{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;margin:0 auto 8px;font-size:1.3rem;}
+
+/* ── Achievement badges ── */
+.achv{display:flex;flex-direction:column;align-items:center;gap:3px;
+  opacity:0.2;transition:all 0.4s;filter:grayscale(1);}
+.achv.unlocked{opacity:1;filter:none;}
+.achv-icon{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:1.1rem;border:2px solid transparent;}
+
+/* ── Final question log ── */
+.q-log-item{display:flex;align-items:center;gap:8px;padding:5px 0;
+  border-bottom:1px solid rgba(255,255,255,0.06);font-size:0.8rem;}
+.q-log-item:last-child{border:none;}
+</style>
 </head>
 <body>
+<div class="bg-canvas">
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+  <div class="bg-orb bg-orb-3"></div>
+</div>
+<div id="particleLayer" style="position:fixed;inset:0;z-index:1;pointer-events:none;"></div>
 
-    <div class="space-bg"></div>
-    <div class="particles" id="particles"></div>
+<!-- ════════════════════════════════
+     START MENU
+════════════════════════════════ -->
+<div id="screenMenu" class="screen" style="z-index:20;align-items:center;justify-content:flex-start;overflow-y:auto;padding:1.5rem 1rem;">
+  <div style="max-width:680px;width:100%;margin:0 auto;padding-bottom:2rem;">
 
-    <!-- MAIN GAME HUD -->
-    <div id="gameUI" class="hidden-panel flex flex-col h-screen p-3 md:p-6 max-w-7xl mx-auto w-full gap-4 relative z-10">
-        
-        <!-- Header Top Bar -->
-        <header class="glass-panel py-3 px-6 flex justify-between items-center z-20">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-tr from-cyan-400 to-blue-500 rounded-full flex items-center justify-center shadow-lg border-2 border-white">
-                    <i class="fa-solid fa-user-astronaut text-white text-lg md:text-xl"></i>
-                </div>
-                <div class="hidden sm:block">
-                    <p class="text-xs text-cyan-200 uppercase tracking-widest font-bold">นักผจญภัย</p>
-                    <h2 id="hudPlayerName" class="font-display font-bold text-xl leading-none">Player</h2>
-                </div>
-            </div>
+    <!-- Hero -->
+    <div style="text-align:center;margin-bottom:1.75rem;">
+      <div style="display:inline-flex;align-items:center;gap:10px;background:rgba(234,197,71,0.12);border:1px solid rgba(234,197,71,0.3);border-radius:999px;padding:5px 14px;margin-bottom:1rem;">
+        <i class="fa-solid fa-flask" style="color:#fcd34d;font-size:0.75rem;"></i>
+        <span style="font-size:0.7rem;font-weight:700;letter-spacing:0.08em;color:#fcd34d;text-transform:uppercase;">Research Edition v2.0</span>
+      </div>
 
-            <div class="flex gap-2 md:gap-4">
-                <div class="bg-black/30 rounded-xl px-4 py-2 border border-white/10 text-center min-w-[80px]">
-                    <p class="text-[10px] text-gray-400 uppercase font-bold leading-none mb-1">ด่าน</p>
-                    <p id="hudLevel" class="font-display font-bold text-xl text-white leading-none">1/10</p>
-                </div>
-                <div class="bg-gradient-to-b from-amber-400 to-orange-500 rounded-xl px-4 py-2 border border-white/30 text-center min-w-[90px] shadow-[0_0_15px_rgba(245,158,11,0.4)]">
-                    <p class="text-[10px] text-orange-100 uppercase font-bold leading-none mb-1">คะแนน</p>
-                    <p id="hudScore" class="font-display font-bold text-xl text-white leading-none drop-shadow-md">0</p>
-                </div>
-            </div>
-        </header>
+      <div style="width:80px;height:80px;border-radius:28px;background:linear-gradient(135deg,#7c3aed,#ec4899);
+        display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;
+        box-shadow:0 8px 30px rgba(124,58,237,0.5);">
+        <i class="fa-solid fa-hands-asl-interpreting" style="font-size:2rem;color:#fff;"></i>
+      </div>
 
-        <!-- Main Play Area -->
-        <div class="flex flex-col lg:flex-row gap-4 flex-grow overflow-hidden">
-            
-            <div class="w-full lg:w-5/12 flex flex-col gap-4">
-                <!-- Video Box -->
-                <div class="glass-panel p-3 flex flex-col relative h-full max-h-[45vh] lg:max-h-none">
-                    <div class="flex justify-between items-center mb-2 px-2">
-                        <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-robot text-cyan-400"></i>
-                            <span class="text-sm font-bold text-cyan-100 uppercase tracking-wider">AI Scanner</span>
-                        </div>
-                        <div class="bg-cyan-500/20 px-3 py-1 rounded-full border border-cyan-400/50">
-                            <span class="text-xs font-bold text-cyan-200">นิ้วที่พบ: <span id="hudFingers" class="font-display text-lg text-white ml-1">0</span></span>
-                        </div>
-                    </div>
-
-                    <div id="cameraStatus" class="absolute inset-0 flex flex-col items-center justify-center z-20 bg-black/80 rounded-xl m-3 backdrop-blur-sm">
-                        <i class="fa-solid fa-satellite-dish fa-spin text-4xl text-cyan-400 mb-3"></i>
-                        <p class="font-bold text-cyan-100">กำลังเชื่อมต่อระบบ AI...</p>
-                    </div>
-
-                    <div id="camWrapper" class="cam-wrapper flex-grow">
-                        <div class="cam-reticle"></div>
-                        <video id="inputVideo" autoplay playsinline></video>
-                        <canvas id="outputCanvas"></canvas>
-                        
-                        <div id="holdIndicator" class="hold-ring-container">
-                            <div class="hold-ring-bg"></div>
-                            <div id="holdFill" class="hold-ring-progress"></div>
-                            <div class="absolute inset-0 flex items-center justify-center"><i class="fa-solid fa-check text-2xl text-amber-500 opacity-50"></i></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Controls -->
-                <div class="flex gap-3">
-                    <button id="btnPause" class="flex-1 py-3 btn-3d bg-white/10 hover:bg-white/20 border border-white/30 text-white shadow-lg">
-                        <i class="fa-solid fa-pause mr-2"></i> พัก
-                    </button>
-                    <button id="btnRestart" class="flex-1 py-3 btn-3d btn-danger">
-                        <i class="fa-solid fa-rotate-right mr-2"></i> เริ่มใหม่
-                    </button>
-                    <button id="btnMenu" class="flex-1 py-3 btn-3d bg-slate-800 border border-slate-600 hover:bg-slate-700 text-white">
-                        <i class="fa-solid fa-bars mr-2"></i> เมนู
-                    </button>
-                </div>
-            </div>
-
-            <div class="w-full lg:w-7/12 flex flex-col gap-4">
-                
-                <!-- The Question Area -->
-                <div class="glass-panel flex-grow flex flex-col items-center justify-center relative p-6 border-t-4 border-t-cyan-400 overflow-hidden">
-                    
-                    <!-- Mode Badge -->
-                    <div class="absolute top-4 left-6 bg-cyan-500/20 border border-cyan-400/50 px-4 py-1.5 rounded-full backdrop-blur-md">
-                        <p id="questionModeText" class="text-sm font-bold text-cyan-100 uppercase tracking-widest"><i class="fa-solid fa-bolt mr-2 text-yellow-400"></i>โหมดการบวก</p>
-                    </div>
-
-                    <div id="comboDisplay" class="absolute top-4 right-6 bg-pink-500 text-white font-black px-4 py-1.5 rounded-full shadow-[0_0_15px_rgba(236,72,153,0.6)] hidden animate-pop transform rotate-3 z-10 border-2 border-white">
-                        🔥 Combo x3!
-                    </div>
-
-                    <!-- Question Content -->
-                    <div class="text-center w-full mt-8 relative z-10">
-                        <h2 id="questionText" class="font-display text-giant text-white drop-shadow-[0_5px_5px_rgba(0,0,0,0.5)]">3 + 4 = ?</h2>
-                        <div class="mt-6 bg-white/10 inline-block px-8 py-3 rounded-full border border-white/20 backdrop-blur-sm">
-                            <p id="instructionText" class="text-xl font-bold text-cyan-50">ชูนิ้วหน้ากล้องเพื่อตอบคำถาม</p>
-                        </div>
-                    </div>
-
-                    <!-- Result Overlay (Popups over the question) -->
-                    <div id="feedbackContainer" class="absolute inset-0 bg-slate-900/90 backdrop-blur-md flex flex-col items-center justify-center hidden-panel z-30">
-                        <div id="feedbackIconWrap" class="w-28 h-28 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(0,0,0,0.5)]">
-                            <i id="feedbackIcon" class="fa-solid fa-check text-6xl text-white"></i>
-                        </div>
-                        <h2 id="feedbackText" class="font-display text-5xl font-bold mb-3 text-white drop-shadow-lg">ยอดเยี่ยม!</h2>
-                        <div class="bg-black/40 px-6 py-2 rounded-2xl border border-white/10 mb-4">
-                            <span id="feedbackPoints" class="font-display text-3xl text-yellow-400 drop-shadow-md">+10</span>
-                        </div>
-                        <p id="feedbackMessage" class="text-xl font-bold text-slate-300"></p>
-                    </div>
-                </div>
-
-                <!-- Timer & Stats -->
-                <div class="glass-panel p-5 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Timer -->
-                    <div class="flex flex-col justify-center">
-                        <div class="flex justify-between items-end mb-2">
-                            <span class="text-sm font-bold text-slate-300 uppercase tracking-widest"><i class="fa-regular fa-clock text-cyan-400 mr-1"></i> เวลา</span>
-                            <span id="timerText" class="font-display text-2xl text-white leading-none">10.0s</span>
-                        </div>
-                        <div class="timer-track">
-                            <div id="timerBar" class="timer-fill bg-cyan-400" style="width: 100%"></div>
-                        </div>
-                    </div>
-
-                    <!-- Badges -->
-                    <div class="flex justify-between items-center bg-black/20 rounded-xl p-3 border border-white/10">
-                        <div class="badge-item text-center flex flex-col items-center" id="badgeBeginner">
-                            <i class="fa-solid fa-seedling text-2xl text-green-400 mb-1 drop-shadow-md"></i><span class="text-[10px] font-bold uppercase text-gray-400">ผู้เริ่มต้น</span>
-                        </div>
-                        <div class="badge-item text-center flex flex-col items-center" id="badgeStar">
-                            <i class="fa-solid fa-star text-2xl text-yellow-400 mb-1 drop-shadow-md"></i><span class="text-[10px] font-bold uppercase text-gray-400">ดาวเด่น</span>
-                        </div>
-                        <div class="badge-item text-center flex flex-col items-center" id="badgeMaster">
-                            <i class="fa-solid fa-fire text-2xl text-orange-500 mb-1 drop-shadow-md"></i><span class="text-[10px] font-bold uppercase text-gray-400">ปรมาจารย์</span>
-                        </div>
-                        <div class="badge-item text-center flex flex-col items-center" id="badgeChampion">
-                            <i class="fa-solid fa-crown text-2xl text-pink-500 mb-1 drop-shadow-md"></i><span class="text-[10px] font-bold uppercase text-gray-400">แชมเปี้ยน</span>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
+      <h1 class="f-display" style="font-size:2.6rem;background:linear-gradient(135deg,#c4b5fd,#f9a8d4,#67e8f9);
+        -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;">
+        FINGER MATH
+      </h1>
+      <p style="font-size:0.95rem;color:#94a3b8;font-weight:500;">จักรวาลคณิตศาสตร์มหัศจรรย์ ✨</p>
     </div>
 
-    <!-- START MENU -->
-    <div id="startMenu" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="glass-panel max-w-2xl w-full p-8 md:p-12 text-center animate-pop relative border-t-4 border-t-violet-400">
-            
-            <div class="absolute top-0 right-0 p-8 opacity-10 pointer-events-none text-8xl"><i class="fa-solid fa-square-root-variable"></i></div>
-
-            <div class="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-violet-500 to-pink-500 rounded-3xl shadow-[0_10px_25px_rgba(139,92,246,0.5)] border-2 border-white/50 mb-6 transform rotate-3">
-                <i class="fa-solid fa-hands-asl-interpreting text-5xl text-white"></i>
-            </div>
-            
-            <h1 class="font-display text-5xl md:text-6xl text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-pink-300 to-cyan-300 mb-2 drop-shadow-lg">FINGER MATH</h1>
-            <p class="text-lg md:text-xl font-bold text-violet-200 mb-8">จักรวาลคณิตศาสตร์มหัศจรรย์ ✨</p>
-
-            <div class="bg-black/30 p-6 rounded-2xl border border-white/10 mb-8 max-w-md mx-auto">
-                <div class="mb-5">
-                    <label class="block text-left text-sm font-bold text-cyan-200 mb-2 uppercase tracking-wide">ชื่อนักสำรวจ</label>
-                    <input type="text" id="startPlayerName" placeholder="พิมพ์ชื่อตรงนี้..." class="glass-input">
-                </div>
-                <div>
-                    <label class="block text-left text-sm font-bold text-pink-200 mb-2 uppercase tracking-wide">จำนวนภารกิจ</label>
-                    <select id="startQuestionCount" class="glass-input appearance-none cursor-pointer">
-                        <option value="5" class="bg-slate-800">5 ข้อ (ฝึกหัด)</option>
-                        <option value="10" selected class="bg-slate-800">10 ข้อ (มาตรฐาน)</option>
-                        <option value="20" class="bg-slate-800">20 ข้อ (ท้าทาย)</option>
-                        <option value="999" class="bg-slate-800">ไม่มีที่สิ้นสุด</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl mx-auto mb-6">
-                <button onclick="app.startGame('adventure')" class="btn-3d btn-primary py-5 px-4 flex flex-col items-center">
-                    <i class="fa-solid fa-rocket text-3xl mb-2 text-violet-200"></i>
-                    <span class="text-xl">ลุยโหมดสุ่ม</span>
-                </button>
-                
-                <div class="bg-white/5 p-4 rounded-2xl border border-white/10 flex flex-col justify-between">
-                    <select id="classroomModeSelect" class="w-full bg-black/40 border border-white/20 rounded-xl p-3 text-white mb-3 outline-none font-bold text-sm">
-                        <option value="1">แสดงตัวเลข</option>
-                        <option value="2">การบวกเลข</option>
-                        <option value="3">การลบเลข</option>
-                        <option value="4">การคูณเลข</option>
-                        <option value="5">มากกว่า / น้อยกว่า</option>
-                        <option value="6">เลขคู่ / เลขคี่</option>
-                    </select>
-                    <button onclick="app.startGame('classroom')" class="w-full py-3 btn-3d btn-accent text-lg">ฝึกเฉพาะเรื่อง</button>
-                </div>
-            </div>
-
-            <button onclick="app.showLeaderboard()" class="text-sm font-bold text-slate-300 hover:text-white underline underline-offset-4 decoration-slate-500 transition">
-                <i class="fa-solid fa-trophy text-yellow-500 mr-1"></i> ดูตารางนักสำรวจที่เก่งที่สุด
-            </button>
+    <!-- Player info card -->
+    <div class="card" style="padding:1.25rem;margin-bottom:1.25rem;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;">
+        <i class="fa-solid fa-user-astronaut" style="color:#a78bfa;"></i>
+        <span style="font-size:0.78rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#a78bfa;">ข้อมูลผู้เรียน</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div>
+          <label class="lbl" style="color:#67e8f9;">ชื่อผู้เรียน</label>
+          <input type="text" id="startPlayerName" placeholder="พิมพ์ชื่อ..." class="inp">
         </div>
+        <div>
+          <label class="lbl" style="color:#f9a8d4;">ห้องเรียน / รหัสกลุ่ม</label>
+          <input type="text" id="startClassroom" placeholder="เช่น ป.3/1" class="inp">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <label class="lbl" style="color:#fcd34d;">จำนวนข้อ</label>
+          <select id="startQuestionCount" class="inp">
+            <option value="5">5 ข้อ</option>
+            <option value="10" selected>10 ข้อ</option>
+            <option value="20">20 ข้อ</option>
+            <option value="999">ไม่จำกัด</option>
+          </select>
+        </div>
+        <div>
+          <label class="lbl" style="color:#6ee7b7;">ระดับความยาก</label>
+          <select id="startDifficulty" class="inp">
+            <option value="easy">ง่าย (ป.1–2)</option>
+            <option value="medium" selected>ปานกลาง (ป.3–4)</option>
+            <option value="hard">ยาก (ป.5–6)</option>
+          </select>
+        </div>
+      </div>
     </div>
 
-    <!-- LEADERBOARD MODAL -->
-    <div id="leaderboardModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm hidden-panel">
-        <div class="glass-panel max-w-md w-full p-8 text-center animate-pop relative border-t-4 border-t-yellow-400">
-            <button onclick="document.getElementById('leaderboardModal').classList.add('hidden-panel')" class="absolute top-4 right-4 text-slate-400 hover:text-white transition text-2xl">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-            <i class="fa-solid fa-crown text-6xl text-yellow-400 mb-4 drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]"></i>
-            <h2 class="font-display text-3xl text-white mb-6">ทำเนียบคนเก่ง</h2>
-            
-            <div id="leaderboardList" class="flex flex-col gap-2 mb-6 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
-                <!-- Injected via JS -->
-            </div>
-            <button onclick="app.requestClearLeaderboard()" class="text-xs font-bold text-red-400 hover:text-red-300">ล้างประวัติทั้งหมด</button>
-        </div>
+    <!-- Tabs -->
+    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:1.25rem;flex-wrap:wrap;">
+      <button class="tab-btn active" data-tab="test" onclick="app.switchMenuTab('test')">
+        <i class="fa-solid fa-clipboard-check" style="margin-right:6px;"></i>โหมดทดสอบ
+      </button>
+      <button class="tab-btn" data-tab="practice" onclick="app.switchMenuTab('practice')">
+        <i class="fa-solid fa-dumbbell" style="margin-right:6px;"></i>โหมดฝึกหัด
+      </button>
+      <button class="tab-btn" data-tab="teacher" onclick="app.switchMenuTab('teacher')">
+        <i class="fa-solid fa-chalkboard-user" style="margin-right:6px;"></i>ครูผู้สอน
+      </button>
     </div>
 
-    <!-- GAME OVER MODAL -->
-    <div id="gameOverModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md hidden-panel">
-        <div class="glass-panel max-w-md w-full p-8 text-center animate-pop border-t-4 border-t-cyan-400">
-            <div class="w-20 h-20 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full mx-auto flex items-center justify-center shadow-lg border-4 border-slate-900 -mt-16 mb-4">
-                <i class="fa-solid fa-flag-checkered text-3xl text-white"></i>
-            </div>
-            
-            <h2 id="gameOverTitle" class="font-display text-4xl text-cyan-300 mb-6 drop-shadow-md">ภารกิจสำเร็จ!</h2>
-            
-            <div class="bg-black/30 rounded-2xl p-6 border border-white/10 mb-6">
-                <p class="text-sm font-bold text-slate-400 uppercase tracking-widest">นักสำรวจ</p>
-                <p id="finalPlayerName" class="font-display text-2xl text-white mb-4"></p>
-                <p class="text-sm font-bold text-yellow-500 uppercase tracking-widest">คะแนนรวม</p>
-                <p id="finalScoreText" class="font-display text-6xl text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.4)]">0</p>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <div class="bg-green-500/10 rounded-xl p-3 border border-green-500/30">
-                    <p class="text-green-400 font-bold text-sm uppercase"><i class="fa-solid fa-check mr-1"></i>ถูก</p>
-                    <p id="finalCorrect" class="font-display text-2xl text-white">0</p>
-                </div>
-                <div class="bg-red-500/10 rounded-xl p-3 border border-red-500/30">
-                    <p class="text-red-400 font-bold text-sm uppercase"><i class="fa-solid fa-xmark mr-1"></i>ผิด</p>
-                    <p id="finalWrong" class="font-display text-2xl text-white">0</p>
-                </div>
-            </div>
-
-            <div class="flex gap-3">
-                <button onclick="app.returnToMenu()" class="flex-1 py-3 btn-3d bg-white/10 text-white border border-white/30">เมนู</button>
-                <button onclick="app.restartGame()" class="flex-1 py-3 btn-3d btn-primary">เล่นอีกครั้ง</button>
-            </div>
+    <!-- Tab: Test -->
+    <div id="tabTest">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem;">
+        <div class="mode-card pre" onclick="app.startGame('pretest')">
+          <div class="mode-icon" style="background:rgba(8,145,178,0.2);">
+            <i class="fa-solid fa-circle-play" style="color:#67e8f9;"></i>
+          </div>
+          <div style="font-weight:700;font-size:0.92rem;margin-bottom:2px;">Pre-Test</div>
+          <div style="font-size:0.72rem;color:#67e8f9;opacity:0.7;">ก่อนเรียน</div>
         </div>
+        <div class="mode-card practice" onclick="app.startGame('practice_topic')">
+          <div class="mode-icon" style="background:rgba(16,185,129,0.2);">
+            <i class="fa-solid fa-book-open-reader" style="color:#6ee7b7;"></i>
+          </div>
+          <div style="font-weight:700;font-size:0.92rem;margin-bottom:2px;">ฝึกหัด</div>
+          <div style="font-size:0.72rem;color:#6ee7b7;opacity:0.7;">ระหว่างเรียน</div>
+        </div>
+        <div class="mode-card post" onclick="app.startGame('posttest')">
+          <div class="mode-icon" style="background:rgba(124,58,237,0.2);">
+            <i class="fa-solid fa-flag-checkered" style="color:#c4b5fd;"></i>
+          </div>
+          <div style="font-weight:700;font-size:0.92rem;margin-bottom:2px;">Post-Test</div>
+          <div style="font-size:0.72rem;color:#c4b5fd;opacity:0.7;">หลังเรียน</div>
+        </div>
+      </div>
+      <div>
+        <label class="lbl">หัวข้อที่ทดสอบ</label>
+        <select id="testTopicSelect" class="inp">
+          <option value="0">🎲 สุ่มทุกหัวข้อ (Adventure)</option>
+          <option value="1">✋ แสดงตัวเลข 0–10</option>
+          <option value="2">➕ การบวก</option>
+          <option value="3">➖ การลบ</option>
+          <option value="4">✖️ การคูณ</option>
+          <option value="5">⚖️ มากกว่า / น้อยกว่า</option>
+          <option value="6">🔢 เลขคู่ / เลขคี่</option>
+        </select>
+      </div>
     </div>
 
-    <!-- CUSTOM CONFIRM MODAL -->
-    <div id="customConfirmModal" class="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm hidden-panel">
-        <div class="glass-panel max-w-sm w-full p-6 text-center animate-pop border-t-4 border-t-red-500">
-            <i class="fa-solid fa-triangle-exclamation text-5xl text-red-500 mb-4"></i>
-            <h2 class="font-display text-2xl text-white mb-2">ยืนยันการล้างข้อมูล?</h2>
-            <p class="text-slate-300 text-sm mb-6">คะแนนที่สะสมมาทั้งหมดจะหายไปและไม่สามารถกู้คืนได้</p>
-            <div class="flex gap-3">
-                <button onclick="document.getElementById('customConfirmModal').classList.add('hidden-panel')" class="flex-1 py-3 btn-3d bg-white/10 text-white border border-white/30">ยกเลิก</button>
-                <button onclick="app.confirmClearLeaderboard()" class="flex-1 py-3 btn-3d btn-danger">ล้างข้อมูล</button>
+    <!-- Tab: Practice -->
+    <div id="tabPractice" class="hidden">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
+        <button onclick="app.startGame('practice',1)" class="btn btn-cyan btn-lg" style="width:100%;justify-content:flex-start;">
+          <i class="fa-solid fa-hand"></i> แสดงตัวเลข
+        </button>
+        <button onclick="app.startGame('practice',2)" class="btn btn-cyan btn-lg" style="width:100%;justify-content:flex-start;">
+          <i class="fa-solid fa-plus"></i> การบวก
+        </button>
+        <button onclick="app.startGame('practice',3)" class="btn btn-cyan btn-lg" style="width:100%;justify-content:flex-start;">
+          <i class="fa-solid fa-minus"></i> การลบ
+        </button>
+        <button onclick="app.startGame('practice',4)" class="btn btn-cyan btn-lg" style="width:100%;justify-content:flex-start;">
+          <i class="fa-solid fa-xmark"></i> การคูณ
+        </button>
+        <button onclick="app.startGame('practice',5)" class="btn btn-cyan btn-lg" style="width:100%;justify-content:flex-start;">
+          <i class="fa-solid fa-less-than"></i> เปรียบเทียบ
+        </button>
+        <button onclick="app.startGame('practice',6)" class="btn btn-cyan btn-lg" style="width:100%;justify-content:flex-start;">
+          <i class="fa-solid fa-hashtag"></i> คู่ / คี่
+        </button>
+      </div>
+      <div>
+        <label class="lbl">Hold Time (เวลากดค้าง)</label>
+        <select id="practiceHoldTime" class="inp">
+          <option value="0.8">0.8 วิ — เร็ว</option>
+          <option value="1.2" selected>1.2 วิ — ปกติ</option>
+          <option value="2.0">2.0 วิ — ช้า (เด็กเล็ก)</option>
+          <option value="3.0">3.0 วิ — ช้ามาก</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Tab: Teacher -->
+    <div id="tabTeacher" class="hidden">
+      <div style="background:rgba(234,197,71,0.07);border:1px solid rgba(234,197,71,0.25);border-radius:12px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+        <i class="fa-solid fa-lock" style="color:#fcd34d;font-size:0.8rem;"></i>
+        <span style="font-size:0.78rem;font-weight:700;color:#fcd34d;">พื้นที่ครูผู้สอน — ข้อมูลวิจัย</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <button onclick="app.showDashboard()" class="btn btn-gold btn-lg" style="width:100%;">
+          <i class="fa-solid fa-chart-bar"></i> Dashboard
+        </button>
+        <button onclick="app.exportCSV()" class="btn btn-green btn-lg" style="width:100%;">
+          <i class="fa-solid fa-file-csv"></i> Export CSV
+        </button>
+        <button onclick="app.showLeaderboard()" class="btn btn-ghost btn-lg" style="width:100%;">
+          <i class="fa-solid fa-trophy" style="color:#fcd34d;"></i> คะแนนสูงสุด
+        </button>
+        <button onclick="app.requestClearLeaderboard()" class="btn btn-red btn-lg" style="width:100%;">
+          <i class="fa-solid fa-trash"></i> ล้างข้อมูล
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer links -->
+    <div style="display:flex;justify-content:center;gap:24px;margin-top:1.5rem;font-size:0.78rem;color:rgba(255,255,255,0.3);font-weight:600;">
+      <button onclick="app.showLeaderboard()" style="background:none;border:none;cursor:pointer;color:inherit;font-family:inherit;font-weight:inherit;" onmouseover="this.style.color='#fcd34d'" onmouseout="this.style.color=''">
+        <i class="fa-solid fa-crown" style="color:#fcd34d;margin-right:5px;"></i>คะแนนสูงสุด
+      </button>
+      <span>|</span>
+      <button onclick="app.exportCSV()" style="background:none;border:none;cursor:pointer;color:inherit;font-family:inherit;font-weight:inherit;" onmouseover="this.style.color='#6ee7b7'" onmouseout="this.style.color=''">
+        <i class="fa-solid fa-download" style="color:#6ee7b7;margin-right:5px;"></i>Export ข้อมูล
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     GAME SCREEN
+════════════════════════════════ -->
+<div id="screenGame" class="screen hidden" style="padding:10px;gap:10px;">
+
+  <!-- ── TOP HUD ── -->
+  <header class="card card-sm" style="padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0;">
+    <!-- Player -->
+    <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1;">
+      <div style="width:38px;height:38px;border-radius:50%;flex-shrink:0;
+        background:linear-gradient(135deg,#7c3aed,#ec4899);
+        display:flex;align-items:center;justify-content:center;
+        box-shadow:0 0 12px rgba(124,58,237,0.4);">
+        <i class="fa-solid fa-user-astronaut" style="font-size:1rem;color:#fff;"></i>
+      </div>
+      <div style="min-width:0;">
+        <div style="font-size:0.65rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#a78bfa;margin-bottom:1px;">นักสำรวจ</div>
+        <div id="hudPlayerName" style="font-weight:700;font-size:0.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Player</div>
+      </div>
+      <div id="hudTestBadge" class="badge badge-practice hidden" style="flex-shrink:0;font-size:0.65rem;"></div>
+    </div>
+
+    <!-- Chips -->
+    <div style="display:flex;gap:6px;flex-shrink:0;">
+      <div class="chip">
+        <span class="chip-val" id="hudLevel">1/10</span>
+        <span class="chip-lbl">ด่าน</span>
+      </div>
+      <div class="chip score-chip">
+        <span class="chip-val" id="hudScore" style="color:#fcd34d;">0</span>
+        <span class="chip-lbl" style="color:rgba(255,220,100,0.6);">คะแนน</span>
+      </div>
+      <div class="chip">
+        <span class="chip-val" id="hudElapsed" style="color:#67e8f9;">0s</span>
+        <span class="chip-lbl">เวลารวม</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── MAIN AREA ── -->
+  <div style="display:flex;gap:10px;flex:1;min-height:0;overflow:hidden;">
+
+    <!-- LEFT: Camera column -->
+    <div style="width:340px;flex-shrink:0;display:flex;flex-direction:column;gap:10px;">
+
+      <!-- Camera card -->
+      <div class="card" style="padding:12px;flex:1;display:flex;flex-direction:column;gap:10px;min-height:0;">
+        <!-- Scanner header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:7px;">
+            <div style="width:28px;height:28px;border-radius:8px;background:rgba(0,212,255,0.15);display:flex;align-items:center;justify-content:center;">
+              <i class="fa-solid fa-robot" style="color:#00d4ff;font-size:0.8rem;"></i>
             </div>
+            <span style="font-size:0.72rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#67e8f9;">AI Scanner</span>
+            <div class="anim-pulse" style="width:7px;height:7px;border-radius:50%;background:#10b981;margin-left:2px;"></div>
+          </div>
+          <!-- Confidence -->
+          <div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:8px;padding:4px 8px;">
+            <i class="fa-solid fa-signal" style="font-size:0.7rem;color:#94a3b8;"></i>
+            <span style="font-size:0.7rem;color:#94a3b8;font-weight:600;">Conf:</span>
+            <span id="hudConf" style="font-size:0.7rem;font-weight:700;color:#fff;">—</span>
+          </div>
         </div>
+
+        <!-- Camera box -->
+        <div class="cam-box" id="camWrapper" style="flex:1;min-height:0;">
+          <div class="cam-corner tl"></div>
+          <div class="cam-corner tr"></div>
+          <div class="cam-corner bl"></div>
+          <div class="cam-corner br"></div>
+          <video id="inputVideo" autoplay playsinline></video>
+          <canvas id="outputCanvas"></canvas>
+          <div id="cameraStatus" class="cam-overlay">
+            <div style="width:56px;height:56px;border-radius:50%;background:rgba(0,212,255,0.1);
+              border:2px solid rgba(0,212,255,0.4);display:flex;align-items:center;justify-content:center;margin-bottom:4px;">
+              <i class="fa-solid fa-satellite-dish fa-spin" style="font-size:1.5rem;color:#00d4ff;"></i>
+            </div>
+            <p style="font-weight:700;font-size:0.9rem;color:#67e8f9;">กำลังเชื่อมต่อ AI...</p>
+            <p style="font-size:0.75rem;color:#64748b;margin-top:2px;">ต้องการอนุญาตกล้อง</p>
+          </div>
+          <div id="holdRing" class="hold-ring">
+            <svg viewBox="0 0 100 100">
+              <circle class="hold-ring-track" cx="50" cy="50" r="45"/>
+              <circle id="holdFill" class="hold-ring-fill" cx="50" cy="50" r="45"/>
+            </svg>
+            <div class="hold-label"><i class="fa-solid fa-check" style="color:#f59e0b;"></i></div>
+          </div>
+          <div class="conf-bar"><div id="confidenceFill" class="conf-fill" style="width:0%;background:#10b981;"></div></div>
+        </div>
+
+        <!-- Finger + Controls row -->
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:10px;padding:8px 12px;flex:1;">
+            <i class="fa-solid fa-hand-point-up" style="color:#00d4ff;font-size:0.9rem;"></i>
+            <span style="font-size:0.72rem;font-weight:700;color:#94a3b8;letter-spacing:0.05em;text-transform:uppercase;">นิ้ว</span>
+            <span id="hudFingers" style="font-family:'Fredoka One',cursive;font-size:1.6rem;color:#fff;margin-left:4px;line-height:1;">0</span>
+          </div>
+          <div id="comboDisplay" class="combo-badge">🔥 Combo x3!</div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button id="btnPause" class="btn btn-ghost" style="flex:1;padding:0.6rem;">
+          <i class="fa-solid fa-pause"></i><span style="font-size:0.8rem;">พัก</span>
+        </button>
+        <button id="btnRestart" class="btn btn-red" style="flex:1;padding:0.6rem;">
+          <i class="fa-solid fa-rotate-right"></i><span style="font-size:0.8rem;">ใหม่</span>
+        </button>
+        <button id="btnMenu" class="btn btn-ghost" style="flex:1;padding:0.6rem;">
+          <i class="fa-solid fa-house"></i><span style="font-size:0.8rem;">เมนู</span>
+        </button>
+      </div>
     </div>
 
-    <!-- LEVEL UP OVERLAY -->
-    <div id="levelUpOverlay" class="fixed inset-0 z-[60] flex items-center justify-center pointer-events-none hidden-panel bg-cyan-900/40 backdrop-blur-sm">
-        <div class="text-center animate-pop">
-            <i class="fa-solid fa-angles-up text-7xl text-cyan-400 mb-4 drop-shadow-[0_0_20px_rgba(34,211,238,0.8)]"></i>
-            <h1 class="font-display text-6xl md:text-8xl text-transparent bg-clip-text bg-gradient-to-b from-white to-cyan-300 drop-shadow-2xl">LEVEL UP!</h1>
-            <p class="text-2xl font-bold text-white mt-4 bg-black/40 px-6 py-2 rounded-full inline-block backdrop-blur-md">เตรียมพร้อม ความเร็วเพิ่มขึ้น!</p>
+    <!-- RIGHT: Question + Stats -->
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;">
+
+      <!-- Question card -->
+      <div class="card" style="flex:1;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;">
+        <!-- Mode badge top-left -->
+        <div style="position:absolute;top:14px;left:14px;background:rgba(0,212,255,0.12);border:1px solid rgba(0,212,255,0.3);border-radius:999px;padding:5px 12px;display:flex;align-items:center;gap:6px;">
+          <i class="fa-solid fa-bolt" style="color:#fcd34d;font-size:0.7rem;"></i>
+          <span id="questionModeText" style="font-size:0.72rem;font-weight:700;color:#67e8f9;letter-spacing:0.06em;text-transform:uppercase;">โหมด</span>
         </div>
+
+        <!-- Combo -->
+        <div id="comboDisplay2" style="position:absolute;top:14px;right:14px;display:none;background:linear-gradient(135deg,#ec4899,#be185d);color:#fff;padding:5px 14px;border-radius:999px;font-weight:800;font-size:0.82rem;box-shadow:0 0 15px rgba(236,72,153,0.5);">🔥 Combo!</div>
+
+        <!-- Question -->
+        <div id="questionText" class="q-text">3 + 4 = ?</div>
+        <div style="margin-top:1rem;background:rgba(255,255,255,0.07);border:1px solid var(--border);border-radius:999px;padding:8px 20px;">
+          <p id="instructionText" style="font-size:0.9rem;font-weight:600;color:#cbd5e1;text-align:center;">ชูนิ้วหน้ากล้องเพื่อตอบ</p>
+        </div>
+
+        <!-- Feedback overlay -->
+        <div id="feedbackContainer" class="feedback-overlay hidden" style="border-radius:18px;">
+          <div id="feedbackIconWrap" style="width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(16,185,129,0.2);border:2px solid #10b981;">
+            <i id="feedbackIcon" class="fa-solid fa-check" style="font-size:2.2rem;color:#10b981;"></i>
+          </div>
+          <div id="feedbackText" style="font-family:'Fredoka One',cursive;font-size:2.2rem;color:#10b981;">ถูกต้อง!</div>
+          <div style="background:rgba(0,0,0,0.4);border:1px solid var(--border);border-radius:999px;padding:5px 18px;">
+            <span id="feedbackPoints" style="font-family:'Fredoka One',cursive;font-size:1.5rem;color:#fcd34d;">+10</span>
+          </div>
+          <p id="feedbackMessage" style="font-size:0.9rem;font-weight:600;color:#94a3b8;text-align:center;padding:0 1rem;"></p>
+          <p id="feedbackAnswer" style="font-size:0.82rem;color:#64748b;"></p>
+        </div>
+      </div>
+
+      <!-- Timer + Achievements row -->
+      <div class="card card-sm" style="padding:12px 16px;display:flex;align-items:center;gap:14px;flex-shrink:0;">
+        <!-- Timer -->
+        <div style="flex:1;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <div style="display:flex;align-items:center;gap:5px;">
+              <i class="fa-regular fa-clock" style="font-size:0.8rem;color:#67e8f9;"></i>
+              <span style="font-size:0.67rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#64748b;">เวลา</span>
+            </div>
+            <span id="timerText" style="font-family:'Fredoka One',cursive;font-size:1.2rem;color:#fff;">10.0s</span>
+          </div>
+          <div class="timer-track">
+            <div id="timerBar" class="timer-fill" style="width:100%;background:#00d4ff;"></div>
+          </div>
+        </div>
+
+        <!-- Divider -->
+        <div style="width:1px;height:40px;background:var(--border);flex-shrink:0;"></div>
+
+        <!-- Achievements -->
+        <div style="display:flex;gap:12px;flex-shrink:0;">
+          <div class="achv" id="achvBeginner" title="เริ่มต้น">
+            <div class="achv-icon" style="background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.4);">
+              <i class="fa-solid fa-seedling" style="color:#10b981;"></i>
+            </div>
+            <span style="font-size:0.58rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#64748b;">เริ่มต้น</span>
+          </div>
+          <div class="achv" id="achvStar" title="ดาวเด่น">
+            <div class="achv-icon" style="background:rgba(253,224,71,0.15);border-color:rgba(253,224,71,0.4);">
+              <i class="fa-solid fa-star" style="color:#fde047;"></i>
+            </div>
+            <span style="font-size:0.58rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#64748b;">ดาวเด่น</span>
+          </div>
+          <div class="achv" id="achvMaster" title="ปรมาจารย์">
+            <div class="achv-icon" style="background:rgba(249,115,22,0.15);border-color:rgba(249,115,22,0.4);">
+              <i class="fa-solid fa-fire" style="color:#f97316;"></i>
+            </div>
+            <span style="font-size:0.58rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#64748b;">ปรมาจารย์</span>
+          </div>
+          <div class="achv" id="achvChampion" title="แชมป์">
+            <div class="achv-icon" style="background:rgba(236,72,153,0.15);border-color:rgba(236,72,153,0.4);">
+              <i class="fa-solid fa-crown" style="color:#ec4899;"></i>
+            </div>
+            <span style="font-size:0.58rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#64748b;">แชมป์</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     LEVEL UP
+════════════════════════════════ -->
+<div id="levelUpOverlay" class="levelup hidden" style="pointer-events:none;">
+  <div style="text-align:center;" class="anim-pop">
+    <div style="font-size:4rem;margin-bottom:0.5rem;">⚡</div>
+    <div class="f-display" style="font-size:4rem;background:linear-gradient(135deg,#fff,#67e8f9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">LEVEL UP!</div>
+    <div style="background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.2);border-radius:999px;padding:8px 24px;display:inline-block;margin-top:10px;font-weight:700;">ความเร็วเพิ่มขึ้น! 🚀</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     GAME OVER MODAL
+════════════════════════════════ -->
+<div id="gameOverModal" class="modal-wrap hidden">
+  <div class="modal-box" style="max-width:520px;">
+    <!-- Header -->
+    <div style="text-align:center;margin-bottom:1.25rem;">
+      <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#00d4ff,#0891b2);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;box-shadow:0 0 20px rgba(0,212,255,0.4);">
+        <i class="fa-solid fa-flag-checkered" style="font-size:1.5rem;color:#fff;"></i>
+      </div>
+      <div id="sessionTypeBadge" class="badge badge-practice" style="margin-bottom:8px;">—</div>
+      <h2 id="gameOverTitle" class="f-display" style="font-size:1.9rem;color:#67e8f9;">ภารกิจสำเร็จ!</h2>
     </div>
 
-    <script>
-        // Custom animated background particles logic
-        function createParticles() {
-            const container = document.getElementById('particles');
-            const symbols = ['+', '-', '×', '÷', '=', '%', 'π', '∞'];
-            for(let i=0; i<20; i++) {
-                let p = document.createElement('div');
-                p.className = 'particle';
-                p.innerText = symbols[Math.floor(Math.random() * symbols.length)];
-                p.style.left = Math.random() * 100 + 'vw';
-                p.style.fontSize = (Math.random() * 2 + 1.5) + 'rem';
-                p.style.animationDuration = (Math.random() * 10 + 10) + 's';
-                p.style.animationDelay = (Math.random() * 5) + 's';
-                container.appendChild(p);
-            }
+    <!-- Info -->
+    <div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:14px;padding:12px 16px;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <span style="font-size:0.78rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;">นักเรียน</span>
+        <span id="finalPlayerName" style="font-weight:700;font-size:0.88rem;"></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <span style="font-size:0.78rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;">ห้องเรียน</span>
+        <span id="finalClassroom" style="font-weight:600;font-size:0.88rem;color:#94a3b8;"></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <span style="font-size:0.78rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;">Session ID</span>
+        <span id="finalSessionId" style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:#64748b;"></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;">
+        <span style="font-size:0.78rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;">เวลาทั้งหมด</span>
+        <span id="finalElapsed" style="font-weight:600;font-size:0.88rem;color:#67e8f9;"></span>
+      </div>
+    </div>
+
+    <!-- Score grid -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+      <div style="background:rgba(217,119,6,0.12);border:1px solid rgba(217,119,6,0.3);border-radius:12px;padding:12px;text-align:center;">
+        <p style="font-size:0.7rem;font-weight:700;color:#f59e0b;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">คะแนนรวม</p>
+        <p id="finalScoreText" class="f-display" style="font-size:2rem;color:#fcd34d;">0</p>
+      </div>
+      <div style="background:rgba(8,145,178,0.12);border:1px solid rgba(8,145,178,0.3);border-radius:12px;padding:12px;text-align:center;">
+        <p style="font-size:0.7rem;font-weight:700;color:#0891b2;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">ความแม่นยำ</p>
+        <p id="finalAccuracy" class="f-display" style="font-size:2rem;color:#67e8f9;">0%</p>
+      </div>
+      <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);border-radius:12px;padding:10px;text-align:center;">
+        <p style="font-size:0.7rem;font-weight:700;color:#10b981;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">ตอบถูก</p>
+        <p id="finalCorrect" class="f-display" style="font-size:1.7rem;color:#6ee7b7;">0</p>
+      </div>
+      <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:12px;padding:10px;text-align:center;">
+        <p style="font-size:0.7rem;font-weight:700;color:#ef4444;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">ตอบผิด</p>
+        <p id="finalWrong" class="f-display" style="font-size:1.7rem;color:#fca5a5;">0</p>
+      </div>
+    </div>
+
+    <!-- Per-question log -->
+    <div style="background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:12px;max-height:120px;overflow-y:auto;">
+      <p style="font-size:0.65rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;margin-bottom:6px;">บันทึกรายข้อ</p>
+      <div id="finalQuestionLog"></div>
+    </div>
+
+    <!-- Action buttons -->
+    <div style="display:flex;gap:8px;">
+      <button onclick="app.returnToMenu()" class="btn btn-ghost" style="flex:1;">
+        <i class="fa-solid fa-house"></i> เมนู
+      </button>
+      <button onclick="app.exportCSV()" class="btn btn-green" style="flex:1;">
+        <i class="fa-solid fa-download"></i> CSV
+      </button>
+      <button onclick="app.restartGame()" class="btn btn-primary" style="flex:1;">
+        <i class="fa-solid fa-rotate-right"></i> เล่นอีกครั้ง
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     LEADERBOARD MODAL
+════════════════════════════════ -->
+<div id="leaderboardModal" class="modal-wrap hidden">
+  <div class="modal-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <i class="fa-solid fa-crown" style="font-size:1.5rem;color:#fcd34d;"></i>
+        <h2 class="f-display" style="font-size:1.5rem;color:#fff;">ทำเนียบคนเก่ง</h2>
+      </div>
+      <button onclick="document.getElementById('leaderboardModal').classList.add('hidden')" class="btn btn-ghost" style="padding:6px 10px;">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div id="leaderboardList" style="display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;margin-bottom:12px;"></div>
+    <button onclick="app.exportCSV()" class="btn btn-green" style="width:100%;">
+      <i class="fa-solid fa-file-csv"></i> Export ข้อมูลทั้งหมด (CSV)
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     TEACHER DASHBOARD MODAL
+════════════════════════════════ -->
+<div id="dashboardModal" class="modal-wrap hidden" style="align-items:flex-start;padding-top:2rem;">
+  <div class="modal-box" style="max-width:600px;max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:40px;height:40px;border-radius:12px;background:rgba(217,119,6,0.2);display:flex;align-items:center;justify-content:center;">
+          <i class="fa-solid fa-chart-bar" style="color:#f59e0b;"></i>
+        </div>
+        <div>
+          <h2 class="f-display" style="font-size:1.3rem;">Teacher Dashboard</h2>
+          <p style="font-size:0.72rem;color:#64748b;font-weight:600;">ข้อมูลผลการเรียนรู้รวม</p>
+        </div>
+      </div>
+      <button onclick="document.getElementById('dashboardModal').classList.add('hidden')" class="btn btn-ghost" style="padding:6px 10px;">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Summary stats -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1rem;">
+      <div style="background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center;">
+        <p style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin-bottom:3px;">ผู้เล่น</p>
+        <p id="dashTotalPlayers" class="f-display" style="font-size:1.7rem;color:#67e8f9;">0</p>
+      </div>
+      <div style="background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center;">
+        <p style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin-bottom:3px;">เซสชัน</p>
+        <p id="dashTotalSessions" class="f-display" style="font-size:1.7rem;color:#a78bfa;">0</p>
+      </div>
+      <div style="background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center;">
+        <p style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin-bottom:3px;">แม่นยำ</p>
+        <p id="dashAvgAcc" class="f-display" style="font-size:1.7rem;color:#6ee7b7;">0%</p>
+      </div>
+      <div style="background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center;">
+        <p style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin-bottom:3px;">เวลาเฉลี่ย</p>
+        <p id="dashAvgTime" class="f-display" style="font-size:1.7rem;color:#fcd34d;">0s</p>
+      </div>
+    </div>
+
+    <!-- Topic accuracy -->
+    <div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:12px;">
+        <i class="fa-solid fa-bullseye" style="color:#10b981;font-size:0.85rem;"></i>
+        <span style="font-size:0.72rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#10b981;">ความแม่นยำแต่ละหัวข้อ</span>
+      </div>
+      <div id="dashTopicBars" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+
+    <!-- Pre/Post -->
+    <div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:12px;">
+        <i class="fa-solid fa-arrows-left-right" style="color:#67e8f9;font-size:0.85rem;"></i>
+        <span style="font-size:0.72rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#67e8f9;">Pre-Test vs Post-Test</span>
+      </div>
+      <div id="dashPrePost" style="color:#64748b;font-size:0.85rem;text-align:center;padding:8px;">ยังไม่มีข้อมูลเพียงพอ</div>
+    </div>
+
+    <!-- Recent sessions -->
+    <div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:14px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:12px;">
+        <i class="fa-solid fa-clock-rotate-left" style="color:#a78bfa;font-size:0.85rem;"></i>
+        <span style="font-size:0.72rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#a78bfa;">เซสชันล่าสุด</span>
+      </div>
+      <div id="dashRecentSessions" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     CONFIRM MODAL
+════════════════════════════════ -->
+<div id="customConfirmModal" class="modal-wrap hidden">
+  <div class="modal-box" style="max-width:360px;text-align:center;">
+    <div style="width:56px;height:56px;border-radius:50%;background:rgba(239,68,68,0.15);border:2px solid rgba(239,68,68,0.4);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+      <i class="fa-solid fa-triangle-exclamation" style="font-size:1.4rem;color:#ef4444;"></i>
+    </div>
+    <h2 class="f-display" style="font-size:1.4rem;margin-bottom:6px;">ล้างข้อมูลทั้งหมด?</h2>
+    <p style="font-size:0.85rem;color:#94a3b8;margin-bottom:1.25rem;">ข้อมูลวิจัยทั้งหมดจะหายถาวร ไม่สามารถกู้คืนได้</p>
+    <div style="display:flex;gap:8px;">
+      <button onclick="document.getElementById('customConfirmModal').classList.add('hidden')" class="btn btn-ghost" style="flex:1;">
+        <i class="fa-solid fa-xmark"></i> ยกเลิก
+      </button>
+      <button onclick="app.confirmClearLeaderboard()" class="btn btn-red" style="flex:1;">
+        <i class="fa-solid fa-trash"></i> ล้างข้อมูล
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Particles ──────────────────────────────
+(function(){
+  const l=document.getElementById('particleLayer');
+  const s=['+','-','×','÷','=','π','√','∞','²','%'];
+  for(let i=0;i<14;i++){
+    const p=document.createElement('div');
+    p.className='particle';
+    p.innerText=s[i%s.length];
+    p.style.left=Math.random()*100+'vw';
+    p.style.animationDuration=(Math.random()*12+12)+'s';
+    p.style.animationDelay=(Math.random()*8)+'s';
+    l.appendChild(p);
+  }
+})();
+
+// ── CONFIG ───────────────────────────────
+const CONFIG={
+  timePerQuestion:10, holdTimeRequired:1.2,
+  pointsBase:10, pointsFast:5, levelUpScore:100,
+  confThreshold:0.6,
+  messages:["ยอดเยี่ยม!","อัจฉริยะ!","สุดยอด!","ไวปานสายฟ้า!","แม่นยำมาก!","ทำได้ดี!","เก่งมาก!","ดีเยี่ยม!"]
+};
+
+// ── DOM ──────────────────────────────────
+const $ = id => document.getElementById(id);
+const DOM={
+  menu:$('screenMenu'), ui:$('screenGame'),
+  camStatus:$('cameraStatus'), video:$('inputVideo'),
+  canvas:$('outputCanvas'), camWrapper:$('camWrapper'),
+  hudScore:$('hudScore'), hudLevel:$('hudLevel'),
+  hudPlayerName:$('hudPlayerName'), hudFingers:$('hudFingers'),
+  hudConf:$('hudConf'), hudElapsed:$('hudElapsed'),
+  hudTestBadge:$('hudTestBadge'), confidenceFill:$('confidenceFill'),
+  timerText:$('timerText'), timerBar:$('timerBar'),
+  questionMode:$('questionModeText'), questionText:$('questionText'),
+  instructionText:$('instructionText'),
+  holdRing:$('holdRing'), holdFill:$('holdFill'),
+  feedbackContainer:$('feedbackContainer'),
+  feedbackIconWrap:$('feedbackIconWrap'), feedbackIcon:$('feedbackIcon'),
+  feedbackText:$('feedbackText'), feedbackPoints:$('feedbackPoints'),
+  feedbackMessage:$('feedbackMessage'), feedbackAnswer:$('feedbackAnswer'),
+  comboDisplay:$('comboDisplay'), comboDisplay2:$('comboDisplay2'),
+  achv:{beginner:$('achvBeginner'),star:$('achvStar'),master:$('achvMaster'),champion:$('achvChampion')},
+  gameOverModal:$('gameOverModal'), gameOverTitle:$('gameOverTitle'),
+  finalScoreText:$('finalScoreText'), finalPlayerName:$('finalPlayerName'),
+  finalClassroom:$('finalClassroom'), finalSessionId:$('finalSessionId'),
+  finalElapsed:$('finalElapsed'), finalAccuracy:$('finalAccuracy'),
+  finalCorrect:$('finalCorrect'), finalWrong:$('finalWrong'),
+  finalQuestionLog:$('finalQuestionLog'),
+  sessionTypeBadge:$('sessionTypeBadge'),
+  startPlayerName:$('startPlayerName'), startClassroom:$('startClassroom'),
+  startQuestionCount:$('startQuestionCount'), startDifficulty:$('startDifficulty'),
+  leaderboardModal:$('leaderboardModal'), leaderboardList:$('leaderboardList'),
+  dashboardModal:$('dashboardModal'), customConfirmModal:$('customConfirmModal'),
+  levelUpOverlay:$('levelUpOverlay'), btnPause:$('btnPause'),
+  btnRestart:$('btnRestart'), btnMenu:$('btnMenu'),
+  dashTotalPlayers:$('dashTotalPlayers'), dashTotalSessions:$('dashTotalSessions'),
+  dashAvgAcc:$('dashAvgAcc'), dashAvgTime:$('dashAvgTime'),
+  dashTopicBars:$('dashTopicBars'), dashPrePost:$('dashPrePost'),
+  dashRecentSessions:$('dashRecentSessions'),
+};
+
+// ── Helpers ──────────────────────────────
+function genSessionId(){return'SES-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,6).toUpperCase();}
+
+class SeededRNG{
+  constructor(s){this.seed=s>>>0;}
+  next(){this.seed=(this.seed*1664525+1013904223)>>>0;return this.seed/0x100000000;}
+  nextInt(a,b){return Math.floor(this.next()*(b-a+1))+a;}
+}
+
+// ── Sound ────────────────────────────────
+class SoundManager{
+  constructor(){this.ctx=null;this.ok=false;}
+  init(){if(!this.ok){this.ctx=new(window.AudioContext||window.webkitAudioContext)();this.ok=true;}if(this.ctx.state==='suspended')this.ctx.resume();}
+  _t(f,t,d,v=0.07){if(!this.ctx)return;const o=this.ctx.createOscillator(),g=this.ctx.createGain();o.type=t;o.frequency.setValueAtTime(f,this.ctx.currentTime);g.gain.setValueAtTime(v,this.ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,this.ctx.currentTime+d);o.connect(g);g.connect(this.ctx.destination);o.start();o.stop(this.ctx.currentTime+d);}
+  correct(){this._t(523,'sine',.1);setTimeout(()=>this._t(659,'sine',.2),100);}
+  wrong(){this._t(150,'sawtooth',.3,.05);}
+  levelUp(){[261,329,392,523].forEach((f,i)=>setTimeout(()=>this._t(f,'square',.15,.05),i*150));}
+}
+
+// ── Hand Tracker ─────────────────────────
+class HandTracker{
+  constructor(v,c,cb){this.v=v;this.c=c;this.ctx=c.getContext('2d');this.cb=cb;this.hands=null;this.camera=null;this.isReady=false;this.lastConf=0;}
+  async init(){
+    this.hands=new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
+    this.hands.setOptions({maxNumHands:2,modelComplexity:1,minDetectionConfidence:0.65,minTrackingConfidence:0.55});
+    this.hands.onResults(r=>this.process(r));
+    this.camera=new Camera(this.v,{
+      onFrame:async()=>{
+        if(!this.isReady){
+          DOM.camStatus.classList.add('hidden');
+          this.isReady=true;
+          this.c.width=this.v.videoWidth;
+          this.c.height=this.v.videoHeight;
         }
-        createParticles();
+        await this.hands.send({image:this.v});
+      },width:640,height:480
+    });
+    await this.camera.start();
+  }
+  process(r){
+    this.ctx.save();
+    this.ctx.clearRect(0,0,this.c.width,this.c.height);
+    this.ctx.translate(this.c.width,0);this.ctx.scale(-1,1);
+    this.ctx.drawImage(r.image,0,0,this.c.width,this.c.height);
+    let tf=0,tc=0;
+    if(r.multiHandLandmarks&&r.multiHandedness&&r.multiHandLandmarks.length>0){
+      DOM.camWrapper.classList.add('detected');
+      r.multiHandLandmarks.forEach((lm,i)=>{
+        drawConnectors(this.ctx,lm,HAND_CONNECTIONS,{color:'rgba(0,212,255,0.7)',lineWidth:2.5});
+        drawLandmarks(this.ctx,lm,{color:'#f59e0b',lineWidth:2,radius:3.5});
+        tf+=this.count(lm);tc+=(r.multiHandedness[i]?.score||0.7);
+      });
+      this.lastConf=tc/r.multiHandLandmarks.length;
+    }else{DOM.camWrapper.classList.remove('detected');this.lastConf=0;}
+    this.ctx.restore();
+    const cp=Math.round(this.lastConf*100);
+    DOM.hudConf.innerText=cp>0?cp+'%':'—';
+    DOM.confidenceFill.style.width=cp+'%';
+    DOM.confidenceFill.style.background=cp>=80?'#10b981':cp>=60?'#f59e0b':'#ef4444';
+    if(this.cb)this.cb(tf,this.lastConf);
+  }
+  count(lm){
+    let c=0;
+    const d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+    if(d(lm[4],lm[17])>d(lm[3],lm[17]))c++;
+    [8,12,16,20].forEach((t,i)=>{if(lm[t].y<lm[[6,10,14,18][i]].y)c++;});
+    return c;
+  }
+}
 
-        const CONFIG = {
-            timePerQuestion: 10,
-            holdTimeRequired: 1.2, 
-            pointsBase: 10,
-            pointsFast: 5, 
-            levelUpScore: 100,
-            messages: ["ยอดเยี่ยม!", "อัจฉริยะ!", "สุดยอดไปเลย!", "ไวปานสายฟ้า!", "แม่นยำมาก!", "ทำได้ดี!"]
-        };
+// ── Question Manager ─────────────────────
+class QuestionManager{
+  constructor(){this.q=null;}
+  generate(level,mode,topic,rng,difficulty){
+    let t=topic?parseInt(topic):this._pick(level,mode);
+    const mx=difficulty==='easy'?5:10;
+    let q={text:'',instruction:'',answerCheck:null,modeName:'',answerText:'',topic:t};
+    switch(t){
+      case 1:{const n=rng.nextInt(0,mx);q.modeName='แสดงตัวเลข';q.text=`ชู ${n} นิ้ว`;q.instruction='ชูนิ้วให้ครบตามตัวเลข';q.answerCheck=f=>f===n;q.answerText=String(n);break;}
+      case 2:{const a=rng.nextInt(0,Math.floor(mx/2)),b=rng.nextInt(0,mx-a);q.modeName='การบวก';q.text=`${a} + ${b} = ?`;q.instruction='คิดในใจแล้วชูนิ้วตอบ';q.answerCheck=f=>f===a+b;q.answerText=String(a+b);break;}
+      case 3:{const a=rng.nextInt(1,mx),b=rng.nextInt(0,a);q.modeName='การลบ';q.text=`${a} - ${b} = ?`;q.instruction='คิดในใจแล้วชูนิ้วตอบ';q.answerCheck=f=>f===a-b;q.answerText=String(a-b);break;}
+      case 4:{const P=[[0,1],[1,1],[1,2],[1,3],[1,4],[1,5],[2,1],[2,2],[2,3],[2,4],[2,5],[3,1],[3,2],[3,3],[4,1],[4,2],[5,1],[5,2]];const p=P[rng.nextInt(0,P.length-1)];q.modeName='การคูณ';q.text=`${p[0]} × ${p[1]} = ?`;q.instruction='คิดในใจแล้วชูนิ้วตอบ';q.answerCheck=f=>f===p[0]*p[1];q.answerText=String(p[0]*p[1]);break;}
+      case 5:{const tv=rng.nextInt(1,9),more=rng.next()>0.5;q.modeName='เปรียบเทียบ';q.text=more?`> ${tv}`:`< ${tv}`;q.instruction=more?`ชูนิ้วให้มากกว่า ${tv}`:`ชูนิ้วให้น้อยกว่า ${tv}`;q.answerCheck=f=>more?(f>tv&&f<=10):(f<tv);q.answerText=more?`จำนวนที่มากกว่า ${tv}`:`จำนวนที่น้อยกว่า ${tv}`;break;}
+      case 6:{const ev=rng.next()>0.5;q.modeName='คู่ หรือ คี่';q.text=ev?'เลขคู่':'เลขคี่';q.instruction=ev?'ชูนิ้วจำนวนคู่ (2, 4, 6…)':'ชูนิ้วจำนวนคี่ (1, 3, 5…)';q.answerCheck=f=>ev?(f%2===0&&f>0):(f%2!==0);q.answerText=ev?'2, 4, 6, 8 หรือ 10':'1, 3, 5, 7 หรือ 9';break;}
+      default:{const n=rng.nextInt(0,10);q.modeName='แสดงตัวเลข';q.text=`ชู ${n} นิ้ว`;q.instruction='ชูนิ้วให้ครบ';q.answerCheck=f=>f===n;q.answerText=String(n);}
+    }
+    this.q=q;return q;
+  }
+  _pick(l,m){
+    if(m==='practice'||m==='practice_topic')return null;
+    if(l<=2)return 1;if(l===3)return 2;if(l===4)return 3;if(l===5)return 4;
+    return Math.floor(Math.random()*6)+1;
+  }
+}
 
-        const DOM = {
-            menu: document.getElementById('startMenu'), ui: document.getElementById('gameUI'),
-            camStatus: document.getElementById('cameraStatus'), video: document.getElementById('inputVideo'),
-            canvas: document.getElementById('outputCanvas'), camWrapper: document.getElementById('camWrapper'),
-            
-            hudScore: document.getElementById('hudScore'), hudLevel: document.getElementById('hudLevel'),
-            hudPlayerName: document.getElementById('hudPlayerName'), hudFingers: document.getElementById('hudFingers'),
-            timerText: document.getElementById('timerText'), timerBar: document.getElementById('timerBar'),
-            
-            questionMode: document.getElementById('questionModeText'), questionText: document.getElementById('questionText'),
-            instructionText: document.getElementById('instructionText'),
-            
-            holdIndicator: document.getElementById('holdIndicator'), holdFill: document.getElementById('holdFill'),
-            
-            feedbackContainer: document.getElementById('feedbackContainer'), feedbackIconWrap: document.getElementById('feedbackIconWrap'),
-            feedbackIcon: document.getElementById('feedbackIcon'), feedbackText: document.getElementById('feedbackText'),
-            feedbackPoints: document.getElementById('feedbackPoints'), feedbackMessage: document.getElementById('feedbackMessage'),
-            comboDisplay: document.getElementById('comboDisplay'),
-            
-            badges: { beginner: document.getElementById('badgeBeginner'), star: document.getElementById('badgeStar'), master: document.getElementById('badgeMaster'), champion: document.getElementById('badgeChampion') },
-            
-            gameOverModal: document.getElementById('gameOverModal'), gameOverTitle: document.getElementById('gameOverTitle'),
-            finalScoreText: document.getElementById('finalScoreText'), finalPlayerName: document.getElementById('finalPlayerName'),
-            finalCorrect: document.getElementById('finalCorrect'), finalWrong: document.getElementById('finalWrong'),
-            
-            startPlayerName: document.getElementById('startPlayerName'), startQuestionCount: document.getElementById('startQuestionCount'),
-            leaderboardModal: document.getElementById('leaderboardModal'), leaderboardList: document.getElementById('leaderboardList'),
-            customConfirmModal: document.getElementById('customConfirmModal'), levelUpOverlay: document.getElementById('levelUpOverlay'),
-            
-            btnPause: document.getElementById('btnPause'), btnRestart: document.getElementById('btnRestart'), btnMenu: document.getElementById('btnMenu')
-        };
+// ── Score Manager ────────────────────────
+class ScoreManager{
+  constructor(){this.reset();}
+  reset(){
+    this.score=0;this.level=1;this.correct=0;this.wrong=0;this.combo=0;this.perfect=true;
+    DOM.hudScore.innerText='0';
+    Object.values(DOM.achv).forEach(b=>b.classList.remove('unlocked'));
+  }
+  add(t){
+    this.correct++;this.combo++;
+    let pts=CONFIG.pointsBase,bonus='';
+    if(t<3){pts+=CONFIG.pointsFast;bonus='⚡ เร็วมาก! +5';}
+    if(this.combo>=3){pts+=this.combo===3?20:(this.combo===5?50:10);
+      const cd=DOM.comboDisplay,cd2=DOM.comboDisplay2;
+      cd.innerText=cd2.innerText=`🔥 Combo x${this.combo}!`;
+      cd.style.display='flex';cd2.style.display='block';
+    }else{DOM.comboDisplay.style.display='none';DOM.comboDisplay2.style.display='none';}
+    this.score+=pts;
+    const lv=Math.floor(this.score/CONFIG.levelUpScore)+1>this.level;
+    if(lv)this.level++;
+    if(this.correct>=10)DOM.achv.beginner.classList.add('unlocked');
+    if(this.correct>=50)DOM.achv.star.classList.add('unlocked');
+    if(this.correct>=100)DOM.achv.master.classList.add('unlocked');
+    if(this.level>=5&&this.perfect&&this.correct>=20)DOM.achv.champion.classList.add('unlocked');
+    DOM.hudScore.innerText=this.score;
+    return{points:pts,leveledUp:lv,bonus};
+  }
+  bad(){this.wrong++;this.combo=0;this.perfect=false;DOM.comboDisplay.style.display='none';DOM.comboDisplay2.style.display='none';DOM.hudScore.innerText=this.score;}
+  get acc(){const t=this.correct+this.wrong;return t===0?0:Math.round((this.correct/t)*100);}
+}
 
-        class SoundManager {
-            constructor() { this.ctx = null; this.initialized = false; }
-            init() {
-                if (!this.initialized) { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); this.initialized = true; }
-                if (this.ctx.state === 'suspended') this.ctx.resume();
-            }
-            playTone(freq, type, duration, vol=0.1) {
-                if (!this.ctx) return;
-                const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
-                osc.type = type; osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
-                osc.connect(gain); gain.connect(this.ctx.destination);
-                osc.start(); osc.stop(this.ctx.currentTime + duration);
-            }
-            correct() { if(!this.ctx) return; this.playTone(523.25, 'sine', 0.1); setTimeout(() => this.playTone(659.25, 'sine', 0.2), 100); }
-            wrong() { if(!this.ctx) return; this.playTone(150, 'sawtooth', 0.3, 0.05); }
-            levelUp() { if(!this.ctx) return; [261.63, 329.63, 392.00, 523.25].forEach((freq, i) => { setTimeout(() => this.playTone(freq, 'square', 0.15, 0.05), i * 150); }); }
-        }
+// ── Research Store ───────────────────────
+class ResearchStore{
+  static KEY='fingerMath_researchData_v2';
+  static load(){try{return JSON.parse(localStorage.getItem(this.KEY))||[];}catch(e){return[];}}
+  static save(d){try{localStorage.setItem(this.KEY,JSON.stringify(d));}catch(e){}}
+  static add(s){const d=this.load();d.push(s);this.save(d);}
+  static clear(){localStorage.removeItem(this.KEY);localStorage.removeItem('fingerMathSpaceLeaderboard');}
+  static stats(){
+    const ss=this.load();if(!ss.length)return null;
+    const players=[...new Set(ss.map(s=>s.playerName))];
+    const all=ss.flatMap(s=>s.responses||[]);
+    const avgTime=all.length?(all.reduce((a,b)=>a+(b.responseTime||0),0)/all.length).toFixed(2):0;
+    const avgAcc=ss.length?Math.round(ss.reduce((a,b)=>a+(b.accuracy||0),0)/ss.length):0;
+    const tn={1:'แสดงตัวเลข',2:'การบวก',3:'การลบ',4:'การคูณ',5:'เปรียบเทียบ',6:'คู่/คี่'};
+    const ts={};all.forEach(r=>{const t=r.topic||0;if(!ts[t])ts[t]={correct:0,total:0,name:tn[t]||`หัวข้อ ${t}`};ts[t].total++;if(r.correct)ts[t].correct++;});
+    const pre=ss.filter(s=>s.testType==='pretest'),post=ss.filter(s=>s.testType==='posttest');
+    const preAvg=pre.length?Math.round(pre.reduce((a,b)=>a+(b.accuracy||0),0)/pre.length):null;
+    const postAvg=post.length?Math.round(post.reduce((a,b)=>a+(b.accuracy||0),0)/post.length):null;
+    return{players,sessions:ss,avgTime,avgAcc,topicStats:ts,preAvg,postAvg};
+  }
+  static csv(){
+    const ss=this.load();if(!ss.length){alert('ยังไม่มีข้อมูล');return;}
+    const rows=[['session_id','player_name','classroom','test_type','difficulty','topic_filter','date_time','total_questions','correct','wrong','accuracy_pct','total_score','total_time_sec','avg_response_time_sec','q_number','q_topic','q_mode','q_text','q_answer_text','student_fingers','q_correct','q_response_time_sec','q_time_remaining'].join(',')];
+    ss.forEach(s=>{
+      const base=[s.sessionId,`"${s.playerName}"`,`"${s.classroom||''}"`,s.testType,s.difficulty,s.topicFilter||'',s.dateTime,s.totalQuestions,s.correctCount,s.wrongCount,s.accuracy,s.score,s.totalTimeSec,s.avgResponseTime];
+      (s.responses||[]).forEach(r=>{rows.push([...base,r.qNumber,r.topic,`"${r.modeName}"`,`"${r.questionText}"`,`"${r.answerText}"`,r.fingersShown,r.correct?1:0,r.responseTime,r.timeRemaining].join(','));});
+      if(!s.responses||!s.responses.length)rows.push([...base,'','','','','','','','',''].join(','));
+    });
+    const b=new Blob(['\uFEFF'+rows.join('\n')],{type:'text/csv;charset=utf-8;'});
+    const u=URL.createObjectURL(b),a=document.createElement('a');
+    a.href=u;a.download=`FingerMath_${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(u);
+  }
+}
 
-        class HandTracker {
-            constructor(videoEl, canvasEl, onResultsCallback) {
-                this.videoEl = videoEl; this.canvasEl = canvasEl; this.ctx = canvasEl.getContext('2d');
-                this.onResultsCallback = onResultsCallback; this.hands = null; this.camera = null; this.isReady = false;
-            }
-            async init() {
-                this.hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-                this.hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5 });
-                this.hands.onResults((results) => this.processResults(results));
-                this.camera = new Camera(this.videoEl, {
-                    onFrame: async () => {
-                        if (!this.isReady) { DOM.camStatus.classList.add('hidden-panel'); this.isReady = true; this.canvasEl.width = this.videoEl.videoWidth; this.canvasEl.height = this.videoEl.videoHeight; }
-                        await this.hands.send({image: this.videoEl});
-                    }, width: 640, height: 480
-                });
-                await this.camera.start();
-            }
-            processResults(results) {
-                this.ctx.save(); this.ctx.clearRect(0, 0, this.canvasEl.width, this.canvasEl.height);
-                this.ctx.translate(this.canvasEl.width, 0); this.ctx.scale(-1, 1);
-                this.ctx.drawImage(results.image, 0, 0, this.canvasEl.width, this.canvasEl.height);
+// ── Game Manager ─────────────────────────
+class GameManager{
+  constructor(){
+    this.sound=new SoundManager();
+    this.qMgr=new QuestionManager();
+    this.score=new ScoreManager();
+    this.tracker=new HandTracker(DOM.video,DOM.canvas,(f,c)=>this.onHand(f,c));
+    this.state='menu';this.gameMode='practice';this.testType='practice';
+    this.classTopic=null;this.playerName='';this.classroom='';
+    this.difficulty='medium';this.totalQ=10;this.qIdx=0;
+    this.holdTime=1.2;this.seed=0;this.rng=null;
+    this.timeLeft=CONFIG.timePerQuestion;this.lastFrame=performance.now();
+    this.sessStart=0;this.isHolding=false;this.holdElapsed=0;
+    this.sessionId='';this.responses=[];this.loopId=null;
+    this._setup();
+  }
+  _setup(){
+    DOM.btnPause.addEventListener('click',()=>this.togglePause());
+    DOM.btnRestart.addEventListener('click',()=>this.startSession());
+    DOM.btnMenu.addEventListener('click',()=>{this.state='menu';DOM.ui.classList.add('hidden');DOM.menu.classList.remove('hidden');});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&(this.state==='playing'||this.state==='paused'))this.endGame('ยุติภารกิจ');});
+  }
+  switchMenuTab(t){
+    ['test','practice','teacher'].forEach(n=>{
+      const el=$('tab'+n.charAt(0).toUpperCase()+n.slice(1));
+      if(el)el.classList.toggle('hidden',n!==t);
+    });
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  }
+  async startGame(mode,topicOverride=null){
+    this.playerName=(DOM.startPlayerName.value.trim())||'ไม่ระบุชื่อ';
+    this.classroom=(DOM.startClassroom.value.trim())||'—';
+    this.totalQ=parseInt(DOM.startQuestionCount.value)||10;
+    this.difficulty=DOM.startDifficulty.value||'medium';
+    this.holdTime=parseFloat($('practiceHoldTime')?.value||1.2);
+    this.gameMode=mode;this.testType=mode;
+    if(topicOverride){this.classTopic=String(topicOverride);}
+    else if(mode==='practice_topic'||mode==='pretest'||mode==='posttest'){
+      this.classTopic=$('testTopicSelect')?.value||'0';
+      if(this.classTopic==='0')this.classTopic=null;
+    }else{this.classTopic=null;}
+    this.sound.init();
+    this.seed=this._hash(new Date().toDateString()+this.playerName);
+    if(mode==='pretest'||mode==='posttest')this.seed=this._hash(new Date().toDateString());
+    this.rng=new SeededRNG(this.seed);
+    DOM.hudPlayerName.innerText=this.playerName;
+    DOM.menu.classList.add('hidden');DOM.ui.classList.remove('hidden');DOM.gameOverModal.classList.add('hidden');
+    this._setBadge(mode);
+    if(!this.tracker.isReady)await this.tracker.init();
+    this.startSession();
+  }
+  _hash(s){let h=0;for(let i=0;i<s.length;i++)h=(Math.imul(31,h)+s.charCodeAt(i))|0;return Math.abs(h);}
+  _setBadge(m){
+    const MAP={pretest:{cls:'badge-pre',txt:'📋 Pre-Test'},posttest:{cls:'badge-post',txt:'🏁 Post-Test'},
+      practice:{cls:'badge-practice',txt:'✏️ ฝึกหัด'},practice_topic:{cls:'badge-practice',txt:'✏️ ฝึกเฉพาะหัวข้อ'},adventure:{cls:'badge-practice',txt:'🚀 Adventure'}};
+    const m2=MAP[m]||MAP.practice;
+    DOM.hudTestBadge.className='badge '+m2.cls;
+    DOM.hudTestBadge.innerText=m2.txt;
+    DOM.hudTestBadge.classList.remove('hidden');
+  }
+  startSession(){
+    this.score.reset();this.state='playing';this.qIdx=0;this.responses=[];
+    this.sessionId=genSessionId();this.sessStart=performance.now();
+    this.rng=new SeededRNG(this.seed);
+    this.nextQ();
+    if(this.loopId)cancelAnimationFrame(this.loopId);
+    this.lastFrame=performance.now();this.loop();
+  }
+  nextQ(){
+    this.qIdx++;
+    if(this.totalQ!==999&&this.qIdx>this.totalQ){this.endGame();return;}
+    DOM.hudLevel.innerText=this.totalQ===999?String(this.qIdx):`${this.qIdx}/${this.totalQ}`;
+    const q=this.qMgr.generate(this.score.level,this.gameMode,this.classTopic,this.rng,this.difficulty);
+    DOM.questionMode.innerHTML=`<i class="fa-solid fa-bolt" style="color:#fcd34d;"></i> ${q.modeName}`;
+    DOM.questionText.innerText=q.text;DOM.instructionText.innerText=q.instruction;
+    this.timeLeft=CONFIG.timePerQuestion;this.lastFrame=performance.now();
+    this.isHolding=false;this.holdElapsed=0;
+    DOM.holdRing.classList.remove('active');
+    DOM.holdFill.style.strokeDashoffset='283';
+    DOM.feedbackContainer.classList.add('hidden');
+    DOM.questionText.classList.remove('anim-pop');
+    void DOM.questionText.offsetWidth;
+    DOM.questionText.classList.add('anim-pop');
+  }
+  onHand(f,conf){
+    if(this.state!=='playing'){DOM.hudFingers.innerText=f;return;}
+    DOM.hudFingers.innerText=f;
+    if(conf<CONFIG.confThreshold)return;
+    const ok=this.qMgr.q?.answerCheck(f);
+    if(ok){if(!this.isHolding){this.isHolding=true;this.holdElapsed=0;DOM.holdRing.classList.add('active');}}
+    else{if(this.isHolding){this.isHolding=false;this.holdElapsed=0;DOM.holdRing.classList.remove('active');DOM.holdFill.style.strokeDashoffset='283';}}
+  }
+  loop(){
+    const now=performance.now();
+    let dt=Math.min((now-this.lastFrame)/1000,0.1);this.lastFrame=now;
+    if(this.state==='playing'||this.state==='feedback'){
+      DOM.hudElapsed.innerText=((now-this.sessStart)/1000).toFixed(0)+'s';
+    }
+    if(this.state==='playing'){
+      if(!this.isHolding){this.timeLeft-=dt;if(this.timeLeft<0)this.timeLeft=0;}
+      else{
+        this.holdElapsed+=dt;
+        const pct=Math.min(1,this.holdElapsed/this.holdTime);
+        DOM.holdFill.style.strokeDashoffset=(283-(283*pct)).toFixed(2);
+        if(this.holdElapsed>=this.holdTime){this.isHolding=false;this.handleOk(CONFIG.timePerQuestion-this.timeLeft);}
+      }
+      DOM.timerText.innerText=Math.max(0,this.timeLeft).toFixed(1)+'s';
+      DOM.timerBar.style.width=(this.timeLeft/CONFIG.timePerQuestion*100)+'%';
+      const low=this.timeLeft<=3;
+      DOM.timerBar.style.background=low?'#ef4444':'#00d4ff';
+      DOM.timerText.style.color=low?'#fca5a5':'#fff';
+      if(this.timeLeft<=0&&!this.isHolding)this.handleBad('หมดเวลา!',`คำตอบที่ถูกคือ: ${this.qMgr.q.answerText}`,-1);
+    }
+    this.loopId=requestAnimationFrame(()=>this.loop());
+  }
+  _log(ok,f){
+    const q=this.qMgr.q;
+    const rt=parseFloat((CONFIG.timePerQuestion-this.timeLeft).toFixed(2));
+    this.responses.push({qNumber:this.qIdx,topic:q.topic,modeName:q.modeName,questionText:q.text,
+      answerText:q.answerText,fingersShown:f,correct:ok,responseTime:rt,
+      timeRemaining:parseFloat(this.timeLeft.toFixed(2)),timestamp:new Date().toISOString()});
+  }
+  handleOk(t){
+    const f=parseInt(DOM.hudFingers.innerText)||0;this._log(true,f);
+    this.state='feedback';this.sound.correct();DOM.holdRing.classList.remove('active');
+    const r=this.score.add(t);
+    this.showFB(true,`+${r.points}`,r.bonus||CONFIG.messages[Math.floor(Math.random()*CONFIG.messages.length)],'');
+    if(r.leveledUp){this.sound.levelUp();DOM.levelUpOverlay.classList.remove('hidden');setTimeout(()=>DOM.levelUpOverlay.classList.add('hidden'),2000);}
+    setTimeout(()=>{if(this.state!=='gameover'&&this.state!=='menu'){this.state='playing';this.nextQ();}},1400);
+  }
+  handleBad(reason,ans,f=-1){
+    const fingers=f===-1?parseInt(DOM.hudFingers.innerText)||0:f;
+    this._log(false,fingers);
+    this.state='feedback';this.sound.wrong();this.score.bad();DOM.holdRing.classList.remove('active');
+    DOM.questionText.classList.add('anim-shake');setTimeout(()=>DOM.questionText.classList.remove('anim-shake'),500);
+    this.showFB(false,'0',reason,ans||'');
+    setTimeout(()=>{if(this.state!=='gameover'&&this.state!=='menu'){this.state='playing';this.nextQ();}},2200);
+  }
+  showFB(ok,pts,msg,sub){
+    DOM.feedbackContainer.classList.remove('hidden');
+    const color=ok?'#10b981':'#ef4444';
+    const icon=ok?'fa-check':'fa-xmark';
+    DOM.feedbackIconWrap.style.cssText=`width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:${ok?'rgba(16,185,129,0.15)':'rgba(239,68,68,0.15)'};border:2px solid ${color};`;
+    DOM.feedbackIcon.className=`fa-solid ${icon}`;
+    DOM.feedbackIcon.style.cssText=`font-size:2.2rem;color:${color};`;
+    DOM.feedbackText.innerText=ok?'ถูกต้อง!':'ผิดจ้า!';
+    DOM.feedbackText.style.color=color;
+    DOM.feedbackPoints.innerText=pts;
+    DOM.feedbackMessage.innerText=msg;DOM.feedbackAnswer.innerText=sub;
+  }
+  togglePause(){
+    if(this.state==='playing'){
+      this.state='paused';
+      DOM.btnPause.innerHTML='<i class="fa-solid fa-play"></i><span style="font-size:0.8rem;">เล่นต่อ</span>';
+      DOM.btnPause.className='btn btn-green';
+    }else if(this.state==='paused'){
+      this.state='playing';this.lastFrame=performance.now();
+      DOM.btnPause.innerHTML='<i class="fa-solid fa-pause"></i><span style="font-size:0.8rem;">พัก</span>';
+      DOM.btnPause.className='btn btn-ghost';
+    }
+  }
+  endGame(title='ภารกิจสำเร็จ!'){
+    this.state='gameover';
+    const tt=parseFloat(((performance.now()-this.sessStart)/1000).toFixed(1));
+    const avgRT=this.responses.length?parseFloat((this.responses.reduce((a,b)=>a+(b.responseTime||0),0)/this.responses.length).toFixed(2)):0;
+    ResearchStore.add({
+      sessionId:this.sessionId,playerName:this.playerName,classroom:this.classroom,
+      testType:this.testType,difficulty:this.difficulty,topicFilter:this.classTopic||'all',
+      dateTime:new Date().toISOString(),totalQuestions:this.responses.length,
+      correctCount:this.score.correct,wrongCount:this.score.wrong,accuracy:this.score.acc,
+      score:this.score.score,totalTimeSec:tt,avgResponseTime:avgRT,responses:this.responses,seed:this.seed,
+    });
+    DOM.ui.classList.add('hidden');DOM.gameOverModal.classList.remove('hidden');
+    const TL={pretest:'📋 Pre-Test',posttest:'🏁 Post-Test',practice:'✏️ ฝึกหัด',practice_topic:'✏️ ฝึกเฉพาะหัวข้อ',adventure:'🚀 Adventure'};
+    const TC={pretest:'badge-pre',posttest:'badge-post',practice:'badge-practice',practice_topic:'badge-practice',adventure:'badge-practice'};
+    DOM.sessionTypeBadge.innerText=TL[this.testType]||this.testType;
+    DOM.sessionTypeBadge.className='badge '+(TC[this.testType]||'badge-practice');
+    DOM.gameOverTitle.innerText=title;
+    DOM.finalPlayerName.innerText=this.playerName;
+    DOM.finalClassroom.innerText=this.classroom;
+    DOM.finalSessionId.innerText=this.sessionId;
+    DOM.finalElapsed.innerText=tt+' วินาที';
+    DOM.finalScoreText.innerText=this.score.score;
+    DOM.finalAccuracy.innerText=this.score.acc+'%';
+    DOM.finalCorrect.innerText=this.score.correct;
+    DOM.finalWrong.innerText=this.score.wrong;
+    DOM.finalQuestionLog.innerHTML='';
+    this.responses.forEach(r=>{
+      const el=document.createElement('div');el.className='q-log-item';
+      el.innerHTML=`<span style="color:${r.correct?'#10b981':'#ef4444'};font-size:0.8rem;">${r.correct?'✓':'✗'}</span><span style="flex:1;color:#94a3b8;">${r.qNumber}. ${r.questionText}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:#64748b;">${r.responseTime}s</span>`;
+      DOM.finalQuestionLog.appendChild(el);
+    });
+  }
+  showDashboard(){
+    DOM.dashboardModal.classList.remove('hidden');
+    const s=ResearchStore.stats();
+    if(!s){DOM.dashTotalPlayers.innerText=DOM.dashTotalSessions.innerText=DOM.dashAvgAcc.innerText=DOM.dashAvgTime.innerText='0';return;}
+    DOM.dashTotalPlayers.innerText=s.players.length;DOM.dashTotalSessions.innerText=s.sessions.length;
+    DOM.dashAvgAcc.innerText=s.avgAcc+'%';DOM.dashAvgTime.innerText=s.avgTime+'s';
+    DOM.dashTopicBars.innerHTML='';
+    Object.entries(s.topicStats).forEach(([_,ts])=>{
+      const p=ts.total>0?Math.round((ts.correct/ts.total)*100):0;
+      const c=p>=80?'#10b981':p>=60?'#f59e0b':'#ef4444';
+      DOM.dashTopicBars.innerHTML+=`<div><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:0.78rem;font-weight:600;color:#94a3b8;">${ts.name}</span><span style="font-size:0.75rem;font-weight:700;color:${c};">${p}% (${ts.correct}/${ts.total})</span></div><div class="sbar-track"><div class="sbar-fill" style="width:${p}%;background:${c};"></div></div></div>`;
+    });
+    if(s.preAvg!==null||s.postAvg!==null){
+      const diff=(s.preAvg!==null&&s.postAvg!==null)?s.postAvg-s.preAvg:null;
+      DOM.dashPrePost.innerHTML=`<div style="display:flex;justify-content:space-around;align-items:center;"><div class="badge badge-pre" style="padding:12px 20px;font-size:0.85rem;flex-direction:column;gap:3px;"><span>Pre-Test</span><span class="f-display" style="font-size:1.5rem;">${s.preAvg!==null?s.preAvg+'%':'—'}</span></div><div style="font-size:1.5rem;color:#64748b;">→${diff!==null?`<span style="font-size:0.9rem;font-weight:700;color:${diff>=0?'#10b981':'#ef4444'};"> (${diff>=0?'+':''}${diff}%)</span>`:'  '}</div><div class="badge badge-post" style="padding:12px 20px;font-size:0.85rem;flex-direction:column;gap:3px;"><span>Post-Test</span><span class="f-display" style="font-size:1.5rem;">${s.postAvg!==null?s.postAvg+'%':'—'}</span></div></div>`;
+    }
+    DOM.dashRecentSessions.innerHTML='';
+    [...s.sessions].reverse().slice(0,5).forEach(ss=>{
+      const el=document.createElement('div');
+      el.style.cssText='display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:8px 12px;font-size:0.78rem;';
+      const tl={pretest:'Pre',posttest:'Post',practice:'ฝึก',practice_topic:'ฝึกหัวข้อ',adventure:'Adv'};
+      const tc={pretest:'badge-pre',posttest:'badge-post',practice:'badge-practice',practice_topic:'badge-practice',adventure:'badge-practice'};
+      el.innerHTML=`<div style="display:flex;align-items:center;gap:6px;"><span style="font-weight:700;">${ss.playerName}</span><span style="color:#64748b;">(${ss.classroom})</span><span class="badge ${tc[ss.testType]||'badge-practice'}" style="font-size:0.62rem;padding:2px 7px;">${tl[ss.testType]||ss.testType}</span></div><div style="text-align:right;"><span style="font-weight:700;color:#fcd34d;">${ss.score}pt</span><span style="color:#64748b;margin-left:8px;">${ss.accuracy}%</span></div>`;
+      DOM.dashRecentSessions.appendChild(el);
+    });
+  }
+  showLeaderboard(){
+    const ss=ResearchStore.load();DOM.leaderboardList.innerHTML='';
+    if(!ss.length){DOM.leaderboardList.innerHTML='<p style="text-align:center;color:#64748b;padding:1.5rem 0;font-weight:600;">ยังไม่มีประวัติ</p>';DOM.leaderboardModal.classList.remove('hidden');return;}
+    ss.sort((a,b)=>b.score-a.score).slice(0,10).forEach((s,i)=>{
+      const el=document.createElement('div');
+      el.style.cssText='display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px 14px;';
+      const medals=['🥇','🥈','🥉'];
+      el.innerHTML=`<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:1.2rem;width:26px;">${medals[i]||i+1}</span><div><p style="font-weight:700;font-size:0.9rem;">${s.playerName}</p><p style="font-size:0.72rem;color:#64748b;">${s.classroom} · ${s.testType}</p></div></div><div style="text-align:right;"><p class="f-display" style="font-size:1.3rem;color:#fcd34d;">${s.score}</p><p style="font-size:0.72rem;color:#64748b;">${s.accuracy}%</p></div>`;
+      DOM.leaderboardList.appendChild(el);
+    });
+    DOM.leaderboardModal.classList.remove('hidden');
+  }
+  exportCSV(){ResearchStore.csv();}
+  requestClearLeaderboard(){DOM.customConfirmModal.classList.remove('hidden');}
+  confirmClearLeaderboard(){ResearchStore.clear();DOM.customConfirmModal.classList.add('hidden');alert('ล้างข้อมูลเรียบร้อยแล้ว');}
+  returnToMenu(){DOM.gameOverModal.classList.add('hidden');DOM.menu.classList.remove('hidden');}
+  restartGame(){DOM.gameOverModal.classList.add('hidden');DOM.ui.classList.remove('hidden');this.startSession();}
+}
 
-                let totalFingers = 0;
-                if (results.multiHandLandmarks && results.multiHandedness) {
-                    DOM.camWrapper.classList.add('detected');
-                    for (let i = 0; i < results.multiHandLandmarks.length; i++) {
-                        const landmarks = results.multiHandLandmarks[i];
-                        drawConnectors(this.ctx, landmarks, HAND_CONNECTIONS, {color: 'rgba(6, 182, 212, 0.8)', lineWidth: 4});
-                        drawLandmarks(this.ctx, landmarks, {color: '#F59E0B', lineWidth: 2, radius: 5});
-                        totalFingers += this.countFingers(landmarks);
-                    }
-                } else {
-                    DOM.camWrapper.classList.remove('detected');
-                }
-                this.ctx.restore(); 
-                if(this.onResultsCallback) this.onResultsCallback(totalFingers);
-            }
-            countFingers(landmarks) {
-                let count = 0; const dist = (p1, p2) => Math.hypot(p1.x - p2.x, p1.y - p2.y);
-                if (dist(landmarks[4], landmarks[17]) > dist(landmarks[3], landmarks[17])) count++;
-                const fingerTips = [8, 12, 16, 20]; const fingerPips = [6, 10, 14, 18];
-                for (let i = 0; i < 4; i++) { if (landmarks[fingerTips[i]].y < landmarks[fingerPips[i]].y) count++; }
-                return count;
-            }
-        }
-
-        class QuestionManager {
-            constructor() { this.currentQuestion = null; }
-            generateQuestion(level, mode = 'adventure', specificMode = null) {
-                let activeMode = specificMode ? parseInt(specificMode) : (level <= 2 ? 1 : (level === 3 ? 2 : (level === 4 ? 3 : (level === 5 ? 4 : Math.floor(Math.random() * 6) + 1))));
-                let q = { text: "", instruction: "", answerCheck: null, modeName: "", answerText: "" };
-
-                switch(activeMode) {
-                    case 1:
-                        const num = Math.floor(Math.random() * ((level === 1 && mode === 'adventure') ? 6 : 11));
-                        q.modeName = "แสดงตัวเลข"; q.text = `ชู ${num} นิ้ว`; q.instruction = "ชูนิ้วให้ครบตามตัวเลข";
-                        q.answerCheck = (f) => f === num; q.answerText = num; break;
-                    case 2:
-                        const a1 = Math.floor(Math.random() * 6), b1 = Math.floor(Math.random() * (11 - a1)); 
-                        q.modeName = "การบวก"; q.text = `${a1} + ${b1} = ?`; q.instruction = "คิดในใจแล้วชูนิ้วตอบ";
-                        q.answerCheck = (f) => f === (a1 + b1); q.answerText = a1+b1; break;
-                    case 3:
-                        const a2 = Math.floor(Math.random() * 11), b2 = Math.floor(Math.random() * (a2 + 1)); 
-                        q.modeName = "การลบ"; q.text = `${a2} - ${b2} = ?`; q.instruction = "คิดในใจแล้วชูนิ้วตอบ";
-                        q.answerCheck = (f) => f === (a2 - b2); q.answerText = a2-b2; break;
-                    case 4:
-                        const pairs = [[0,1], [0,2], [1,1], [1,2], [1,3], [1,4], [1,5], [1,6], [1,7], [1,8], [1,9], [1,10], [2,1], [2,2], [2,3], [2,4], [2,5], [3,1], [3,2], [3,3], [4,1], [4,2], [5,1], [5,2]];
-                        const pair = pairs[Math.floor(Math.random() * pairs.length)];
-                        q.modeName = "การคูณ"; q.text = `${pair[0]} × ${pair[1]} = ?`; q.instruction = "คิดในใจแล้วชูนิ้วตอบ";
-                        q.answerCheck = (f) => f === (pair[0] * pair[1]); q.answerText = pair[0]*pair[1]; break;
-                    case 5:
-                        const target = Math.floor(Math.random() * 9) + 1, isMore = Math.random() > 0.5;
-                        q.modeName = "เปรียบเทียบ"; q.text = isMore ? `> ${target}` : `< ${target}`; q.instruction = isMore ? `ชูนิ้วให้ มากกว่า ${target}` : `ชูนิ้วให้ น้อยกว่า ${target}`;
-                        q.answerCheck = (f) => isMore ? (f > target && f <=10) : (f < target); q.answerText = isMore ? `จำนวนที่มากกว่า ${target}` : `จำนวนที่น้อยกว่า ${target}`; break;
-                    case 6:
-                        const isEven = Math.random() > 0.5;
-                        q.modeName = "คู่ หรือ คี่"; q.text = isEven ? "เลขคู่" : "เลขคี่"; q.instruction = isEven ? "ชูนิ้วจำนวนคู่ (2,4...)" : "ชูนิ้วจำนวนคี่ (1,3...)";
-                        q.answerCheck = (f) => isEven ? (f % 2 === 0 && f > 0) : (f % 2 !== 0); q.answerText = isEven ? "2, 4, 6, 8 หรือ 10" : "1, 3, 5, 7 หรือ 9"; break;
-                }
-                this.currentQuestion = q; return q;
-            }
-        }
-
-        class ScoreManager {
-            constructor() { this.reset(); }
-            reset() { this.score = 0; this.level = 1; this.correctCount = 0; this.wrongCount = 0; this.combo = 0; this.perfectAccuracy = true; this.updateUI(); Object.values(DOM.badges).forEach(b => b.classList.remove('unlocked')); }
-            addScore(timeElapsed) {
-                this.correctCount++; this.combo++; let pts = CONFIG.pointsBase; let bonusMsg = "";
-                if (timeElapsed < 3) { pts += CONFIG.pointsFast; bonusMsg = "เร็วมาก! +5"; }
-                if (this.combo === 3) { pts += 20; DOM.comboDisplay.innerText="🔥 Combo x3!"; DOM.comboDisplay.classList.remove('hidden'); }
-                else if (this.combo === 5) { pts += 50; DOM.comboDisplay.innerText="🔥 Combo x5!"; DOM.comboDisplay.classList.remove('hidden'); }
-                else if (this.combo > 5) { pts += 10; }
-                if(this.combo !== 3 && this.combo !== 5 && this.combo <= 1) DOM.comboDisplay.classList.add('hidden');
-                
-                this.score += pts; let leveledUp = false;
-                if (Math.floor(this.score / CONFIG.levelUpScore) + 1 > this.level) { this.level++; leveledUp = true; }
-                
-                if (this.correctCount >= 10) DOM.badges.beginner.classList.add('unlocked');
-                if (this.correctCount >= 50) DOM.badges.star.classList.add('unlocked');
-                if (this.correctCount >= 100) DOM.badges.master.classList.add('unlocked');
-                if (this.level >= 5 && this.perfectAccuracy && this.correctCount >= 20) DOM.badges.champion.classList.add('unlocked');
-                
-                this.updateUI(); return { points: pts, leveledUp, bonusMsg };
-            }
-            recordWrong() { this.wrongCount++; this.combo = 0; this.perfectAccuracy = false; DOM.comboDisplay.classList.add('hidden'); this.updateUI(); }
-            updateUI() { DOM.hudScore.innerText = this.score; }
-        }
-
-        class GameManager {
-            constructor() {
-                this.sound = new SoundManager(); 
-                this.qManager = new QuestionManager(); 
-                this.scoreManager = new ScoreManager();
-                this.handTracker = new HandTracker(DOM.video, DOM.canvas, (f) => this.onHandResult(f));
-                
-                this.state = 'menu'; this.gameMode = 'adventure'; this.classTopic = null; this.playerName = "ผู้เยี่ยมชม";
-                this.totalQuestions = 10; this.currentQuestionIndex = 0; 
-                
-                this.lastFrameTime = performance.now();
-                this.savedTimeLeft = CONFIG.timePerQuestion; 
-                this.isHolding = false; this.holdElapsed = 0; 
-                this.loopId = null;
-                
-                this.setupListeners(); this.loadLeaderboard();
-            }
-
-            setupListeners() {
-                DOM.btnPause.addEventListener('click', () => this.togglePause());
-                DOM.btnRestart.addEventListener('click', () => this.startSession(this.gameMode, this.classTopic));
-                DOM.btnMenu.addEventListener('click', () => { this.state = 'menu'; DOM.ui.classList.add('hidden-panel'); DOM.menu.classList.remove('hidden-panel'); });
-            }
-
-            async startGame(mode) {
-                let inputName = DOM.startPlayerName.value.trim();
-                this.playerName = inputName || "นักสำรวจไร้ชื่อ";
-                this.totalQuestions = parseInt(DOM.startQuestionCount.value) || 10;
-                this.sound.init(); this.gameMode = mode;
-                if(mode === 'classroom') this.classTopic = document.getElementById('classroomModeSelect').value;
-                
-                DOM.hudPlayerName.innerText = this.playerName;
-                DOM.menu.classList.add('hidden-panel'); DOM.ui.classList.remove('hidden-panel'); DOM.gameOverModal.classList.add('hidden-panel');
-                
-                if (!this.handTracker.isReady) await this.handTracker.init();
-                this.startSession(mode, this.classTopic);
-            }
-
-            startSession(mode, topic) {
-                this.scoreManager.reset(); 
-                this.state = 'playing'; 
-                this.currentQuestionIndex = 0;
-                this.nextQuestion();
-                if (this.loopId) cancelAnimationFrame(this.loopId);
-                this.lastFrameTime = performance.now();
-                this.gameLoop();
-            }
-
-            nextQuestion() {
-                this.currentQuestionIndex++;
-                if (this.totalQuestions !== 999 && this.currentQuestionIndex > this.totalQuestions) { this.endGame(); return; }
-                DOM.hudLevel.innerText = this.totalQuestions === 999 ? `${this.currentQuestionIndex}` : `${this.currentQuestionIndex}/${this.totalQuestions}`;
-
-                const q = this.qManager.generateQuestion(this.scoreManager.level, this.gameMode, this.classTopic);
-                DOM.questionMode.innerHTML = `<i class="fa-solid fa-bolt mr-2 text-yellow-400"></i>${q.modeName}`; 
-                DOM.questionText.innerText = q.text; DOM.instructionText.innerText = q.instruction;
-                
-                this.savedTimeLeft = CONFIG.timePerQuestion; 
-                this.lastFrameTime = performance.now();
-                this.isHolding = false; this.holdElapsed = 0; 
-                DOM.holdIndicator.classList.remove('active');
-                DOM.holdFill.style.transform = 'rotate(-45deg)';
-                
-                DOM.questionText.classList.remove('animate-pop'); void DOM.questionText.offsetWidth; DOM.questionText.classList.add('animate-pop');
-            }
-
-            onHandResult(fingers) {
-                if (this.state !== 'playing') { DOM.hudFingers.innerText = fingers; return; }
-                DOM.hudFingers.innerText = fingers;
-
-                if (this.qManager.currentQuestion.answerCheck(fingers)) {
-                    if (!this.isHolding) { this.isHolding = true; this.holdElapsed = 0; DOM.holdIndicator.classList.add('active'); }
-                } else {
-                    if (this.isHolding) { this.isHolding = false; this.holdElapsed = 0; DOM.holdIndicator.classList.remove('active'); DOM.holdFill.style.transform = 'rotate(-45deg)'; }
-                }
-            }
-
-            gameLoop() {
-                const now = performance.now();
-                let deltaTime = (now - this.lastFrameTime) / 1000;
-                if (deltaTime > 0.1) deltaTime = 0.1; // clamp to prevent massive drops if tab is inactive
-                this.lastFrameTime = now;
-
-                if (this.state === 'playing') {
-                    if (!this.isHolding) {
-                        this.savedTimeLeft -= deltaTime;
-                        if (this.savedTimeLeft < 0) this.savedTimeLeft = 0;
-                    } else {
-                        this.holdElapsed += deltaTime;
-                        const fillPercent = Math.min(1, this.holdElapsed / CONFIG.holdTimeRequired);
-                        DOM.holdFill.style.transform = `rotate(${-45 + (fillPercent * 360)}deg)`;
-                        
-                        if (this.holdElapsed >= CONFIG.holdTimeRequired) {
-                            this.isHolding = false; 
-                            this.handleCorrect(CONFIG.timePerQuestion - this.savedTimeLeft);
-                        }
-                    }
-
-                    const displayTime = Math.max(0, this.savedTimeLeft).toFixed(1);
-                    DOM.timerText.innerText = displayTime + 's';
-                    DOM.timerBar.style.width = ((this.savedTimeLeft / CONFIG.timePerQuestion) * 100) + '%';
-                    
-                    if (this.savedTimeLeft <= 3) { 
-                        DOM.timerBar.classList.replace('bg-cyan-400', 'bg-red-500'); 
-                        DOM.timerText.classList.replace('text-white', 'text-red-400'); 
-                    } else { 
-                        DOM.timerBar.classList.replace('bg-red-500', 'bg-cyan-400'); 
-                        DOM.timerText.classList.replace('text-red-400', 'text-white'); 
-                    }
-
-                    if (this.savedTimeLeft <= 0 && !this.isHolding && this.state === 'playing') {
-                        this.handleWrong("หมดเวลา!", `คำตอบที่ถูกคือ: ${this.qManager.currentQuestion.answerText}`);
-                    }
-                }
-                this.loopId = requestAnimationFrame(() => this.gameLoop());
-            }
-
-            handleCorrect(timeTaken) {
-                this.state = 'feedback'; this.sound.correct(); DOM.holdIndicator.classList.remove('active');
-                const res = this.scoreManager.addScore(timeTaken);
-                this.showFeedback(true, `+${res.points}`, res.bonusMsg || CONFIG.messages[Math.floor(Math.random()*CONFIG.messages.length)]);
-
-                if (res.leveledUp && this.gameMode === 'adventure') {
-                    this.sound.levelUp(); DOM.levelUpOverlay.classList.remove('hidden-panel');
-                    setTimeout(() => DOM.levelUpOverlay.classList.add('hidden-panel'), 2000);
-                }
-                setTimeout(() => { if(this.state !== 'gameover' && this.state !== 'menu') { this.state = 'playing'; DOM.feedbackContainer.classList.add('hidden-panel'); this.nextQuestion(); } }, 1500);
-            }
-
-            handleWrong(reason, answerText) {
-                this.state = 'feedback'; this.sound.wrong(); this.scoreManager.recordWrong(); DOM.holdIndicator.classList.remove('active');
-                DOM.questionText.classList.add('animate-shake'); setTimeout(()=>DOM.questionText.classList.remove('animate-shake'), 500);
-                this.showFeedback(false, "0", answerText || "ไม่เป็นไร ลองใหม่นะ");
-                setTimeout(() => { if(this.state !== 'gameover' && this.state !== 'menu') { this.state = 'playing'; DOM.feedbackContainer.classList.add('hidden-panel'); this.nextQuestion(); } }, 2500);
-            }
-
-            showFeedback(isCorrect, points, msg) {
-                DOM.feedbackContainer.classList.remove('hidden-panel');
-                
-                DOM.feedbackIconWrap.className = isCorrect ? "w-28 h-28 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(16,185,129,0.5)] bg-gradient-to-tr from-emerald-400 to-green-500" : "w-28 h-28 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(244,63,94,0.5)] bg-gradient-to-tr from-rose-500 to-red-600";
-                DOM.feedbackIcon.className = isCorrect ? "fa-solid fa-check text-6xl text-white" : "fa-solid fa-xmark text-6xl text-white";
-                DOM.feedbackText.innerText = isCorrect ? "ถูกต้อง!" : "ผิดจ้า!";
-                DOM.feedbackText.className = isCorrect ? "font-display text-5xl font-bold mb-3 text-emerald-400 drop-shadow-lg" : "font-display text-5xl font-bold mb-3 text-rose-400 drop-shadow-lg";
-                DOM.feedbackPoints.innerText = points; DOM.feedbackMessage.innerText = msg;
-            }
-
-            togglePause() {
-                if(this.state === 'playing') {
-                    this.state = 'paused'; 
-                    DOM.btnPause.innerHTML = '<i class="fa-solid fa-play mr-2"></i> เล่นต่อ';
-                    DOM.btnPause.classList.replace('bg-white/10', 'bg-emerald-500'); DOM.btnPause.classList.replace('border-white/30', 'border-emerald-400');
-                } else if (this.state === 'paused') {
-                    this.state = 'playing'; 
-                    this.lastFrameTime = performance.now(); 
-                    DOM.btnPause.innerHTML = '<i class="fa-solid fa-pause mr-2"></i> พัก';
-                    DOM.btnPause.classList.replace('bg-emerald-500', 'bg-white/10'); DOM.btnPause.classList.replace('border-emerald-400', 'border-white/30');
-                }
-            }
-
-            endGame(title = "ภารกิจสำเร็จ!") {
-                this.state = 'gameover'; DOM.ui.classList.add('hidden-panel'); DOM.gameOverModal.classList.remove('hidden-panel');
-                DOM.gameOverTitle.innerText = title; DOM.finalPlayerName.innerText = this.playerName;
-                DOM.finalScoreText.innerText = this.scoreManager.score; DOM.finalCorrect.innerText = this.scoreManager.correctCount; DOM.finalWrong.innerText = this.scoreManager.wrongCount;
-
-                if (this.scoreManager.score > 0 || this.scoreManager.correctCount > 0) {
-                    const data = JSON.parse(localStorage.getItem('fingerMathSpaceLeaderboard')) || [];
-                    data.push({ name: this.playerName, score: this.scoreManager.score, date: new Date().toISOString() });
-                    localStorage.setItem('fingerMathSpaceLeaderboard', JSON.stringify(data)); this.loadLeaderboard();
-                }
-            }
-
-            loadLeaderboard() {
-                const data = JSON.parse(localStorage.getItem('fingerMathSpaceLeaderboard')) || [];
-                DOM.leaderboardList.innerHTML = '';
-                if (data.length === 0) { DOM.leaderboardList.innerHTML = '<p class="text-slate-400 font-bold mt-4 bg-black/20 py-4 rounded-xl">ยังไม่มีประวัติ มาสร้างสถิติคนแรกกัน!</p>'; return; }
-                
-                data.sort((a,b) => b.score - a.score).slice(0, 10).forEach((entry, idx) => {
-                    const el = document.createElement('div');
-                    el.className = "flex justify-between items-center bg-black/20 p-3 rounded-2xl border border-white/10 transition hover:bg-black/40";
-                    let rankIcon = idx === 0 ? '<i class="fa-solid fa-medal text-yellow-400 text-2xl mr-3"></i>' : 
-                               (idx === 1 ? '<i class="fa-solid fa-medal text-slate-300 text-2xl mr-3"></i>' : 
-                               (idx === 2 ? '<i class="fa-solid fa-medal text-orange-400 text-2xl mr-3"></i>' : 
-                               `<span class="text-slate-500 font-display text-xl w-8 mr-1 text-center">${idx+1}</span>`));
-                    el.innerHTML = `<div class="flex items-center">${rankIcon}<span class="font-bold text-white text-lg truncate w-32 text-left">${entry.name}</span></div><div class="text-right"><span class="text-yellow-400 font-display text-2xl drop-shadow-md">${entry.score}</span></div>`;
-                    DOM.leaderboardList.appendChild(el);
-                });
-            }
-
-            requestClearLeaderboard() { DOM.customConfirmModal.classList.remove('hidden-panel'); }
-            confirmClearLeaderboard() { localStorage.removeItem('fingerMathSpaceLeaderboard'); this.loadLeaderboard(); DOM.customConfirmModal.classList.add('hidden-panel'); }
-
-            returnToMenu() { DOM.gameOverModal.classList.add('hidden-panel'); DOM.menu.classList.remove('hidden-panel'); }
-            restartGame() { DOM.gameOverModal.classList.add('hidden-panel'); DOM.ui.classList.remove('hidden-panel'); this.startSession(this.gameMode, this.classTopic); }
-            showLeaderboard() { this.loadLeaderboard(); DOM.leaderboardModal.classList.remove('hidden-panel'); }
-        }
-
-        window.onload = () => {
-            window.app = new GameManager();
-            document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && window.app.state === 'playing') window.app.endGame("ยุติภารกิจ"); });
-        };
-    </script>
+window.onload=()=>{window.app=new GameManager();app.switchMenuTab('test');};
+</script>
 </body>
 </html>
