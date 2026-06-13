@@ -9,6 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Noto+Sans+Thai:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -41,7 +42,6 @@ body{
 .f-display{font-family:'Fredoka One',cursive;}
 .f-mono{font-family:'IBM Plex Mono',monospace;}
 
-/* ── Animated Background ── */
 .bg-canvas{
   position:fixed;inset:0;z-index:0;overflow:hidden;
   background:linear-gradient(135deg,#0f0c29 0%,#302b63 50%,#24243e 100%);
@@ -55,7 +55,6 @@ body{
 .bg-orb-3{width:400px;height:400px;background:#ec4899;top:40%;left:30%;animation-delay:-12s;}
 @keyframes orbFloat{0%{transform:translate(0,0) scale(1)}100%{transform:translate(40px,30px) scale(1.1)}}
 
-/* ── Math particles ── */
 .particle{
   position:fixed;pointer-events:none;font-weight:700;color:rgba(255,255,255,0.05);
   animation:rise linear infinite;z-index:1;font-size:1.5rem;
@@ -66,11 +65,9 @@ body{
   100%{transform:translateY(-10vh) rotate(360deg);opacity:0}
 }
 
-/* ── Layout ── */
 .screen{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;overflow:hidden;}
 .hidden{display:none!important;}
 
-/* ── Glass Cards ── */
 .card{
   background:rgba(255,255,255,0.055);
   border:1px solid var(--border);
@@ -79,7 +76,6 @@ body{
 }
 .card-sm{border-radius:14px;}
 
-/* ── Buttons ── */
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
   padding:0.65rem 1.25rem;border-radius:12px;font-weight:700;font-size:0.875rem;
@@ -102,7 +98,6 @@ body{
 .btn-lg{padding:0.9rem 1.75rem;font-size:1rem;border-radius:16px;}
 .btn-xl{padding:1.1rem 2rem;font-size:1.1rem;border-radius:18px;}
 
-/* ── Inputs ── */
 .inp{
   width:100%;background:rgba(0,0,0,0.3);border:1.5px solid var(--border);border-radius:12px;
   padding:0.75rem 1rem;font-size:0.95rem;font-weight:600;color:#e2e8f0;
@@ -114,7 +109,6 @@ select.inp{appearance:none;cursor:pointer;}
 label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
   text-transform:uppercase;margin-bottom:6px;opacity:0.7;}
 
-/* ── Camera ── */
 .cam-box{position:relative;border-radius:16px;overflow:hidden;background:#000;
   aspect-ratio:4/3;border:2px solid var(--border);}
 .cam-box video{display:none;}
@@ -128,11 +122,9 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
 .cam-corner.br{bottom:10px;right:10px;border-width:0 3px 3px 0;border-radius:0 0 4px 0;}
 .detected .cam-corner{border-color:#10b981;}
 
-/* ── Timer bar ── */
 .timer-track{height:8px;background:rgba(0,0,0,0.3);border-radius:999px;overflow:hidden;border:1px solid var(--border);}
 .timer-fill{height:100%;border-radius:999px;transition:width 0.08s linear,background 0.3s;}
 
-/* ── Hold ring ── */
 .hold-ring{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
   width:100px;height:100px;pointer-events:none;display:none;z-index:20;}
 .hold-ring.active{display:block;}
@@ -143,33 +135,27 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
 .hold-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   font-size:1.8rem;}
 
-/* ── Feedback overlay ── */
 .feedback-overlay{
   position:absolute;inset:0;border-radius:18px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   background:rgba(15,12,41,0.93);backdrop-filter:blur(8px);z-index:30;gap:10px;
 }
 
-/* ── Question text ── */
 .q-text{font-family:'Fredoka One',cursive;font-size:clamp(3rem,7vw,6rem);
   line-height:1.05;color:#fff;text-align:center;}
 
-/* ── Badges ── */
 .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:999px;
   font-size:0.72rem;font-weight:700;letter-spacing:0.06em;}
 .badge-pre{background:rgba(8,145,178,0.2);color:#67e8f9;border:1px solid rgba(8,145,178,0.4);}
 .badge-post{background:rgba(124,58,237,0.2);color:#c4b5fd;border:1px solid rgba(124,58,237,0.4);}
 .badge-practice{background:rgba(16,185,129,0.2);color:#6ee7b7;border:1px solid rgba(16,185,129,0.4);}
-.badge-research{background:rgba(234,197,71,0.15);color:#fcd34d;border:1px solid rgba(234,197,71,0.3);}
 
-/* ── HUD chips ── */
 .chip{background:rgba(0,0,0,0.35);border:1px solid var(--border);border-radius:10px;
   padding:6px 12px;text-align:center;}
 .chip-val{font-family:'Fredoka One',cursive;font-size:1.25rem;line-height:1;display:block;}
 .chip-lbl{font-size:0.65rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
   opacity:0.55;display:block;margin-top:1px;}
 
-/* ── Anim ── */
 @keyframes popIn{0%{transform:scale(0.7);opacity:0}60%{transform:scale(1.07)}100%{transform:scale(1);opacity:1}}
 .anim-pop{animation:popIn 0.4s cubic-bezier(.34,1.56,.64,1) forwards;}
 @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
@@ -177,17 +163,18 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
 .anim-pulse{animation:pulse 1.5s infinite;}
 
-/* ── Level up ── */
+@keyframes bounceIn{0%{transform:scale(0) translateY(-20px);opacity:0}60%{transform:scale(1.2) translateY(0);opacity:1}100%{transform:scale(1) translateY(0);opacity:1}}
+@keyframes slideUp{0%{transform:translateY(30px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes fadeOut{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-20px)}}
+
 .levelup{
   position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
   background:rgba(124,58,237,0.35);backdrop-filter:blur(6px);pointer-events:none;
 }
 
-/* ── Stat bars ── */
 .sbar-track{height:6px;background:rgba(255,255,255,0.1);border-radius:3px;}
 .sbar-fill{height:100%;border-radius:3px;transition:width 0.5s ease;}
 
-/* ── Modals ── */
 .modal-wrap{
   position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;
   padding:1rem;background:rgba(0,0,0,0.65);backdrop-filter:blur(8px);overflow-y:auto;
@@ -198,48 +185,15 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
   box-shadow:0 20px 60px rgba(0,0,0,0.6);
 }
 
-/* ── Scrollbar ── */
 ::-webkit-scrollbar{width:4px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:2px;}
 
-/* ── Tab ── */
 .tab-btn{padding:0.5rem 1rem;border-radius:10px;font-weight:700;font-size:0.8rem;
   cursor:pointer;border:1.5px solid transparent;color:rgba(255,255,255,0.4);transition:all 0.2s;}
 .tab-btn.active{background:rgba(124,58,237,0.3);border-color:#7c3aed;color:#c4b5fd;}
 .tab-btn:not(.active):hover{color:rgba(255,255,255,0.7);}
 
-/* ── Finger indicator ── */
-.finger-display{
-  width:60px;height:60px;border-radius:50%;
-  border:3px solid var(--cyan);
-  display:flex;align-items:center;justify-content:center;
-  font-family:'Fredoka One',cursive;font-size:1.8rem;color:#fff;
-  background:rgba(0,212,255,0.1);
-  box-shadow:0 0 20px rgba(0,212,255,0.3);
-}
-.finger-display.detected-good{border-color:#10b981;box-shadow:0 0 20px rgba(16,185,129,0.4);}
-
-/* ── Conf bar ── */
-.conf-bar{position:absolute;bottom:6px;left:8px;right:8px;height:4px;
-  background:rgba(0,0,0,0.4);border-radius:2px;z-index:15;}
-.conf-fill{height:100%;border-radius:2px;transition:width 0.12s,background 0.3s;}
-
-/* ── Score highlight chip ── */
-.score-chip{
-  background:linear-gradient(135deg,#d97706,#b45309);
-  border:1px solid rgba(245,158,11,0.5);
-  box-shadow:0 0 20px rgba(217,119,6,0.4);
-}
-
-/* ── Combo badge ── */
-.combo-badge{
-  background:linear-gradient(135deg,#ec4899,#be185d);
-  color:#fff;padding:4px 14px;border-radius:999px;font-weight:800;font-size:0.82rem;
-  box-shadow:0 0 15px rgba(236,72,153,0.5);display:none;
-}
-
-/* ── Mode selector cards ── */
 .mode-card{
   background:rgba(255,255,255,0.05);border:1.5px solid var(--border);border-radius:16px;
   padding:1rem 0.75rem;cursor:pointer;transition:all 0.2s;text-align:center;
@@ -254,17 +208,81 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
 .mode-icon{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;
   justify-content:center;margin:0 auto 8px;font-size:1.3rem;}
 
-/* ── Achievement badges ── */
 .achv{display:flex;flex-direction:column;align-items:center;gap:3px;
   opacity:0.2;transition:all 0.4s;filter:grayscale(1);}
 .achv.unlocked{opacity:1;filter:none;}
 .achv-icon{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;
   justify-content:center;font-size:1.1rem;border:2px solid transparent;}
 
-/* ── Final question log ── */
 .q-log-item{display:flex;align-items:center;gap:8px;padding:5px 0;
   border-bottom:1px solid rgba(255,255,255,0.06);font-size:0.8rem;}
 .q-log-item:last-child{border:none;}
+
+.score-chip{
+  background:linear-gradient(135deg,#d97706,#b45309);
+  border:1px solid rgba(245,158,11,0.5);
+  box-shadow:0 0 20px rgba(217,119,6,0.4);
+}
+.combo-badge{
+  background:linear-gradient(135deg,#ec4899,#be185d);
+  color:#fff;padding:4px 14px;border-radius:999px;font-weight:800;font-size:0.82rem;
+  box-shadow:0 0 15px rgba(236,72,153,0.5);display:none;
+}
+.conf-bar{position:absolute;bottom:6px;left:8px;right:8px;height:4px;
+  background:rgba(0,0,0,0.4);border-radius:2px;z-index:15;}
+.conf-fill{height:100%;border-radius:2px;transition:width 0.12s,background 0.3s;}
+
+/* ── EMOTION PANEL ── */
+.emotion-panel{
+  background:rgba(0,0,0,0.45);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:10px 12px;
+  display:flex;flex-direction:column;gap:8px;
+  flex-shrink:0;
+}
+.emotion-row{display:flex;align-items:center;gap:8px;}
+.emotion-emoji-big{
+  font-size:2.4rem;line-height:1;
+  transition:all 0.4s ease;
+  filter:drop-shadow(0 0 8px rgba(255,255,255,0.3));
+  animation:bounceIn 0.4s ease forwards;
+}
+.emotion-label{
+  font-family:'Fredoka One',cursive;
+  font-size:1rem;
+  letter-spacing:0.02em;
+}
+.emotion-sub{font-size:0.72rem;font-weight:600;color:#94a3b8;line-height:1.3;}
+
+/* Motivational toast */
+.motive-toast{
+  position:absolute;
+  bottom:60px;left:50%;transform:translateX(-50%);
+  background:rgba(15,12,41,0.95);
+  border:1.5px solid rgba(255,255,255,0.2);
+  border-radius:14px;padding:8px 16px;
+  display:flex;align-items:center;gap:8px;
+  white-space:nowrap;
+  z-index:50;
+  font-size:0.82rem;font-weight:700;color:#fff;
+  box-shadow:0 4px 20px rgba(0,0,0,0.5);
+  pointer-events:none;
+  animation:slideUp 0.35s ease forwards;
+}
+.motive-toast.fade-out{animation:fadeOut 0.5s ease forwards;}
+
+/* Emotion confidence bars */
+.emo-bar-wrap{display:flex;flex-direction:column;gap:3px;}
+.emo-bar-row{display:flex;align-items:center;gap:6px;font-size:0.68rem;}
+.emo-bar-label{width:40px;color:#94a3b8;font-weight:600;flex-shrink:0;}
+.emo-bar-track{flex:1;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;}
+.emo-bar-fill{height:100%;border-radius:3px;transition:width 0.3s ease;}
+.emo-bar-val{width:26px;text-align:right;color:#64748b;font-weight:700;}
+
+/* Pulse ring around emoji on anxiety */
+@keyframes anxietPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.5)}50%{box-shadow:0 0 0 10px rgba(239,68,68,0)}}
+.emotion-anxious .emotion-emoji-big{animation:anxietPulse 1.5s infinite;}
 </style>
 </head>
 <body>
@@ -275,33 +293,35 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
 </div>
 <div id="particleLayer" style="position:fixed;inset:0;z-index:1;pointer-events:none;"></div>
 
-<!-- ════════════════════════════════
-     START MENU
-════════════════════════════════ -->
+<!-- ════ START MENU ════ -->
 <div id="screenMenu" class="screen" style="z-index:20;align-items:center;justify-content:flex-start;overflow-y:auto;padding:1.5rem 1rem;">
   <div style="max-width:680px;width:100%;margin:0 auto;padding-bottom:2rem;">
-
-    <!-- Hero -->
     <div style="text-align:center;margin-bottom:1.75rem;">
       <div style="display:inline-flex;align-items:center;gap:10px;background:rgba(234,197,71,0.12);border:1px solid rgba(234,197,71,0.3);border-radius:999px;padding:5px 14px;margin-bottom:1rem;">
         <i class="fa-solid fa-flask" style="color:#fcd34d;font-size:0.75rem;"></i>
-        <span style="font-size:0.7rem;font-weight:700;letter-spacing:0.08em;color:#fcd34d;text-transform:uppercase;">Research Edition v2.0</span>
+        <span style="font-size:0.7rem;font-weight:700;letter-spacing:0.08em;color:#fcd34d;text-transform:uppercase;">Research Edition v2.1 + EmoSense™</span>
       </div>
-
       <div style="width:80px;height:80px;border-radius:28px;background:linear-gradient(135deg,#7c3aed,#ec4899);
         display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;
         box-shadow:0 8px 30px rgba(124,58,237,0.5);">
         <i class="fa-solid fa-hands-asl-interpreting" style="font-size:2rem;color:#fff;"></i>
       </div>
-
       <h1 class="f-display" style="font-size:2.6rem;background:linear-gradient(135deg,#c4b5fd,#f9a8d4,#67e8f9);
         -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;">
         FINGER MATH
       </h1>
-      <p style="font-size:0.95rem;color:#94a3b8;font-weight:500;">จักรวาลคณิตศาสตร์มหัศจรรย์ ✨</p>
+      <p style="font-size:0.95rem;color:#94a3b8;font-weight:500;">จักรวาลคณิตศาสตร์มหัศจรรย์ ✨ พร้อมระบบวิเคราะห์อารมณ์ AI</p>
     </div>
 
-    <!-- Player info card -->
+    <!-- EmoSense Info Badge -->
+    <div style="background:linear-gradient(135deg,rgba(236,72,153,0.12),rgba(124,58,237,0.12));border:1px solid rgba(236,72,153,0.3);border-radius:14px;padding:12px 16px;margin-bottom:1.25rem;display:flex;align-items:center;gap:12px;">
+      <div style="font-size:2rem;flex-shrink:0;">😊</div>
+      <div>
+        <p style="font-weight:800;font-size:0.88rem;color:#f9a8d4;margin-bottom:2px;">✨ ระบบ EmoSense™ ใหม่!</p>
+        <p style="font-size:0.75rem;color:#94a3b8;line-height:1.4;">AI วิเคราะห์ใบหน้าแบบ Real-time ตรวจจับความสุข ความกังวล และสมาธิ พร้อมส่งข้อความกำลังใจอัตโนมัติ</p>
+      </div>
+    </div>
+
     <div class="card" style="padding:1.25rem;margin-bottom:1.25rem;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;">
         <i class="fa-solid fa-user-astronaut" style="color:#a78bfa;"></i>
@@ -338,7 +358,6 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
       </div>
     </div>
 
-    <!-- Tabs -->
     <div style="display:flex;gap:8px;justify-content:center;margin-bottom:1.25rem;flex-wrap:wrap;">
       <button class="tab-btn active" data-tab="test" onclick="app.switchMenuTab('test')">
         <i class="fa-solid fa-clipboard-check" style="margin-right:6px;"></i>โหมดทดสอบ
@@ -351,7 +370,6 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
       </button>
     </div>
 
-    <!-- Tab: Test -->
     <div id="tabTest">
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem;">
         <div class="mode-card pre" onclick="app.startGame('pretest')">
@@ -379,7 +397,7 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
       <div>
         <label class="lbl">หัวข้อที่ทดสอบ</label>
         <select id="testTopicSelect" class="inp">
-          <option value="0">🎲 สุ่มทุกหัวข้อ (Adventure)</option>
+          <option value="0">🎲 สุ่มทุกหัวข้อ</option>
           <option value="1">✋ แสดงตัวเลข 0–10</option>
           <option value="2">➕ การบวก</option>
           <option value="3">➖ การลบ</option>
@@ -390,62 +408,39 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
       </div>
     </div>
 
-    <!-- Tab: Practice -->
     <div id="tabPractice" class="hidden">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
-        <button onclick="app.startGame('practice',1)" class="btn btn-cyan btn-lg" style="width:100%;justify-content:flex-start;">
-          <i class="fa-solid fa-hand"></i> แสดงตัวเลข
-        </button>
-        <button onclick="app.startGame('practice',2)" class="btn btn-cyan btn-lg" style="width:100%;justify-content:flex-start;">
-          <i class="fa-solid fa-plus"></i> การบวก
-        </button>
-        <button onclick="app.startGame('practice',3)" class="btn btn-cyan btn-lg" style="width:100%;justify-content:flex-start;">
-          <i class="fa-solid fa-minus"></i> การลบ
-        </button>
-        <button onclick="app.startGame('practice',4)" class="btn btn-cyan btn-lg" style="width:100%;justify-content:flex-start;">
-          <i class="fa-solid fa-xmark"></i> การคูณ
-        </button>
-        <button onclick="app.startGame('practice',5)" class="btn btn-cyan btn-lg" style="width:100%;justify-content:flex-start;">
-          <i class="fa-solid fa-less-than"></i> เปรียบเทียบ
-        </button>
-        <button onclick="app.startGame('practice',6)" class="btn btn-cyan btn-lg" style="width:100%;justify-content:flex-start;">
-          <i class="fa-solid fa-hashtag"></i> คู่ / คี่
-        </button>
+        <button onclick="app.startGame('practice',1)" class="btn btn-cyan btn-lg" style="width:100%;justify-content:flex-start;"><i class="fa-solid fa-hand"></i> แสดงตัวเลข</button>
+        <button onclick="app.startGame('practice',2)" class="btn btn-cyan btn-lg" style="width:100%;justify-content:flex-start;"><i class="fa-solid fa-plus"></i> การบวก</button>
+        <button onclick="app.startGame('practice',3)" class="btn btn-cyan btn-lg" style="width:100%;justify-content:flex-start;"><i class="fa-solid fa-minus"></i> การลบ</button>
+        <button onclick="app.startGame('practice',4)" class="btn btn-cyan btn-lg" style="width:100%;justify-content:flex-start;"><i class="fa-solid fa-xmark"></i> การคูณ</button>
+        <button onclick="app.startGame('practice',5)" class="btn btn-cyan btn-lg" style="width:100%;justify-content:flex-start;"><i class="fa-solid fa-less-than"></i> เปรียบเทียบ</button>
+        <button onclick="app.startGame('practice',6)" class="btn btn-cyan btn-lg" style="width:100%;justify-content:flex-start;"><i class="fa-solid fa-hashtag"></i> คู่ / คี่</button>
       </div>
       <div>
-        <label class="lbl">Hold Time (เวลากดค้าง)</label>
+        <label class="lbl">Hold Time</label>
         <select id="practiceHoldTime" class="inp">
           <option value="0.8">0.8 วิ — เร็ว</option>
           <option value="1.2" selected>1.2 วิ — ปกติ</option>
-          <option value="2.0">2.0 วิ — ช้า (เด็กเล็ก)</option>
+          <option value="2.0">2.0 วิ — ช้า</option>
           <option value="3.0">3.0 วิ — ช้ามาก</option>
         </select>
       </div>
     </div>
 
-    <!-- Tab: Teacher -->
     <div id="tabTeacher" class="hidden">
       <div style="background:rgba(234,197,71,0.07);border:1px solid rgba(234,197,71,0.25);border-radius:12px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
         <i class="fa-solid fa-lock" style="color:#fcd34d;font-size:0.8rem;"></i>
         <span style="font-size:0.78rem;font-weight:700;color:#fcd34d;">พื้นที่ครูผู้สอน — ข้อมูลวิจัย</span>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <button onclick="app.showDashboard()" class="btn btn-gold btn-lg" style="width:100%;">
-          <i class="fa-solid fa-chart-bar"></i> Dashboard
-        </button>
-        <button onclick="app.exportCSV()" class="btn btn-green btn-lg" style="width:100%;">
-          <i class="fa-solid fa-file-csv"></i> Export CSV
-        </button>
-        <button onclick="app.showLeaderboard()" class="btn btn-ghost btn-lg" style="width:100%;">
-          <i class="fa-solid fa-trophy" style="color:#fcd34d;"></i> คะแนนสูงสุด
-        </button>
-        <button onclick="app.requestClearLeaderboard()" class="btn btn-red btn-lg" style="width:100%;">
-          <i class="fa-solid fa-trash"></i> ล้างข้อมูล
-        </button>
+        <button onclick="app.showDashboard()" class="btn btn-gold btn-lg" style="width:100%;"><i class="fa-solid fa-chart-bar"></i> Dashboard</button>
+        <button onclick="app.exportCSV()" class="btn btn-green btn-lg" style="width:100%;"><i class="fa-solid fa-file-csv"></i> Export CSV</button>
+        <button onclick="app.showLeaderboard()" class="btn btn-ghost btn-lg" style="width:100%;"><i class="fa-solid fa-trophy" style="color:#fcd34d;"></i> คะแนนสูงสุด</button>
+        <button onclick="app.requestClearLeaderboard()" class="btn btn-red btn-lg" style="width:100%;"><i class="fa-solid fa-trash"></i> ล้างข้อมูล</button>
       </div>
     </div>
 
-    <!-- Footer links -->
     <div style="display:flex;justify-content:center;gap:24px;margin-top:1.5rem;font-size:0.78rem;color:rgba(255,255,255,0.3);font-weight:600;">
       <button onclick="app.showLeaderboard()" style="background:none;border:none;cursor:pointer;color:inherit;font-family:inherit;font-weight:inherit;" onmouseover="this.style.color='#fcd34d'" onmouseout="this.style.color=''">
         <i class="fa-solid fa-crown" style="color:#fcd34d;margin-right:5px;"></i>คะแนนสูงสุด
@@ -458,19 +453,14 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
   </div>
 </div>
 
-<!-- ════════════════════════════════
-     GAME SCREEN
-════════════════════════════════ -->
+<!-- ════ GAME SCREEN ════ -->
 <div id="screenGame" class="screen hidden" style="padding:10px;gap:10px;">
 
-  <!-- ── TOP HUD ── -->
   <header class="card card-sm" style="padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0;">
-    <!-- Player -->
     <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1;">
       <div style="width:38px;height:38px;border-radius:50%;flex-shrink:0;
         background:linear-gradient(135deg,#7c3aed,#ec4899);
-        display:flex;align-items:center;justify-content:center;
-        box-shadow:0 0 12px rgba(124,58,237,0.4);">
+        display:flex;align-items:center;justify-content:center;">
         <i class="fa-solid fa-user-astronaut" style="font-size:1rem;color:#fff;"></i>
       </div>
       <div style="min-width:0;">
@@ -479,8 +469,6 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
       </div>
       <div id="hudTestBadge" class="badge badge-practice hidden" style="flex-shrink:0;font-size:0.65rem;"></div>
     </div>
-
-    <!-- Chips -->
     <div style="display:flex;gap:6px;flex-shrink:0;">
       <div class="chip">
         <span class="chip-val" id="hudLevel">1/10</span>
@@ -497,15 +485,12 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
     </div>
   </header>
 
-  <!-- ── MAIN AREA ── -->
   <div style="display:flex;gap:10px;flex:1;min-height:0;overflow:hidden;">
 
     <!-- LEFT: Camera column -->
     <div style="width:480px;flex-shrink:0;display:flex;flex-direction:column;gap:10px;">
 
-      <!-- Camera card -->
-      <div class="card" style="padding:12px;flex:1;display:flex;flex-direction:column;gap:10px;min-height:0;">
-        <!-- Scanner header -->
+      <div class="card" style="padding:12px;flex:1;display:flex;flex-direction:column;gap:8px;min-height:0;">
         <div style="display:flex;align-items:center;justify-content:space-between;">
           <div style="display:flex;align-items:center;gap:7px;">
             <div style="width:28px;height:28px;border-radius:8px;background:rgba(0,212,255,0.15);display:flex;align-items:center;justify-content:center;">
@@ -514,7 +499,6 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
             <span style="font-size:0.72rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#67e8f9;">AI Scanner</span>
             <div class="anim-pulse" style="width:7px;height:7px;border-radius:50%;background:#10b981;margin-left:2px;"></div>
           </div>
-          <!-- Confidence -->
           <div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:8px;padding:4px 8px;">
             <i class="fa-solid fa-signal" style="font-size:0.7rem;color:#94a3b8;"></i>
             <span style="font-size:0.7rem;color:#94a3b8;font-weight:600;">Conf:</span>
@@ -522,14 +506,14 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
           </div>
         </div>
 
-        <!-- Camera box -->
-        <div class="cam-box" id="camWrapper" style="flex:1;min-height:0;">
+        <div class="cam-box" id="camWrapper" style="flex:1;min-height:0;position:relative;">
           <div class="cam-corner tl"></div>
           <div class="cam-corner tr"></div>
           <div class="cam-corner bl"></div>
           <div class="cam-corner br"></div>
           <video id="inputVideo" autoplay playsinline></video>
           <canvas id="outputCanvas"></canvas>
+          <canvas id="faceCanvas" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:5;"></canvas>
           <div id="cameraStatus" class="cam-overlay">
             <div style="width:56px;height:56px;border-radius:50%;background:rgba(0,212,255,0.1);
               border:2px solid rgba(0,212,255,0.4);display:flex;align-items:center;justify-content:center;margin-bottom:4px;">
@@ -546,10 +530,13 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
             <div class="hold-label"><i class="fa-solid fa-check" style="color:#f59e0b;"></i></div>
           </div>
           <div class="conf-bar"><div id="confidenceFill" class="conf-fill" style="width:0%;background:#10b981;"></div></div>
+
+          <!-- Motivational Toast (inside cam-box) -->
+          <div id="motiveToast" class="motive-toast hidden"></div>
         </div>
 
-        <!-- Finger + Controls row -->
-        <div style="display:flex;align-items:center;gap:10px;">
+        <!-- Finger + Combo row -->
+        <div style="display:flex;align-items:center;gap:8px;">
           <div style="display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:10px;padding:8px 12px;flex:1;">
             <i class="fa-solid fa-hand-point-up" style="color:#00d4ff;font-size:0.9rem;"></i>
             <span style="font-size:0.72rem;font-weight:700;color:#94a3b8;letter-spacing:0.05em;text-transform:uppercase;">นิ้ว</span>
@@ -557,9 +544,54 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
           </div>
           <div id="comboDisplay" class="combo-badge">🔥 Combo x3!</div>
         </div>
+
+        <!-- ── EMOTION PANEL ── -->
+        <div class="emotion-panel" id="emotionPanel">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <i class="fa-solid fa-face-smile" style="color:#ec4899;font-size:0.8rem;"></i>
+              <span style="font-size:0.68rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#ec4899;">EmoSense™ AI</span>
+            </div>
+            <div id="faceDetectedDot" style="display:flex;align-items:center;gap:4px;">
+              <div style="width:6px;height:6px;border-radius:50%;background:#64748b;" id="faceStatusDot"></div>
+              <span id="faceStatusTxt" style="font-size:0.62rem;color:#64748b;font-weight:600;">ค้นหาใบหน้า...</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div id="emotionEmojiWrap" style="position:relative;">
+              <div id="emotionEmoji" class="emotion-emoji-big">😐</div>
+            </div>
+            <div style="flex:1;">
+              <div id="emotionLabel" class="emotion-label" style="color:#fff;">รอการตรวจจับ</div>
+              <div id="emotionSub" class="emotion-sub">กล้องกำลังวิเคราะห์ใบหน้า</div>
+            </div>
+          </div>
+          <!-- Emotion bars -->
+          <div class="emo-bar-wrap" id="emotionBars">
+            <div class="emo-bar-row">
+              <span class="emo-bar-label">😊 สุข</span>
+              <div class="emo-bar-track"><div class="emo-bar-fill" id="barHappy" style="width:0%;background:#10b981;"></div></div>
+              <span class="emo-bar-val" id="valHappy">0%</span>
+            </div>
+            <div class="emo-bar-row">
+              <span class="emo-bar-label">😟 กังวล</span>
+              <div class="emo-bar-track"><div class="emo-bar-fill" id="barAnxious" style="width:0%;background:#ef4444;"></div></div>
+              <span class="emo-bar-val" id="valAnxious">0%</span>
+            </div>
+            <div class="emo-bar-row">
+              <span class="emo-bar-label">🧐 โฟกัส</span>
+              <div class="emo-bar-track"><div class="emo-bar-fill" id="barFocus" style="width:0%;background:#00d4ff;"></div></div>
+              <span class="emo-bar-val" id="valFocus">0%</span>
+            </div>
+            <div class="emo-bar-row">
+              <span class="emo-bar-label">😮 ตื่นเต้น</span>
+              <div class="emo-bar-track"><div class="emo-bar-fill" id="barExcited" style="width:0%;background:#f59e0b;"></div></div>
+              <span class="emo-bar-val" id="valExcited">0%</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Controls -->
       <div style="display:flex;gap:8px;flex-shrink:0;">
         <button id="btnPause" class="btn btn-ghost" style="flex:1;padding:0.6rem;">
           <i class="fa-solid fa-pause"></i><span style="font-size:0.8rem;">พัก</span>
@@ -575,25 +607,26 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
 
     <!-- RIGHT: Question + Stats -->
     <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;">
-
-      <!-- Question card -->
       <div class="card" style="flex:1;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;">
-        <!-- Mode badge top-left -->
         <div style="position:absolute;top:14px;left:14px;background:rgba(0,212,255,0.12);border:1px solid rgba(0,212,255,0.3);border-radius:999px;padding:5px 12px;display:flex;align-items:center;gap:6px;">
           <i class="fa-solid fa-bolt" style="color:#fcd34d;font-size:0.7rem;"></i>
           <span id="questionModeText" style="font-size:0.72rem;font-weight:700;color:#67e8f9;letter-spacing:0.06em;text-transform:uppercase;">โหมด</span>
         </div>
-
-        <!-- Combo -->
         <div id="comboDisplay2" style="position:absolute;top:14px;right:14px;display:none;background:linear-gradient(135deg,#ec4899,#be185d);color:#fff;padding:5px 14px;border-radius:999px;font-weight:800;font-size:0.82rem;box-shadow:0 0 15px rgba(236,72,153,0.5);">🔥 Combo!</div>
 
-        <!-- Question -->
-        <div id="questionText" class="q-text">3 + 4 = ?</div>
-        <div style="margin-top:1rem;background:rgba(255,255,255,0.07);border:1px solid var(--border);border-radius:999px;padding:8px 20px;">
+        <!-- Emotion-based ambient border -->
+        <div id="emotionAmbient" style="position:absolute;inset:0;border-radius:18px;pointer-events:none;transition:box-shadow 0.6s ease;z-index:1;"></div>
+
+        <div id="questionText" class="q-text" style="position:relative;z-index:2;">3 + 4 = ?</div>
+        <div style="margin-top:1rem;background:rgba(255,255,255,0.07);border:1px solid var(--border);border-radius:999px;padding:8px 20px;position:relative;z-index:2;">
           <p id="instructionText" style="font-size:0.9rem;font-weight:600;color:#cbd5e1;text-align:center;">ชูนิ้วหน้ากล้องเพื่อตอบ</p>
         </div>
 
-        <!-- Feedback overlay -->
+        <!-- Inline emotion cheer (shown inside question card) -->
+        <div id="emotionCheer" style="position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:none;z-index:5;text-align:center;">
+          <div id="emotionCheerText" style="font-size:0.85rem;font-weight:700;color:#fcd34d;background:rgba(0,0,0,0.5);border:1px solid rgba(255,200,0,0.3);border-radius:999px;padding:5px 16px;white-space:nowrap;"></div>
+        </div>
+
         <div id="feedbackContainer" class="feedback-overlay hidden" style="border-radius:18px;">
           <div id="feedbackIconWrap" style="width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(16,185,129,0.2);border:2px solid #10b981;">
             <i id="feedbackIcon" class="fa-solid fa-check" style="font-size:2.2rem;color:#10b981;"></i>
@@ -607,9 +640,7 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
         </div>
       </div>
 
-      <!-- Timer + Achievements row -->
       <div class="card card-sm" style="padding:12px 16px;display:flex;align-items:center;gap:14px;flex-shrink:0;">
-        <!-- Timer -->
         <div style="flex:1;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
             <div style="display:flex;align-items:center;gap:5px;">
@@ -622,11 +653,7 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
             <div id="timerBar" class="timer-fill" style="width:100%;background:#00d4ff;"></div>
           </div>
         </div>
-
-        <!-- Divider -->
         <div style="width:1px;height:40px;background:var(--border);flex-shrink:0;"></div>
-
-        <!-- Achievements -->
         <div style="display:flex;gap:12px;flex-shrink:0;">
           <div class="achv" id="achvBeginner" title="เริ่มต้น">
             <div class="achv-icon" style="background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.4);">
@@ -654,14 +681,11 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
           </div>
         </div>
       </div>
-
     </div>
   </div>
 </div>
 
-<!-- ════════════════════════════════
-     LEVEL UP
-════════════════════════════════ -->
+<!-- Level Up -->
 <div id="levelUpOverlay" class="levelup hidden" style="pointer-events:none;">
   <div style="text-align:center;" class="anim-pop">
     <div style="font-size:4rem;margin-bottom:0.5rem;">⚡</div>
@@ -670,12 +694,9 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
   </div>
 </div>
 
-<!-- ════════════════════════════════
-     GAME OVER MODAL
-════════════════════════════════ -->
+<!-- Game Over Modal -->
 <div id="gameOverModal" class="modal-wrap hidden">
   <div class="modal-box" style="max-width:520px;">
-    <!-- Header -->
     <div style="text-align:center;margin-bottom:1.25rem;">
       <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#00d4ff,#0891b2);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;box-shadow:0 0 20px rgba(0,212,255,0.4);">
         <i class="fa-solid fa-flag-checkered" style="font-size:1.5rem;color:#fff;"></i>
@@ -684,7 +705,6 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
       <h2 id="gameOverTitle" class="f-display" style="font-size:1.9rem;color:#67e8f9;">ภารกิจสำเร็จ!</h2>
     </div>
 
-    <!-- Info -->
     <div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:14px;padding:12px 16px;margin-bottom:12px;">
       <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
         <span style="font-size:0.78rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;">นักเรียน</span>
@@ -704,7 +724,7 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
       </div>
     </div>
 
-    <!-- Learner level analysis card (NEW) -->
+    <!-- Learner level -->
     <div id="levelAnalysisCard" style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);border-radius:14px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;">
       <div id="levelAnalysisIcon" style="width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;"></div>
       <div>
@@ -713,7 +733,15 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
       </div>
     </div>
 
-    <!-- Score grid -->
+    <!-- Emotion summary -->
+    <div id="emotionSummaryCard" style="background:rgba(236,72,153,0.08);border:1px solid rgba(236,72,153,0.25);border-radius:14px;padding:12px 14px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+        <i class="fa-solid fa-brain" style="color:#ec4899;font-size:0.8rem;"></i>
+        <span style="font-size:0.7rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#ec4899;">สรุปอารมณ์ระหว่างเรียน (EmoSense™)</span>
+      </div>
+      <div id="emotionSummaryContent" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+    </div>
+
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
       <div style="background:rgba(217,119,6,0.12);border:1px solid rgba(217,119,6,0.3);border-radius:12px;padding:12px;text-align:center;">
         <p style="font-size:0.7rem;font-weight:700;color:#f59e0b;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">คะแนนรวม</p>
@@ -733,30 +761,20 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
       </div>
     </div>
 
-    <!-- Per-question log -->
     <div style="background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:12px;max-height:120px;overflow-y:auto;">
       <p style="font-size:0.65rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;margin-bottom:6px;">บันทึกรายข้อ</p>
       <div id="finalQuestionLog"></div>
     </div>
 
-    <!-- Action buttons -->
     <div style="display:flex;gap:8px;">
-      <button onclick="app.returnToMenu()" class="btn btn-ghost" style="flex:1;">
-        <i class="fa-solid fa-house"></i> เมนู
-      </button>
-      <button onclick="app.exportCSV()" class="btn btn-green" style="flex:1;">
-        <i class="fa-solid fa-download"></i> CSV
-      </button>
-      <button onclick="app.restartGame()" class="btn btn-primary" style="flex:1;">
-        <i class="fa-solid fa-rotate-right"></i> เล่นอีกครั้ง
-      </button>
+      <button onclick="app.returnToMenu()" class="btn btn-ghost" style="flex:1;"><i class="fa-solid fa-house"></i> เมนู</button>
+      <button onclick="app.exportCSV()" class="btn btn-green" style="flex:1;"><i class="fa-solid fa-download"></i> CSV</button>
+      <button onclick="app.restartGame()" class="btn btn-primary" style="flex:1;"><i class="fa-solid fa-rotate-right"></i> เล่นอีกครั้ง</button>
     </div>
   </div>
 </div>
 
-<!-- ════════════════════════════════
-     LEADERBOARD MODAL
-════════════════════════════════ -->
+<!-- Leaderboard Modal -->
 <div id="leaderboardModal" class="modal-wrap hidden">
   <div class="modal-box">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
@@ -764,20 +782,14 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
         <i class="fa-solid fa-crown" style="font-size:1.5rem;color:#fcd34d;"></i>
         <h2 class="f-display" style="font-size:1.5rem;color:#fff;">ทำเนียบคนเก่ง</h2>
       </div>
-      <button onclick="document.getElementById('leaderboardModal').classList.add('hidden')" class="btn btn-ghost" style="padding:6px 10px;">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
+      <button onclick="document.getElementById('leaderboardModal').classList.add('hidden')" class="btn btn-ghost" style="padding:6px 10px;"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div id="leaderboardList" style="display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;margin-bottom:12px;"></div>
-    <button onclick="app.exportCSV()" class="btn btn-green" style="width:100%;">
-      <i class="fa-solid fa-file-csv"></i> Export ข้อมูลทั้งหมด (CSV)
-    </button>
+    <button onclick="app.exportCSV()" class="btn btn-green" style="width:100%;"><i class="fa-solid fa-file-csv"></i> Export CSV</button>
   </div>
 </div>
 
-<!-- ════════════════════════════════
-     TEACHER DASHBOARD MODAL
-════════════════════════════════ -->
+<!-- Dashboard Modal -->
 <div id="dashboardModal" class="modal-wrap hidden" style="align-items:flex-start;padding-top:2rem;">
   <div class="modal-box" style="max-width:600px;max-height:90vh;overflow-y:auto;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
@@ -790,12 +802,8 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
           <p style="font-size:0.72rem;color:#64748b;font-weight:600;">ข้อมูลผลการเรียนรู้รวม</p>
         </div>
       </div>
-      <button onclick="document.getElementById('dashboardModal').classList.add('hidden')" class="btn btn-ghost" style="padding:6px 10px;">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
+      <button onclick="document.getElementById('dashboardModal').classList.add('hidden')" class="btn btn-ghost" style="padding:6px 10px;"><i class="fa-solid fa-xmark"></i></button>
     </div>
-
-    <!-- Summary stats -->
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1rem;">
       <div style="background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center;">
         <p style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin-bottom:3px;">ผู้เล่น</p>
@@ -814,8 +822,6 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
         <p id="dashAvgTime" class="f-display" style="font-size:1.7rem;color:#fcd34d;">0s</p>
       </div>
     </div>
-
-    <!-- Topic accuracy -->
     <div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;">
       <div style="display:flex;align-items:center;gap:7px;margin-bottom:12px;">
         <i class="fa-solid fa-bullseye" style="color:#10b981;font-size:0.85rem;"></i>
@@ -823,8 +829,6 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
       </div>
       <div id="dashTopicBars" style="display:flex;flex-direction:column;gap:10px;"></div>
     </div>
-
-    <!-- Pre/Post -->
     <div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;">
       <div style="display:flex;align-items:center;gap:7px;margin-bottom:12px;">
         <i class="fa-solid fa-arrows-left-right" style="color:#67e8f9;font-size:0.85rem;"></i>
@@ -832,35 +836,17 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
       </div>
       <div id="dashPrePost" style="color:#64748b;font-size:0.85rem;text-align:center;padding:8px;">ยังไม่มีข้อมูลเพียงพอ</div>
     </div>
-
-    <!-- Recent sessions -->
-    <div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;">
+    <div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:14px;padding:14px;">
       <div style="display:flex;align-items:center;gap:7px;margin-bottom:12px;">
         <i class="fa-solid fa-clock-rotate-left" style="color:#a78bfa;font-size:0.85rem;"></i>
         <span style="font-size:0.72rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#a78bfa;">เซสชันล่าสุด</span>
       </div>
       <div id="dashRecentSessions" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;"></div>
     </div>
-
-    <!-- Learner development / level analysis per player (NEW) -->
-    <div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:14px;padding:14px;">
-      <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;">
-        <i class="fa-solid fa-graduation-cap" style="color:#ec4899;font-size:0.85rem;"></i>
-        <span style="font-size:0.72rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#ec4899;">พัฒนาการผู้เรียนรายบุคคล (วิเคราะห์จากเวลาตอบ)</span>
-      </div>
-      <p style="font-size:0.68rem;color:#64748b;margin-bottom:10px;">
-        🌟 เชี่ยวชาญ: เฉลี่ย ≤3s & แม่นยำ ≥85% &nbsp;|&nbsp;
-        🚀 ปานกลาง: เฉลี่ย ≤6s & แม่นยำ ≥60% &nbsp;|&nbsp;
-        🌱 เริ่มต้น: นอกเหนือจากนั้น
-      </p>
-      <div id="dashPlayerLevels" style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;"></div>
-    </div>
   </div>
 </div>
 
-<!-- ════════════════════════════════
-     CONFIRM MODAL
-════════════════════════════════ -->
+<!-- Confirm Modal -->
 <div id="customConfirmModal" class="modal-wrap hidden">
   <div class="modal-box" style="max-width:360px;text-align:center;">
     <div style="width:56px;height:56px;border-radius:50%;background:rgba(239,68,68,0.15);border:2px solid rgba(239,68,68,0.4);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
@@ -869,24 +855,18 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
     <h2 class="f-display" style="font-size:1.4rem;margin-bottom:6px;">ล้างข้อมูลทั้งหมด?</h2>
     <p style="font-size:0.85rem;color:#94a3b8;margin-bottom:1.25rem;">ข้อมูลวิจัยทั้งหมดจะหายถาวร ไม่สามารถกู้คืนได้</p>
     <div style="display:flex;gap:8px;">
-      <button onclick="document.getElementById('customConfirmModal').classList.add('hidden')" class="btn btn-ghost" style="flex:1;">
-        <i class="fa-solid fa-xmark"></i> ยกเลิก
-      </button>
-      <button onclick="app.confirmClearLeaderboard()" class="btn btn-red" style="flex:1;">
-        <i class="fa-solid fa-trash"></i> ล้างข้อมูล
-      </button>
+      <button onclick="document.getElementById('customConfirmModal').classList.add('hidden')" class="btn btn-ghost" style="flex:1;"><i class="fa-solid fa-xmark"></i> ยกเลิก</button>
+      <button onclick="app.confirmClearLeaderboard()" class="btn btn-red" style="flex:1;"><i class="fa-solid fa-trash"></i> ล้างข้อมูล</button>
     </div>
   </div>
 </div>
 
 <script>
-// ── Particles ──────────────────────────────
 (function(){
   const l=document.getElementById('particleLayer');
   const s=['+','-','×','÷','=','π','√','∞','²','%'];
   for(let i=0;i<14;i++){
-    const p=document.createElement('div');
-    p.className='particle';
+    const p=document.createElement('div');p.className='particle';
     p.innerText=s[i%s.length];
     p.style.left=Math.random()*100+'vw';
     p.style.animationDuration=(Math.random()*12+12)+'s';
@@ -895,81 +875,64 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
   }
 })();
 
-// ── CONFIG ───────────────────────────────
 const CONFIG={
-  timePerQuestion:10, holdTimeRequired:1.2,
-  pointsBase:10, pointsFast:5, levelUpScore:100,
+  timePerQuestion:10,holdTimeRequired:1.2,
+  pointsBase:10,pointsFast:5,levelUpScore:100,
   confThreshold:0.6,
   messages:["ยอดเยี่ยม!","อัจฉริยะ!","สุดยอด!","ไวปานสายฟ้า!","แม่นยำมาก!","ทำได้ดี!","เก่งมาก!","ดีเยี่ยม!"]
 };
 
-// ── Learner Level Classification (NEW) ──────
-// วิเคราะห์ระดับผู้เรียนจากเวลาตอบเฉลี่ย (avgResponseTime) และความแม่นยำ (accuracy)
-function classifyLearnerLevel(avgRT, accuracy){
-  if(avgRT<=3 && accuracy>=85){
-    return {
-      label:'ระดับเชี่ยวชาญ', icon:'🌟', color:'#fcd34d',
-      bg:'rgba(234,197,71,0.15)', border:'rgba(234,197,71,0.4)',
-      desc:'ตอบเร็วและแม่นยำมาก พร้อมเพิ่มความยากของโจทย์ได้แล้ว'
-    };
-  }
-  if(avgRT<=6 && accuracy>=60){
-    return {
-      label:'ระดับปานกลาง', icon:'🚀', color:'#67e8f9',
-      bg:'rgba(8,145,178,0.15)', border:'rgba(8,145,178,0.4)',
-      desc:'ทำได้ดี ควรฝึกเพิ่มเพื่อเพิ่มความเร็วและความแม่นยำ'
-    };
-  }
-  return {
-    label:'ระดับเริ่มต้น', icon:'🌱', color:'#6ee7b7',
-    bg:'rgba(16,185,129,0.15)', border:'rgba(16,185,129,0.4)',
-    desc:'ยังต้องฝึกฝนเพิ่ม แนะนำใช้โหมดฝึกหัดบ่อย ๆ เพื่อเพิ่มความเร็วและความแม่นยำ'
-  };
+function classifyLearnerLevel(avgRT,accuracy){
+  if(avgRT<=3&&accuracy>=85)return{label:'ระดับเชี่ยวชาญ',icon:'🌟',color:'#fcd34d',bg:'rgba(234,197,71,0.15)',border:'rgba(234,197,71,0.4)',desc:'ตอบเร็วและแม่นยำมาก พร้อมเพิ่มความยากของโจทย์ได้แล้ว'};
+  if(avgRT<=6&&accuracy>=60)return{label:'ระดับปานกลาง',icon:'🚀',color:'#67e8f9',bg:'rgba(8,145,178,0.15)',border:'rgba(8,145,178,0.4)',desc:'ทำได้ดี ควรฝึกเพิ่มเพื่อเพิ่มความเร็วและความแม่นยำ'};
+  return{label:'ระดับเริ่มต้น',icon:'🌱',color:'#6ee7b7',bg:'rgba(16,185,129,0.15)',border:'rgba(16,185,129,0.4)',desc:'ยังต้องฝึกฝนเพิ่ม แนะนำใช้โหมดฝึกหัดบ่อย ๆ'};
 }
 
-// ── DOM ──────────────────────────────────
-const $ = id => document.getElementById(id);
+const $=id=>document.getElementById(id);
 const DOM={
-  menu:$('screenMenu'), ui:$('screenGame'),
-  camStatus:$('cameraStatus'), video:$('inputVideo'),
-  canvas:$('outputCanvas'), camWrapper:$('camWrapper'),
-  hudScore:$('hudScore'), hudLevel:$('hudLevel'),
-  hudPlayerName:$('hudPlayerName'), hudFingers:$('hudFingers'),
-  hudConf:$('hudConf'), hudElapsed:$('hudElapsed'),
-  hudTestBadge:$('hudTestBadge'), confidenceFill:$('confidenceFill'),
-  timerText:$('timerText'), timerBar:$('timerBar'),
-  questionMode:$('questionModeText'), questionText:$('questionText'),
+  menu:$('screenMenu'),ui:$('screenGame'),
+  camStatus:$('cameraStatus'),video:$('inputVideo'),
+  canvas:$('outputCanvas'),faceCanvas:$('faceCanvas'),camWrapper:$('camWrapper'),
+  hudScore:$('hudScore'),hudLevel:$('hudLevel'),
+  hudPlayerName:$('hudPlayerName'),hudFingers:$('hudFingers'),
+  hudConf:$('hudConf'),hudElapsed:$('hudElapsed'),
+  hudTestBadge:$('hudTestBadge'),confidenceFill:$('confidenceFill'),
+  timerText:$('timerText'),timerBar:$('timerBar'),
+  questionMode:$('questionModeText'),questionText:$('questionText'),
   instructionText:$('instructionText'),
-  holdRing:$('holdRing'), holdFill:$('holdFill'),
+  holdRing:$('holdRing'),holdFill:$('holdFill'),
   feedbackContainer:$('feedbackContainer'),
-  feedbackIconWrap:$('feedbackIconWrap'), feedbackIcon:$('feedbackIcon'),
-  feedbackText:$('feedbackText'), feedbackPoints:$('feedbackPoints'),
-  feedbackMessage:$('feedbackMessage'), feedbackAnswer:$('feedbackAnswer'),
-  comboDisplay:$('comboDisplay'), comboDisplay2:$('comboDisplay2'),
+  feedbackIconWrap:$('feedbackIconWrap'),feedbackIcon:$('feedbackIcon'),
+  feedbackText:$('feedbackText'),feedbackPoints:$('feedbackPoints'),
+  feedbackMessage:$('feedbackMessage'),feedbackAnswer:$('feedbackAnswer'),
+  comboDisplay:$('comboDisplay'),comboDisplay2:$('comboDisplay2'),
   achv:{beginner:$('achvBeginner'),star:$('achvStar'),master:$('achvMaster'),champion:$('achvChampion')},
-  gameOverModal:$('gameOverModal'), gameOverTitle:$('gameOverTitle'),
-  finalScoreText:$('finalScoreText'), finalPlayerName:$('finalPlayerName'),
-  finalClassroom:$('finalClassroom'), finalSessionId:$('finalSessionId'),
-  finalElapsed:$('finalElapsed'), finalAccuracy:$('finalAccuracy'),
-  finalCorrect:$('finalCorrect'), finalWrong:$('finalWrong'),
-  finalQuestionLog:$('finalQuestionLog'),
-  sessionTypeBadge:$('sessionTypeBadge'),
-  startPlayerName:$('startPlayerName'), startClassroom:$('startClassroom'),
-  startQuestionCount:$('startQuestionCount'), startDifficulty:$('startDifficulty'),
-  leaderboardModal:$('leaderboardModal'), leaderboardList:$('leaderboardList'),
-  dashboardModal:$('dashboardModal'), customConfirmModal:$('customConfirmModal'),
-  levelUpOverlay:$('levelUpOverlay'), btnPause:$('btnPause'),
-  btnRestart:$('btnRestart'), btnMenu:$('btnMenu'),
-  dashTotalPlayers:$('dashTotalPlayers'), dashTotalSessions:$('dashTotalSessions'),
-  dashAvgAcc:$('dashAvgAcc'), dashAvgTime:$('dashAvgTime'),
-  dashTopicBars:$('dashTopicBars'), dashPrePost:$('dashPrePost'),
+  gameOverModal:$('gameOverModal'),gameOverTitle:$('gameOverTitle'),
+  finalScoreText:$('finalScoreText'),finalPlayerName:$('finalPlayerName'),
+  finalClassroom:$('finalClassroom'),finalSessionId:$('finalSessionId'),
+  finalElapsed:$('finalElapsed'),finalAccuracy:$('finalAccuracy'),
+  finalCorrect:$('finalCorrect'),finalWrong:$('finalWrong'),
+  finalQuestionLog:$('finalQuestionLog'),sessionTypeBadge:$('sessionTypeBadge'),
+  startPlayerName:$('startPlayerName'),startClassroom:$('startClassroom'),
+  startQuestionCount:$('startQuestionCount'),startDifficulty:$('startDifficulty'),
+  leaderboardModal:$('leaderboardModal'),leaderboardList:$('leaderboardList'),
+  dashboardModal:$('dashboardModal'),customConfirmModal:$('customConfirmModal'),
+  levelUpOverlay:$('levelUpOverlay'),btnPause:$('btnPause'),
+  btnRestart:$('btnRestart'),btnMenu:$('btnMenu'),
+  dashTotalPlayers:$('dashTotalPlayers'),dashTotalSessions:$('dashTotalSessions'),
+  dashAvgAcc:$('dashAvgAcc'),dashAvgTime:$('dashAvgTime'),
+  dashTopicBars:$('dashTopicBars'),dashPrePost:$('dashPrePost'),
   dashRecentSessions:$('dashRecentSessions'),
-  dashPlayerLevels:$('dashPlayerLevels'),
-  levelAnalysisCard:$('levelAnalysisCard'), levelAnalysisIcon:$('levelAnalysisIcon'),
-  levelAnalysisTitle:$('levelAnalysisTitle'), levelAnalysisDesc:$('levelAnalysisDesc'),
+  levelAnalysisCard:$('levelAnalysisCard'),levelAnalysisIcon:$('levelAnalysisIcon'),
+  levelAnalysisTitle:$('levelAnalysisTitle'),levelAnalysisDesc:$('levelAnalysisDesc'),
+  emotionEmoji:$('emotionEmoji'),emotionLabel:$('emotionLabel'),emotionSub:$('emotionSub'),
+  faceStatusDot:$('faceStatusDot'),faceStatusTxt:$('faceStatusTxt'),
+  barHappy:$('barHappy'),barAnxious:$('barAnxious'),barFocus:$('barFocus'),barExcited:$('barExcited'),
+  valHappy:$('valHappy'),valAnxious:$('valAnxious'),valFocus:$('valFocus'),valExcited:$('valExcited'),
+  motiveToast:$('motiveToast'),emotionCheer:$('emotionCheer'),emotionCheerText:$('emotionCheerText'),
+  emotionAmbient:$('emotionAmbient'),emotionSummaryContent:$('emotionSummaryContent'),
 };
 
-// ── Helpers ──────────────────────────────
 function genSessionId(){return'SES-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,6).toUpperCase();}
 
 class SeededRNG{
@@ -978,7 +941,6 @@ class SeededRNG{
   nextInt(a,b){return Math.floor(this.next()*(b-a+1))+a;}
 }
 
-// ── Sound ────────────────────────────────
 class SoundManager{
   constructor(){this.ctx=null;this.ok=false;}
   init(){if(!this.ok){this.ctx=new(window.AudioContext||window.webkitAudioContext)();this.ok=true;}if(this.ctx.state==='suspended')this.ctx.resume();}
@@ -986,50 +948,289 @@ class SoundManager{
   correct(){this._t(523,'sine',.1);setTimeout(()=>this._t(659,'sine',.2),100);}
   wrong(){this._t(150,'sawtooth',.3,.05);}
   levelUp(){[261,329,392,523].forEach((f,i)=>setTimeout(()=>this._t(f,'square',.15,.05),i*150));}
+  cheer(){[440,550,660].forEach((f,i)=>setTimeout(()=>this._t(f,'triangle',.1,.04),i*80));}
 }
 
-// ── Hand Tracker ─────────────────────────
+// ── EMOTION ANALYZER ────────────────────────
+class EmotionAnalyzer {
+  constructor(){
+    this.currentEmotion='neutral';
+    this.scores={happy:0,anxious:0,focused:0,excited:0,neutral:100};
+    this.faceDetected=false;
+    this.lastMotiveTime=0;
+    this.motiveTimeout=null;
+    this.anxietyStreak=0;
+    this.emotionHistory=[];
+    this.smoothed={happy:0,anxious:0,focused:0,excited:0};
+    this.lastEmoji='😐';
+  }
+
+  // MediaPipe FaceMesh landmark analysis
+  analyzeFace(landmarks){
+    if(!landmarks||landmarks.length===0){
+      this.faceDetected=false;
+      this._updateUI(null);
+      return;
+    }
+    this.faceDetected=true;
+    const lm=landmarks[0];
+
+    // Key landmark indices for expression analysis
+    // Mouth corners: 61 (left) and 291 (right)
+    // Mouth top: 13, bottom: 14
+    // Left eye: 159 (top), 145 (bottom)
+    // Right eye: 386 (top), 374 (bottom)
+    // Eyebrow inner: 70 (left), 300 (right)
+    // Eyebrow outer: 105 (left), 334 (right)
+    // Nose tip: 1
+
+    const safe=(i)=>lm[i]||{x:0.5,y:0.5,z:0};
+
+    // ── Smile detection ──
+    const mouthLeft=safe(61), mouthRight=safe(291);
+    const mouthTop=safe(13), mouthBottom=safe(14);
+    const mouthWidth=Math.abs(mouthRight.x-mouthLeft.x);
+    const mouthOpen=Math.abs(mouthBottom.y-mouthTop.y);
+    // Corners lifted = smile
+    const mouthCenterY=(mouthLeft.y+mouthRight.y)/2;
+    const mouthMidTop=safe(12).y;
+    const smileScore=Math.max(0,Math.min(1,(mouthWidth-0.12)*5));
+    const cornerLift=(mouthMidTop-mouthCenterY);
+    const smileLift=Math.max(0,Math.min(1,cornerLift*20+0.3));
+
+    // ── Eyebrow raise (surprise/excited) ──
+    const eyebrowLeft=safe(105), eyebrowRight=safe(334);
+    const eyeLeft=safe(159), eyeRight=safe(386);
+    const leftBrowDist=Math.abs(eyebrowLeft.y-eyeLeft.y);
+    const rightBrowDist=Math.abs(eyebrowRight.y-eyeRight.y);
+    const browRaise=(leftBrowDist+rightBrowDist)/2;
+    const exciteScore=Math.max(0,Math.min(1,(browRaise-0.04)*8));
+
+    // ── Eyebrow furrow (anxiety/concentration) ──
+    const innerBrowLeft=safe(70), innerBrowRight=safe(300);
+    const browFurrow=Math.abs(innerBrowLeft.x-innerBrowRight.x);
+    const furrowScore=Math.max(0,Math.min(1,(0.08-browFurrow)*15+0.2));
+
+    // ── Eye openness (focus/attention) ──
+    const leftEyeOpen=Math.abs(safe(159).y-safe(145).y);
+    const rightEyeOpen=Math.abs(safe(386).y-safe(374).y);
+    const eyeOpen=(leftEyeOpen+rightEyeOpen)/2;
+    const focusScore=Math.max(0,Math.min(1,(eyeOpen-0.015)*15));
+
+    // ── Composite emotion scores ──
+    const happy=Math.min(1,(smileScore*0.6+smileLift*0.4));
+    const anxious=Math.min(1,(furrowScore*0.6+Math.max(0,1-focusScore)*0.2+Math.max(0,1-happy)*0.2));
+    const focused=Math.min(1,(focusScore*0.5+(1-furrowScore)*0.3+(1-mouthOpen*8)*0.2));
+    const excited=Math.min(1,(exciteScore*0.6+happy*0.3+Math.min(1,mouthOpen*12)*0.1));
+
+    // Smooth with EMA
+    const a=0.25;
+    this.smoothed.happy=this.smoothed.happy*(1-a)+happy*a;
+    this.smoothed.anxious=this.smoothed.anxious*(1-a)+anxious*a;
+    this.smoothed.focused=this.smoothed.focused*(1-a)+focused*a;
+    this.smoothed.excited=this.smoothed.excited*(1-a)+excited*a;
+
+    this._classify();
+    this._updateUI(lm);
+    this.emotionHistory.push({
+      t:Date.now(),
+      emotion:this.currentEmotion,
+      happy:Math.round(this.smoothed.happy*100),
+      anxious:Math.round(this.smoothed.anxious*100),
+      focused:Math.round(this.smoothed.focused*100),
+      excited:Math.round(this.smoothed.excited*100),
+    });
+    if(this.emotionHistory.length>500)this.emotionHistory.shift();
+  }
+
+  _classify(){
+    const s=this.smoothed;
+    const max=Math.max(s.happy,s.anxious,s.focused,s.excited);
+    if(max<0.15){this.currentEmotion='neutral';return;}
+    if(s.happy>=max)this.currentEmotion='happy';
+    else if(s.excited>=max&&s.excited>0.3)this.currentEmotion='excited';
+    else if(s.focused>=max&&s.focused>0.25)this.currentEmotion='focused';
+    else if(s.anxious>=max&&s.anxious>0.2)this.currentEmotion='anxious';
+    else this.currentEmotion='neutral';
+  }
+
+  _updateUI(lm){
+    if(!lm){
+      DOM.faceStatusDot.style.background='#64748b';
+      DOM.faceStatusTxt.innerText='ค้นหาใบหน้า...';
+      return;
+    }
+    DOM.faceStatusDot.style.background='#10b981';
+    DOM.faceStatusTxt.innerText='กำลังวิเคราะห์';
+
+    const STATES={
+      happy:{emoji:'😊',label:'มีความสุข 😊',sub:'เยี่ยมมาก! ทำต่อไปนะ',color:'#10b981',ambientColor:'rgba(16,185,129,0.15)'},
+      excited:{emoji:'🤩',label:'ตื่นเต้นสนุกสนาน! 🤩',sub:'พลังงานดีมาก! ไปต่อ!',color:'#f59e0b',ambientColor:'rgba(245,158,11,0.15)'},
+      focused:{emoji:'🧐',label:'มีสมาธิ กำลังคิด 🧐',sub:'โฟกัสดีมาก! เก่งมาก',color:'#00d4ff',ambientColor:'rgba(0,212,255,0.12)'},
+      anxious:{emoji:'😟',label:'ดูเหมือนกังวลนิดหน่อย 😟',sub:'ไม่เป็นไร ค่อย ๆ คิดนะ',color:'#ef4444',ambientColor:'rgba(239,68,68,0.12)'},
+      neutral:{emoji:'😐',label:'สงบ พร้อมตอบ 😌',sub:'เตรียมพร้อมดีแล้ว!',color:'#94a3b8',ambientColor:'transparent'},
+    };
+    const st=STATES[this.currentEmotion]||STATES.neutral;
+
+    if(DOM.emotionEmoji.innerText!==st.emoji){
+      DOM.emotionEmoji.style.animation='none';
+      void DOM.emotionEmoji.offsetWidth;
+      DOM.emotionEmoji.style.animation='bounceIn 0.4s ease forwards';
+      DOM.emotionEmoji.innerText=st.emoji;
+    }
+    DOM.emotionLabel.innerText=st.label;
+    DOM.emotionLabel.style.color=st.color;
+    DOM.emotionSub.innerText=st.sub;
+
+    // Ambient glow in question card
+    DOM.emotionAmbient.style.boxShadow=`inset 0 0 60px ${st.ambientColor}`;
+
+    const fmt=v=>Math.round(v*100)+'%';
+    DOM.barHappy.style.width=fmt(this.smoothed.happy);DOM.valHappy.innerText=fmt(this.smoothed.happy);
+    DOM.barAnxious.style.width=fmt(this.smoothed.anxious);DOM.valAnxious.innerText=fmt(this.smoothed.anxious);
+    DOM.barFocus.style.width=fmt(this.smoothed.focused);DOM.valFocus.innerText=fmt(this.smoothed.focused);
+    DOM.barExcited.style.width=fmt(this.smoothed.excited);DOM.valExcited.innerText=fmt(this.smoothed.excited);
+
+    // Motivational messages triggered by anxiety
+    if(this.currentEmotion==='anxious'){
+      this.anxietyStreak++;
+      if(this.anxietyStreak>=15&&Date.now()-this.lastMotiveTime>6000){
+        this._showMotive('anxious');
+        this.lastMotiveTime=Date.now();
+        this.anxietyStreak=0;
+      }
+    } else {
+      this.anxietyStreak=0;
+    }
+  }
+
+  _showMotive(trigger){
+    const MSGS={
+      anxious:[
+        {emoji:'💪',text:'ไม่ต้องกลัว! ค่อย ๆ คิดนะ',color:'#f59e0b'},
+        {emoji:'🌟',text:'เธอทำได้แน่นอน! สู้ต่อไป',color:'#10b981'},
+        {emoji:'🤗',text:'ใจเย็น ๆ แล้วคำตอบจะมาเอง',color:'#00d4ff'},
+        {emoji:'✨',text:'ผิดบ้างก็ไม่เป็นไร เรียนรู้ได้',color:'#a78bfa'},
+        {emoji:'🎯',text:'หายใจลึก ๆ แล้วลองอีกครั้ง',color:'#ec4899'},
+      ],
+      correct:[
+        {emoji:'🎉',text:'ยอดเยี่ยมมาก! ฉลาดมากเลย!',color:'#10b981'},
+        {emoji:'⭐',text:'เก่งสุดยอด! ทำต่อไปนะ!',color:'#fcd34d'},
+        {emoji:'🚀',text:'ไวปานจรวด! ทำได้ดีมากเลย',color:'#00d4ff'},
+      ],
+      happy:[
+        {emoji:'😄',text:'เห็นรอยยิ้มแล้วใจฟู! ทำต่อ!',color:'#10b981'},
+        {emoji:'🌈',text:'ความสุขของเธอคือพลังงาน!',color:'#f59e0b'},
+      ],
+    };
+    const arr=MSGS[trigger]||MSGS.anxious;
+    const m=arr[Math.floor(Math.random()*arr.length)];
+
+    // Show in toast
+    DOM.motiveToast.classList.remove('hidden','fade-out');
+    DOM.motiveToast.innerHTML=`<span style="font-size:1.3rem;">${m.emoji}</span><span style="color:${m.color};">${m.text}</span>`;
+    DOM.motiveToast.style.borderColor=m.color+'55';
+
+    // Also show inline cheer
+    DOM.emotionCheer.style.display='block';
+    DOM.emotionCheerText.innerText=m.emoji+' '+m.text;
+    DOM.emotionCheerText.style.color=m.color;
+
+    clearTimeout(this.motiveTimeout);
+    this.motiveTimeout=setTimeout(()=>{
+      DOM.motiveToast.classList.add('fade-out');
+      setTimeout(()=>{DOM.motiveToast.classList.add('hidden');DOM.emotionCheer.style.display='none';},500);
+    },4000);
+  }
+
+  onCorrect(){this._showMotive('correct');}
+  onHappy(){if(this.currentEmotion==='happy'&&Date.now()-this.lastMotiveTime>8000){this._showMotive('happy');this.lastMotiveTime=Date.now();}}
+
+  getSummary(){
+    if(!this.emotionHistory.length)return null;
+    const counts={happy:0,excited:0,focused:0,anxious:0,neutral:0};
+    this.emotionHistory.forEach(e=>counts[e.emotion]=(counts[e.emotion]||0)+1);
+    const total=this.emotionHistory.length;
+    return Object.entries(counts).map(([k,v])=>({emotion:k,pct:Math.round(v/total*100)})).filter(e=>e.pct>0).sort((a,b)=>b.pct-a.pct);
+  }
+
+  reset(){this.emotionHistory=[];this.smoothed={happy:0,anxious:0,focused:0,excited:0};this.anxietyStreak=0;}
+}
+
+// ── Hand + Face Tracker ──────────────────
 class HandTracker{
-  constructor(v,c,cb){this.v=v;this.c=c;this.ctx=c.getContext('2d');this.cb=cb;this.hands=null;this.camera=null;this.isReady=false;this.lastConf=0;}
+  constructor(v,c,fc,cb){
+    this.v=v;this.c=c;this.fc=fc;
+    this.hCtx=c.getContext('2d');
+    this.fCtx=fc.getContext('2d');
+    this.cb=cb;this.hands=null;this.faceMesh=null;
+    this.camera=null;this.isReady=false;this.lastConf=0;
+    this.emotionAnalyzer=new EmotionAnalyzer();
+    this.latestFaceLandmarks=null;
+    this.frameCount=0;
+  }
   async init(){
+    // Init hands
     this.hands=new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
     this.hands.setOptions({maxNumHands:2,modelComplexity:1,minDetectionConfidence:0.65,minTrackingConfidence:0.55});
-    this.hands.onResults(r=>this.process(r));
+    this.hands.onResults(r=>this.processHands(r));
+
+    // Init face mesh
+    this.faceMesh=new FaceMesh({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
+    this.faceMesh.setOptions({maxNumFaces:1,refineLandmarks:true,minDetectionConfidence:0.5,minTrackingConfidence:0.5});
+    this.faceMesh.onResults(r=>this.processFace(r));
+
     this.camera=new Camera(this.v,{
       onFrame:async()=>{
         if(!this.isReady){
           DOM.camStatus.classList.add('hidden');
           this.isReady=true;
-          this.c.width=this.v.videoWidth;
-          this.c.height=this.v.videoHeight;
+          this.c.width=this.v.videoWidth;this.c.height=this.v.videoHeight;
+          this.fc.width=this.v.videoWidth;this.fc.height=this.v.videoHeight;
         }
+        this.frameCount++;
         await this.hands.send({image:this.v});
+        // Process face every 2 frames to save CPU
+        if(this.frameCount%2===0) await this.faceMesh.send({image:this.v});
       },width:640,height:480
     });
     await this.camera.start();
   }
-  process(r){
-    this.ctx.save();
-    this.ctx.clearRect(0,0,this.c.width,this.c.height);
-    this.ctx.translate(this.c.width,0);this.ctx.scale(-1,1);
-    this.ctx.drawImage(r.image,0,0,this.c.width,this.c.height);
+
+  processFace(r){
+    this.fCtx.clearRect(0,0,this.fc.width,this.fc.height);
+    if(r.multiFaceLandmarks&&r.multiFaceLandmarks.length>0){
+      this.latestFaceLandmarks=r.multiFaceLandmarks;
+      this.emotionAnalyzer.analyzeFace(r.multiFaceLandmarks);
+    } else {
+      this.latestFaceLandmarks=null;
+      this.emotionAnalyzer.analyzeFace(null);
+    }
+  }
+
+  processHands(r){
+    this.hCtx.save();
+    this.hCtx.clearRect(0,0,this.c.width,this.c.height);
+    this.hCtx.translate(this.c.width,0);this.hCtx.scale(-1,1);
+    this.hCtx.drawImage(r.image,0,0,this.c.width,this.c.height);
     let tf=0,tc=0;
     if(r.multiHandLandmarks&&r.multiHandedness&&r.multiHandLandmarks.length>0){
       DOM.camWrapper.classList.add('detected');
       r.multiHandLandmarks.forEach((lm,i)=>{
-        drawConnectors(this.ctx,lm,HAND_CONNECTIONS,{color:'rgba(0,212,255,0.7)',lineWidth:2.5});
-        drawLandmarks(this.ctx,lm,{color:'#f59e0b',lineWidth:2,radius:3.5});
+        drawConnectors(this.hCtx,lm,HAND_CONNECTIONS,{color:'rgba(0,212,255,0.7)',lineWidth:2.5});
+        drawLandmarks(this.hCtx,lm,{color:'#f59e0b',lineWidth:2,radius:3.5});
         tf+=this.count(lm);tc+=(r.multiHandedness[i]?.score||0.7);
       });
       this.lastConf=tc/r.multiHandLandmarks.length;
-    }else{DOM.camWrapper.classList.remove('detected');this.lastConf=0;}
-    this.ctx.restore();
+    } else {DOM.camWrapper.classList.remove('detected');this.lastConf=0;}
+    this.hCtx.restore();
     const cp=Math.round(this.lastConf*100);
     DOM.hudConf.innerText=cp>0?cp+'%':'—';
     DOM.confidenceFill.style.width=cp+'%';
     DOM.confidenceFill.style.background=cp>=80?'#10b981':cp>=60?'#f59e0b':'#ef4444';
     if(this.cb)this.cb(tf,this.lastConf);
   }
+
   count(lm){
     let c=0;
     const d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
@@ -1039,7 +1240,6 @@ class HandTracker{
   }
 }
 
-// ── Question Manager ─────────────────────
 class QuestionManager{
   constructor(){this.q=null;}
   generate(level,mode,topic,rng,difficulty){
@@ -1057,14 +1257,9 @@ class QuestionManager{
     }
     this.q=q;return q;
   }
-  _pick(l,m){
-    if(m==='practice'||m==='practice_topic')return null;
-    if(l<=2)return 1;if(l===3)return 2;if(l===4)return 3;if(l===5)return 4;
-    return Math.floor(Math.random()*6)+1;
-  }
+  _pick(l){if(l<=2)return 1;if(l===3)return 2;if(l===4)return 3;if(l===5)return 4;return Math.floor(Math.random()*6)+1;}
 }
 
-// ── Score Manager ────────────────────────
 class ScoreManager{
   constructor(){this.reset();}
   reset(){
@@ -1095,7 +1290,6 @@ class ScoreManager{
   get acc(){const t=this.correct+this.wrong;return t===0?0:Math.round((this.correct/t)*100);}
 }
 
-// ── Research Store ───────────────────────
 class ResearchStore{
   static KEY='fingerMath_researchData_v2';
   static load(){try{return JSON.parse(localStorage.getItem(this.KEY))||[];}catch(e){return[];}}
@@ -1117,10 +1311,12 @@ class ResearchStore{
   }
   static csv(){
     const ss=this.load();if(!ss.length){alert('ยังไม่มีข้อมูล');return;}
-    const rows=[['session_id','player_name','classroom','test_type','difficulty','topic_filter','date_time','total_questions','correct','wrong','accuracy_pct','total_score','total_time_sec','avg_response_time_sec','learner_level','q_number','q_topic','q_mode','q_text','q_answer_text','student_fingers','q_correct','q_response_time_sec','q_time_remaining'].join(',')];
+    const rows=[['session_id','player_name','classroom','test_type','difficulty','topic_filter','date_time','total_questions','correct','wrong','accuracy_pct','total_score','total_time_sec','avg_response_time_sec','emotion_happy_pct','emotion_anxious_pct','emotion_focused_pct','emotion_excited_pct','learner_level','q_number','q_topic','q_mode','q_text','q_answer_text','student_fingers','q_correct','q_response_time_sec','q_time_remaining'].join(',')];
     ss.forEach(s=>{
       const lvl=classifyLearnerLevel(s.avgResponseTime||0,s.accuracy||0);
-      const base=[s.sessionId,`"${s.playerName}"`,`"${s.classroom||''}"`,s.testType,s.difficulty,s.topicFilter||'',s.dateTime,s.totalQuestions,s.correctCount,s.wrongCount,s.accuracy,s.score,s.totalTimeSec,s.avgResponseTime,`"${lvl.label}"`];
+      const es=s.emotionSummary||{};
+      const base=[s.sessionId,`"${s.playerName}"`,`"${s.classroom||''}"`,s.testType,s.difficulty,s.topicFilter||'',s.dateTime,s.totalQuestions,s.correctCount,s.wrongCount,s.accuracy,s.score,s.totalTimeSec,s.avgResponseTime,
+        es.happy||0,es.anxious||0,es.focused||0,es.excited||0,`"${lvl.label}"`];
       (s.responses||[]).forEach(r=>{rows.push([...base,r.qNumber,r.topic,`"${r.modeName}"`,`"${r.questionText}"`,`"${r.answerText}"`,r.fingersShown,r.correct?1:0,r.responseTime,r.timeRemaining].join(','));});
       if(!s.responses||!s.responses.length)rows.push([...base,'','','','','','','','',''].join(','));
     });
@@ -1136,7 +1332,7 @@ class GameManager{
     this.sound=new SoundManager();
     this.qMgr=new QuestionManager();
     this.score=new ScoreManager();
-    this.tracker=new HandTracker(DOM.video,DOM.canvas,(f,c)=>this.onHand(f,c));
+    this.tracker=new HandTracker(DOM.video,DOM.canvas,DOM.faceCanvas,(f,c)=>this.onHand(f,c));
     this.state='menu';this.gameMode='practice';this.testType='practice';
     this.classTopic=null;this.playerName='';this.classroom='';
     this.difficulty='medium';this.totalQ=10;this.qIdx=0;
@@ -1146,6 +1342,7 @@ class GameManager{
     this.sessionId='';this.responses=[];this.loopId=null;
     this._setup();
   }
+  get emoAnalyzer(){return this.tracker.emotionAnalyzer;}
   _setup(){
     DOM.btnPause.addEventListener('click',()=>this.togglePause());
     DOM.btnRestart.addEventListener('click',()=>this.startSession());
@@ -1184,7 +1381,7 @@ class GameManager{
   _hash(s){let h=0;for(let i=0;i<s.length;i++)h=(Math.imul(31,h)+s.charCodeAt(i))|0;return Math.abs(h);}
   _setBadge(m){
     const MAP={pretest:{cls:'badge-pre',txt:'📋 Pre-Test'},posttest:{cls:'badge-post',txt:'🏁 Post-Test'},
-      practice:{cls:'badge-practice',txt:'✏️ ฝึกหัด'},practice_topic:{cls:'badge-practice',txt:'✏️ ฝึกเฉพาะหัวข้อ'},adventure:{cls:'badge-practice',txt:'🚀 Adventure'}};
+      practice:{cls:'badge-practice',txt:'✏️ ฝึกหัด'},practice_topic:{cls:'badge-practice',txt:'✏️ ฝึกเฉพาะหัวข้อ'}};
     const m2=MAP[m]||MAP.practice;
     DOM.hudTestBadge.className='badge '+m2.cls;
     DOM.hudTestBadge.innerText=m2.txt;
@@ -1194,6 +1391,7 @@ class GameManager{
     this.score.reset();this.state='playing';this.qIdx=0;this.responses=[];
     this.sessionId=genSessionId();this.sessStart=performance.now();
     this.rng=new SeededRNG(this.seed);
+    this.emoAnalyzer.reset();
     this.nextQ();
     if(this.loopId)cancelAnimationFrame(this.loopId);
     this.lastFrame=performance.now();this.loop();
@@ -1250,12 +1448,15 @@ class GameManager{
     const rt=parseFloat((CONFIG.timePerQuestion-this.timeLeft).toFixed(2));
     this.responses.push({qNumber:this.qIdx,topic:q.topic,modeName:q.modeName,questionText:q.text,
       answerText:q.answerText,fingersShown:f,correct:ok,responseTime:rt,
-      timeRemaining:parseFloat(this.timeLeft.toFixed(2)),timestamp:new Date().toISOString()});
+      timeRemaining:parseFloat(this.timeLeft.toFixed(2)),
+      emotion:this.emoAnalyzer.currentEmotion,
+      timestamp:new Date().toISOString()});
   }
   handleOk(t){
     const f=parseInt(DOM.hudFingers.innerText)||0;this._log(true,f);
     this.state='feedback';this.sound.correct();DOM.holdRing.classList.remove('active');
     const r=this.score.add(t);
+    this.emoAnalyzer.onCorrect();
     this.showFB(true,`+${r.points}`,r.bonus||CONFIG.messages[Math.floor(Math.random()*CONFIG.messages.length)],'');
     if(r.leveledUp){this.sound.levelUp();DOM.levelUpOverlay.classList.remove('hidden');setTimeout(()=>DOM.levelUpOverlay.classList.add('hidden'),2000);}
     setTimeout(()=>{if(this.state!=='gameover'&&this.state!=='menu'){this.state='playing';this.nextQ();}},1400);
@@ -1295,16 +1496,24 @@ class GameManager{
     this.state='gameover';
     const tt=parseFloat(((performance.now()-this.sessStart)/1000).toFixed(1));
     const avgRT=this.responses.length?parseFloat((this.responses.reduce((a,b)=>a+(b.responseTime||0),0)/this.responses.length).toFixed(2)):0;
+
+    // Build emotion summary
+    const emoSummary=this.emoAnalyzer.getSummary();
+    const emotionSummaryMap={};
+    if(emoSummary)emoSummary.forEach(e=>emotionSummaryMap[e.emotion]=e.pct);
+
     ResearchStore.add({
       sessionId:this.sessionId,playerName:this.playerName,classroom:this.classroom,
       testType:this.testType,difficulty:this.difficulty,topicFilter:this.classTopic||'all',
       dateTime:new Date().toISOString(),totalQuestions:this.responses.length,
       correctCount:this.score.correct,wrongCount:this.score.wrong,accuracy:this.score.acc,
-      score:this.score.score,totalTimeSec:tt,avgResponseTime:avgRT,responses:this.responses,seed:this.seed,
+      score:this.score.score,totalTimeSec:tt,avgResponseTime:avgRT,
+      emotionSummary:emotionSummaryMap,
+      responses:this.responses,seed:this.seed,
     });
     DOM.ui.classList.add('hidden');DOM.gameOverModal.classList.remove('hidden');
-    const TL={pretest:'📋 Pre-Test',posttest:'🏁 Post-Test',practice:'✏️ ฝึกหัด',practice_topic:'✏️ ฝึกเฉพาะหัวข้อ',adventure:'🚀 Adventure'};
-    const TC={pretest:'badge-pre',posttest:'badge-post',practice:'badge-practice',practice_topic:'badge-practice',adventure:'badge-practice'};
+    const TL={pretest:'📋 Pre-Test',posttest:'🏁 Post-Test',practice:'✏️ ฝึกหัด',practice_topic:'✏️ ฝึกเฉพาะหัวข้อ'};
+    const TC={pretest:'badge-pre',posttest:'badge-post',practice:'badge-practice',practice_topic:'badge-practice'};
     DOM.sessionTypeBadge.innerText=TL[this.testType]||this.testType;
     DOM.sessionTypeBadge.className='badge '+(TC[this.testType]||'badge-practice');
     DOM.gameOverTitle.innerText=title;
@@ -1317,7 +1526,7 @@ class GameManager{
     DOM.finalCorrect.innerText=this.score.correct;
     DOM.finalWrong.innerText=this.score.wrong;
 
-    // ── Learner level analysis (NEW) ──
+    // Learner level
     const lvl=classifyLearnerLevel(avgRT,this.score.acc);
     DOM.levelAnalysisIcon.style.background=lvl.bg;
     DOM.levelAnalysisIcon.style.border='2px solid '+lvl.border;
@@ -1326,17 +1535,37 @@ class GameManager{
     DOM.levelAnalysisTitle.style.color=lvl.color;
     DOM.levelAnalysisDesc.innerText=lvl.desc+` (เวลาตอบเฉลี่ย ${avgRT}s)`;
 
+    // Emotion summary in game over
+    const EMOMAP={happy:{emoji:'😊',label:'มีความสุข',color:'#10b981'},
+      excited:{emoji:'🤩',label:'ตื่นเต้น',color:'#f59e0b'},
+      focused:{emoji:'🧐',label:'มีสมาธิ',color:'#00d4ff'},
+      anxious:{emoji:'😟',label:'กังวล',color:'#ef4444'},
+      neutral:{emoji:'😐',label:'สงบ',color:'#94a3b8'}};
+    DOM.emotionSummaryContent.innerHTML='';
+    if(emoSummary&&emoSummary.length){
+      emoSummary.slice(0,4).forEach(e=>{
+        const em=EMOMAP[e.emotion]||EMOMAP.neutral;
+        const el=document.createElement('div');
+        el.style.cssText=`display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(0,0,0,0.25);border-radius:10px;padding:8px 12px;flex:1;min-width:70px;`;
+        el.innerHTML=`<span style="font-size:1.4rem;">${em.emoji}</span><span style="font-size:0.68rem;font-weight:700;color:${em.color};">${em.label}</span><span style="font-family:'Fredoka One',cursive;font-size:1rem;color:#fff;">${e.pct}%</span>`;
+        DOM.emotionSummaryContent.appendChild(el);
+      });
+    } else {
+      DOM.emotionSummaryContent.innerHTML='<p style="font-size:0.78rem;color:#64748b;padding:4px;">ไม่พบข้อมูลอารมณ์ (ต้องการกล้อง)</p>';
+    }
+
     DOM.finalQuestionLog.innerHTML='';
+    const EMOICON={happy:'😊',excited:'🤩',focused:'🧐',anxious:'😟',neutral:'😐'};
     this.responses.forEach(r=>{
       const el=document.createElement('div');el.className='q-log-item';
-      el.innerHTML=`<span style="color:${r.correct?'#10b981':'#ef4444'};font-size:0.8rem;">${r.correct?'✓':'✗'}</span><span style="flex:1;color:#94a3b8;">${r.qNumber}. ${r.questionText}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:#64748b;">${r.responseTime}s</span>`;
+      el.innerHTML=`<span style="color:${r.correct?'#10b981':'#ef4444'};font-size:0.8rem;">${r.correct?'✓':'✗'}</span><span style="flex:1;color:#94a3b8;">${r.qNumber}. ${r.questionText}</span><span style="font-size:0.9rem;">${EMOICON[r.emotion]||'😐'}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:#64748b;">${r.responseTime}s</span>`;
       DOM.finalQuestionLog.appendChild(el);
     });
   }
   showDashboard(){
     DOM.dashboardModal.classList.remove('hidden');
     const s=ResearchStore.stats();
-    if(!s){DOM.dashTotalPlayers.innerText=DOM.dashTotalSessions.innerText=DOM.dashAvgAcc.innerText=DOM.dashAvgTime.innerText='0';DOM.dashPlayerLevels.innerHTML='<p style="text-align:center;color:#64748b;font-size:0.8rem;padding:0.5rem 0;">ยังไม่มีข้อมูล</p>';return;}
+    if(!s){DOM.dashTotalPlayers.innerText=DOM.dashTotalSessions.innerText=DOM.dashAvgAcc.innerText=DOM.dashAvgTime.innerText='0';return;}
     DOM.dashTotalPlayers.innerText=s.players.length;DOM.dashTotalSessions.innerText=s.sessions.length;
     DOM.dashAvgAcc.innerText=s.avgAcc+'%';DOM.dashAvgTime.innerText=s.avgTime+'s';
     DOM.dashTopicBars.innerHTML='';
@@ -1353,36 +1582,13 @@ class GameManager{
     [...s.sessions].reverse().slice(0,5).forEach(ss=>{
       const el=document.createElement('div');
       el.style.cssText='display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:8px 12px;font-size:0.78rem;';
-      const tl={pretest:'Pre',posttest:'Post',practice:'ฝึก',practice_topic:'ฝึกหัวข้อ',adventure:'Adv'};
-      const tc={pretest:'badge-pre',posttest:'badge-post',practice:'badge-practice',practice_topic:'badge-practice',adventure:'badge-practice'};
-      el.innerHTML=`<div style="display:flex;align-items:center;gap:6px;"><span style="font-weight:700;">${ss.playerName}</span><span style="color:#64748b;">(${ss.classroom})</span><span class="badge ${tc[ss.testType]||'badge-practice'}" style="font-size:0.62rem;padding:2px 7px;">${tl[ss.testType]||ss.testType}</span></div><div style="text-align:right;"><span style="font-weight:700;color:#fcd34d;">${ss.score}pt</span><span style="color:#64748b;margin-left:8px;">${ss.accuracy}%</span></div>`;
+      const tl={pretest:'Pre',posttest:'Post',practice:'ฝึก',practice_topic:'ฝึกหัวข้อ'};
+      const tc={pretest:'badge-pre',posttest:'badge-post',practice:'badge-practice',practice_topic:'badge-practice'};
+      const emo=ss.emotionSummary;
+      const topEmo=emo?Object.entries(emo).sort((a,b)=>b[1]-a[1])[0]:null;
+      const EMOICON={happy:'😊',excited:'🤩',focused:'🧐',anxious:'😟',neutral:'😐'};
+      el.innerHTML=`<div style="display:flex;align-items:center;gap:6px;"><span style="font-weight:700;">${ss.playerName}</span><span style="color:#64748b;">(${ss.classroom})</span><span class="badge ${tc[ss.testType]||'badge-practice'}" style="font-size:0.62rem;padding:2px 7px;">${tl[ss.testType]||ss.testType}</span>${topEmo?`<span title="อารมณ์หลัก" style="font-size:0.9rem;">${EMOICON[topEmo[0]]||''}</span>`:''}</div><div style="text-align:right;"><span style="font-weight:700;color:#fcd34d;">${ss.score}pt</span><span style="color:#64748b;margin-left:8px;">${ss.accuracy}%</span></div>`;
       DOM.dashRecentSessions.appendChild(el);
-    });
-
-    // ── Per-player learner level analysis (NEW) ──
-    const byPlayer={};
-    s.sessions.forEach(ss=>{
-      const key=ss.playerName+'|'+(ss.classroom||'');
-      if(!byPlayer[key])byPlayer[key]={name:ss.playerName,classroom:ss.classroom,sessions:[]};
-      byPlayer[key].sessions.push(ss);
-    });
-    DOM.dashPlayerLevels.innerHTML='';
-    Object.values(byPlayer).forEach(p=>{
-      const sorted=p.sessions.slice().sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime));
-      const last=sorted[sorted.length-1];
-      const lvl=classifyLearnerLevel(last.avgResponseTime||0,last.accuracy||0);
-      let trend='';
-      if(sorted.length>1){
-        const first=sorted[0];
-        const diff=parseFloat(((first.avgResponseTime||0)-(last.avgResponseTime||0)).toFixed(1));
-        if(diff>0)trend=`<span style="color:#10b981;font-weight:700;">▲ เร็วขึ้น ${diff}s</span>`;
-        else if(diff<0)trend=`<span style="color:#ef4444;font-weight:700;">▼ ช้าลง ${Math.abs(diff)}s</span>`;
-        else trend=`<span style="color:#64748b;">คงที่</span>`;
-      }
-      const el=document.createElement('div');
-      el.style.cssText=`display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.25);border:1px solid ${lvl.border};border-radius:10px;padding:8px 12px;`;
-      el.innerHTML=`<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:1.2rem;">${lvl.icon}</span><div><p style="font-weight:700;font-size:0.85rem;">${p.name}</p><p style="font-size:0.7rem;color:#64748b;">${p.classroom} · เฉลี่ย ${last.avgResponseTime}s · แม่นยำ ${last.accuracy}% · ${sorted.length} เซสชัน</p></div></div><div style="text-align:right;font-size:0.75rem;"><p style="font-weight:700;color:${lvl.color};">${lvl.label}</p>${trend}</div>`;
-      DOM.dashPlayerLevels.appendChild(el);
     });
   }
   showLeaderboard(){
