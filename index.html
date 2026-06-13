@@ -704,6 +704,15 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
       </div>
     </div>
 
+    <!-- Learner level analysis card (NEW) -->
+    <div id="levelAnalysisCard" style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);border-radius:14px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;">
+      <div id="levelAnalysisIcon" style="width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;"></div>
+      <div>
+        <p id="levelAnalysisTitle" style="font-weight:800;font-size:1rem;margin-bottom:2px;"></p>
+        <p id="levelAnalysisDesc" style="font-size:0.78rem;color:#94a3b8;"></p>
+      </div>
+    </div>
+
     <!-- Score grid -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
       <div style="background:rgba(217,119,6,0.12);border:1px solid rgba(217,119,6,0.3);border-radius:12px;padding:12px;text-align:center;">
@@ -825,12 +834,26 @@ label.lbl{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
     </div>
 
     <!-- Recent sessions -->
-    <div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:14px;padding:14px;">
+    <div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;">
       <div style="display:flex;align-items:center;gap:7px;margin-bottom:12px;">
         <i class="fa-solid fa-clock-rotate-left" style="color:#a78bfa;font-size:0.85rem;"></i>
         <span style="font-size:0.72rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#a78bfa;">เซสชันล่าสุด</span>
       </div>
       <div id="dashRecentSessions" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;"></div>
+    </div>
+
+    <!-- Learner development / level analysis per player (NEW) -->
+    <div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:14px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;">
+        <i class="fa-solid fa-graduation-cap" style="color:#ec4899;font-size:0.85rem;"></i>
+        <span style="font-size:0.72rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#ec4899;">พัฒนาการผู้เรียนรายบุคคล (วิเคราะห์จากเวลาตอบ)</span>
+      </div>
+      <p style="font-size:0.68rem;color:#64748b;margin-bottom:10px;">
+        🌟 เชี่ยวชาญ: เฉลี่ย ≤3s & แม่นยำ ≥85% &nbsp;|&nbsp;
+        🚀 ปานกลาง: เฉลี่ย ≤6s & แม่นยำ ≥60% &nbsp;|&nbsp;
+        🌱 เริ่มต้น: นอกเหนือจากนั้น
+      </p>
+      <div id="dashPlayerLevels" style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;"></div>
     </div>
   </div>
 </div>
@@ -880,6 +903,30 @@ const CONFIG={
   messages:["ยอดเยี่ยม!","อัจฉริยะ!","สุดยอด!","ไวปานสายฟ้า!","แม่นยำมาก!","ทำได้ดี!","เก่งมาก!","ดีเยี่ยม!"]
 };
 
+// ── Learner Level Classification (NEW) ──────
+// วิเคราะห์ระดับผู้เรียนจากเวลาตอบเฉลี่ย (avgResponseTime) และความแม่นยำ (accuracy)
+function classifyLearnerLevel(avgRT, accuracy){
+  if(avgRT<=3 && accuracy>=85){
+    return {
+      label:'ระดับเชี่ยวชาญ', icon:'🌟', color:'#fcd34d',
+      bg:'rgba(234,197,71,0.15)', border:'rgba(234,197,71,0.4)',
+      desc:'ตอบเร็วและแม่นยำมาก พร้อมเพิ่มความยากของโจทย์ได้แล้ว'
+    };
+  }
+  if(avgRT<=6 && accuracy>=60){
+    return {
+      label:'ระดับปานกลาง', icon:'🚀', color:'#67e8f9',
+      bg:'rgba(8,145,178,0.15)', border:'rgba(8,145,178,0.4)',
+      desc:'ทำได้ดี ควรฝึกเพิ่มเพื่อเพิ่มความเร็วและความแม่นยำ'
+    };
+  }
+  return {
+    label:'ระดับเริ่มต้น', icon:'🌱', color:'#6ee7b7',
+    bg:'rgba(16,185,129,0.15)', border:'rgba(16,185,129,0.4)',
+    desc:'ยังต้องฝึกฝนเพิ่ม แนะนำใช้โหมดฝึกหัดบ่อย ๆ เพื่อเพิ่มความเร็วและความแม่นยำ'
+  };
+}
+
 // ── DOM ──────────────────────────────────
 const $ = id => document.getElementById(id);
 const DOM={
@@ -917,6 +964,9 @@ const DOM={
   dashAvgAcc:$('dashAvgAcc'), dashAvgTime:$('dashAvgTime'),
   dashTopicBars:$('dashTopicBars'), dashPrePost:$('dashPrePost'),
   dashRecentSessions:$('dashRecentSessions'),
+  dashPlayerLevels:$('dashPlayerLevels'),
+  levelAnalysisCard:$('levelAnalysisCard'), levelAnalysisIcon:$('levelAnalysisIcon'),
+  levelAnalysisTitle:$('levelAnalysisTitle'), levelAnalysisDesc:$('levelAnalysisDesc'),
 };
 
 // ── Helpers ──────────────────────────────
@@ -1067,9 +1117,10 @@ class ResearchStore{
   }
   static csv(){
     const ss=this.load();if(!ss.length){alert('ยังไม่มีข้อมูล');return;}
-    const rows=[['session_id','player_name','classroom','test_type','difficulty','topic_filter','date_time','total_questions','correct','wrong','accuracy_pct','total_score','total_time_sec','avg_response_time_sec','q_number','q_topic','q_mode','q_text','q_answer_text','student_fingers','q_correct','q_response_time_sec','q_time_remaining'].join(',')];
+    const rows=[['session_id','player_name','classroom','test_type','difficulty','topic_filter','date_time','total_questions','correct','wrong','accuracy_pct','total_score','total_time_sec','avg_response_time_sec','learner_level','q_number','q_topic','q_mode','q_text','q_answer_text','student_fingers','q_correct','q_response_time_sec','q_time_remaining'].join(',')];
     ss.forEach(s=>{
-      const base=[s.sessionId,`"${s.playerName}"`,`"${s.classroom||''}"`,s.testType,s.difficulty,s.topicFilter||'',s.dateTime,s.totalQuestions,s.correctCount,s.wrongCount,s.accuracy,s.score,s.totalTimeSec,s.avgResponseTime];
+      const lvl=classifyLearnerLevel(s.avgResponseTime||0,s.accuracy||0);
+      const base=[s.sessionId,`"${s.playerName}"`,`"${s.classroom||''}"`,s.testType,s.difficulty,s.topicFilter||'',s.dateTime,s.totalQuestions,s.correctCount,s.wrongCount,s.accuracy,s.score,s.totalTimeSec,s.avgResponseTime,`"${lvl.label}"`];
       (s.responses||[]).forEach(r=>{rows.push([...base,r.qNumber,r.topic,`"${r.modeName}"`,`"${r.questionText}"`,`"${r.answerText}"`,r.fingersShown,r.correct?1:0,r.responseTime,r.timeRemaining].join(','));});
       if(!s.responses||!s.responses.length)rows.push([...base,'','','','','','','','',''].join(','));
     });
@@ -1265,6 +1316,16 @@ class GameManager{
     DOM.finalAccuracy.innerText=this.score.acc+'%';
     DOM.finalCorrect.innerText=this.score.correct;
     DOM.finalWrong.innerText=this.score.wrong;
+
+    // ── Learner level analysis (NEW) ──
+    const lvl=classifyLearnerLevel(avgRT,this.score.acc);
+    DOM.levelAnalysisIcon.style.background=lvl.bg;
+    DOM.levelAnalysisIcon.style.border='2px solid '+lvl.border;
+    DOM.levelAnalysisIcon.innerText=lvl.icon;
+    DOM.levelAnalysisTitle.innerText=lvl.label;
+    DOM.levelAnalysisTitle.style.color=lvl.color;
+    DOM.levelAnalysisDesc.innerText=lvl.desc+` (เวลาตอบเฉลี่ย ${avgRT}s)`;
+
     DOM.finalQuestionLog.innerHTML='';
     this.responses.forEach(r=>{
       const el=document.createElement('div');el.className='q-log-item';
@@ -1275,7 +1336,7 @@ class GameManager{
   showDashboard(){
     DOM.dashboardModal.classList.remove('hidden');
     const s=ResearchStore.stats();
-    if(!s){DOM.dashTotalPlayers.innerText=DOM.dashTotalSessions.innerText=DOM.dashAvgAcc.innerText=DOM.dashAvgTime.innerText='0';return;}
+    if(!s){DOM.dashTotalPlayers.innerText=DOM.dashTotalSessions.innerText=DOM.dashAvgAcc.innerText=DOM.dashAvgTime.innerText='0';DOM.dashPlayerLevels.innerHTML='<p style="text-align:center;color:#64748b;font-size:0.8rem;padding:0.5rem 0;">ยังไม่มีข้อมูล</p>';return;}
     DOM.dashTotalPlayers.innerText=s.players.length;DOM.dashTotalSessions.innerText=s.sessions.length;
     DOM.dashAvgAcc.innerText=s.avgAcc+'%';DOM.dashAvgTime.innerText=s.avgTime+'s';
     DOM.dashTopicBars.innerHTML='';
@@ -1296,6 +1357,32 @@ class GameManager{
       const tc={pretest:'badge-pre',posttest:'badge-post',practice:'badge-practice',practice_topic:'badge-practice',adventure:'badge-practice'};
       el.innerHTML=`<div style="display:flex;align-items:center;gap:6px;"><span style="font-weight:700;">${ss.playerName}</span><span style="color:#64748b;">(${ss.classroom})</span><span class="badge ${tc[ss.testType]||'badge-practice'}" style="font-size:0.62rem;padding:2px 7px;">${tl[ss.testType]||ss.testType}</span></div><div style="text-align:right;"><span style="font-weight:700;color:#fcd34d;">${ss.score}pt</span><span style="color:#64748b;margin-left:8px;">${ss.accuracy}%</span></div>`;
       DOM.dashRecentSessions.appendChild(el);
+    });
+
+    // ── Per-player learner level analysis (NEW) ──
+    const byPlayer={};
+    s.sessions.forEach(ss=>{
+      const key=ss.playerName+'|'+(ss.classroom||'');
+      if(!byPlayer[key])byPlayer[key]={name:ss.playerName,classroom:ss.classroom,sessions:[]};
+      byPlayer[key].sessions.push(ss);
+    });
+    DOM.dashPlayerLevels.innerHTML='';
+    Object.values(byPlayer).forEach(p=>{
+      const sorted=p.sessions.slice().sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime));
+      const last=sorted[sorted.length-1];
+      const lvl=classifyLearnerLevel(last.avgResponseTime||0,last.accuracy||0);
+      let trend='';
+      if(sorted.length>1){
+        const first=sorted[0];
+        const diff=parseFloat(((first.avgResponseTime||0)-(last.avgResponseTime||0)).toFixed(1));
+        if(diff>0)trend=`<span style="color:#10b981;font-weight:700;">▲ เร็วขึ้น ${diff}s</span>`;
+        else if(diff<0)trend=`<span style="color:#ef4444;font-weight:700;">▼ ช้าลง ${Math.abs(diff)}s</span>`;
+        else trend=`<span style="color:#64748b;">คงที่</span>`;
+      }
+      const el=document.createElement('div');
+      el.style.cssText=`display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.25);border:1px solid ${lvl.border};border-radius:10px;padding:8px 12px;`;
+      el.innerHTML=`<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:1.2rem;">${lvl.icon}</span><div><p style="font-weight:700;font-size:0.85rem;">${p.name}</p><p style="font-size:0.7rem;color:#64748b;">${p.classroom} · เฉลี่ย ${last.avgResponseTime}s · แม่นยำ ${last.accuracy}% · ${sorted.length} เซสชัน</p></div></div><div style="text-align:right;font-size:0.75rem;"><p style="font-weight:700;color:${lvl.color};">${lvl.label}</p>${trend}</div>`;
+      DOM.dashPlayerLevels.appendChild(el);
     });
   }
   showLeaderboard(){
