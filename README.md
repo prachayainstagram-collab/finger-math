@@ -1,45 +1,24 @@
-# Finger Math Single Auth V5
+# Finger Math Direct Role V6
 
-## ระบบเข้าสู่ระบบใหม่
+เวอร์ชันนี้นำหน้าล็อกอินและสมัครสมาชิกออกทั้งหมด
 
-ใช้ระบบเดียวเท่านั้น:
+เมื่อเปิดเว็บ ผู้ใช้เลือกเข้าได้ทันที 3 โหมด:
 
-- ครู: อีเมล + รหัสผ่าน Supabase อย่างน้อย 6 ตัวอักษร
-- ผู้ปกครอง: อีเมล + รหัสผ่าน Supabase อย่างน้อย 6 ตัวอักษร
-- นักเรียน: รหัสผู้เรียน UUID + PIN ตัวเลข 4 หลัก
+- โหมดครู
+- โหมดผู้ปกครอง
+- โหมดนักเรียน
 
-ระบบ AccountManager และรหัสผู้ใหญ่ 4 ตัวใน LocalStorage ถูกปิดแล้ว
-
-## ผู้ปกครอง
-
-หลังผู้ปกครองล็อกอินด้วย Supabase แล้ว จะต้องกรอก:
-
-1. รหัสผู้เรียน UUID
-2. PIN ของนักเรียน 4 หลัก
-
-จึงจะเปิดพื้นที่ฝึกที่บ้านของลูกได้ และระบบตรวจว่าเด็กคนนั้นอยู่ในบัญชีผู้ปกครองเดียวกัน
-
-## ฐานข้อมูล
-
-รัน `supabase/schema.sql` ใน Supabase SQL Editor
-
-คำเตือน: schema.sql เป็นไฟล์ reset และจะลบข้อมูลตาราง Finger Math เดิมก่อนสร้างใหม่
-
-PIN นักเรียนใน V5 ต้องเป็นตัวเลข 4 หลักเท่านั้น
-
-## ตั้งบัญชีครู
-
-```sql
-update public.profiles
-set role='teacher',updated_at=now()
-where email='อีเมลครู';
-```
+โหมดท่าทางถูกปิดใช้งาน และแสดงข้อความ “กำลังพัฒนา”
 
 ## อัป GitHub
 
+นำไฟล์ทั้งหมดไปแทน repository แล้วรัน:
+
 ```bash
 git add .
-git commit -m "Use single Supabase auth and four digit student PIN"
+git commit -m "Remove login and add direct role selection"
 git pull --rebase origin main
 git push origin main
 ```
+
+ไม่จำเป็นต้องรัน schema.sql ใหม่สำหรับการเปลี่ยนหน้าจอนี้

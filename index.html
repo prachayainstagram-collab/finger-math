@@ -23,66 +23,69 @@
 </div>
 <div id="particleLayer" style="position:fixed;inset:0;z-index:1;pointer-events:none;"></div>
 
-<!-- ════ AUTH SCREEN (เข้าสู่ระบบ / สมัครใช้งาน) ════ -->
-<div id="screenAuth" class="screen" style="z-index:25;align-items:center;justify-content:center;padding:1.5rem;">
-  <div class="card auth-card">
-    <div style="text-align:center;margin-bottom:1.35rem;">
-      <div style="width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,#7c3aed,#ec4899);
-        display:flex;align-items:center;justify-content:center;margin:0 auto 10px;box-shadow:0 8px 26px rgba(124,58,237,0.45);">
-        <i class="fa-solid fa-hands-asl-interpreting" style="font-size:1.6rem;color:#fff;"></i>
+<!-- ════ ROLE SELECTOR — NO LOGIN ════ -->
+<div id="screenAuth" class="screen role-entry-screen"
+     style="z-index:25;align-items:center;justify-content:center;padding:1.5rem;">
+  <div class="card role-entry-card">
+    <div class="role-entry-logo">
+      <div class="role-entry-icon">
+        <i class="fa-solid fa-hands-asl-interpreting"></i>
       </div>
-      <h1 class="f-display" style="font-size:1.9rem;background:linear-gradient(135deg,#c4b5fd,#f9a8d4,#67e8f9);
-        -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:2px;">FINGER MATH</h1>
-      <p style="font-size:0.8rem;color:#94a3b8;font-weight:500;">ระบบตรวจสิทธิ์ครูหรือผู้ปกครองจากฐานข้อมูลโดยอัตโนมัติ</p>
+      <h1 class="f-display">FINGER MATH</h1>
+      <p>เลือกพื้นที่ใช้งานได้ทันที โดยไม่ต้องสมัครสมาชิกหรือเข้าสู่ระบบ</p>
     </div>
 
-    <div style="display:flex;gap:10px;margin-bottom:14px;">
-      <button type="button" class="auth-role-btn active" id="authRoleParentBtn" onclick="app.setAuthRole('parent')">
-        <i class="fa-solid fa-user-shield"></i><span>ครู / ผู้ปกครอง</span>
+    <div class="direct-role-grid">
+      <button type="button" class="direct-role-card role-teacher-card"
+              onclick="window.FMDirectMode.enter('teacher')">
+        <i class="fa-solid fa-chalkboard-user"></i>
+        <strong>โหมดครู</strong>
+        <span>ประเมินทักษะ จัดการรายชื่อ คลังโจทย์ และรายงานผล</span>
       </button>
-      <button type="button" class="auth-role-btn role-teacher hidden" id="authRoleTeacherBtn" tabindex="-1" aria-hidden="true">
-        <i class="fa-solid fa-chalkboard-user"></i><span>ครู</span>
+
+      <button type="button" class="direct-role-card role-parent-card"
+              onclick="window.FMDirectMode.enter('parent')">
+        <i class="fa-solid fa-house-user"></i>
+        <strong>โหมดผู้ปกครอง</strong>
+        <span>ตั้งค่าผู้เรียน ฝึกที่บ้าน และดูสรุปความก้าวหน้า</span>
       </button>
-      <button type="button" class="auth-role-btn role-student" id="authRoleStudentBtn" onclick="app.setAuthRole('student')">
-        <i class="fa-solid fa-child-reaching"></i><span>นักเรียน</span>
+
+      <button type="button" class="direct-role-card role-student-card"
+              onclick="window.FMDirectMode.enter('student')">
+        <i class="fa-solid fa-child-reaching"></i>
+        <strong>โหมดนักเรียน</strong>
+        <span>เข้าสู่กิจกรรมฝึกคณิตศาสตร์ได้ทันที</span>
       </button>
     </div>
 
-    <div class="auth-mode-switch" id="authModeSwitch" style="margin-bottom:16px;">
-      <button type="button" class="active" id="authModeLoginBtn" onclick="app.setAuthMode('login')">เข้าสู่ระบบ</button>
-      <button type="button" id="authModeSignupBtn" onclick="app.setAuthMode('signup')">สมัครใช้งาน</button>
-    </div>
-
-    <div id="authSignupNameWrap" class="hidden" style="margin-bottom:12px;">
-      <label class="lbl">ชื่อ-นามสกุล</label>
-      <input type="text" id="authName" class="inp" placeholder="เช่น สมชาย ใจดี">
-    </div>
-    <div id="authEmailWrap" style="margin-bottom:12px;">
-      <label class="lbl">อีเมล</label>
-      <input type="email" id="authEmail" class="inp" placeholder="you@example.com" autocomplete="username">
-    </div>
-    <div id="authPasswordWrap" style="margin-bottom:8px;">
-      <label class="lbl">รหัสผ่าน</label>
-      <input type="password" id="authPassword" class="inp" placeholder="อย่างน้อย 6 ตัวอักษร" autocomplete="current-password">
-    </div>
-    <div id="authStudentPanel" class="student-access-panel hidden">
-      <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;">
-        <div style="font-size:1.8rem;">🎒</div>
-        <div>
-          <div style="font-weight:900;font-size:.95rem;">เข้าใช้งานสำหรับนักเรียน</div>
-          <div style="font-size:.72rem;color:#94a3b8;line-height:1.45;">นักเรียนใช้รหัสผู้เรียนและ PIN ตัวเลข 4 หลักที่ครูหรือผู้ปกครองกำหนด</div>
-        </div>
+    <div class="development-notice">
+      <i class="fa-solid fa-person-walking-arrow-loop-left"></i>
+      <div>
+        <strong>โหมดท่าทาง — กำลังพัฒนา</strong>
+        <span>ปิดใช้งานชั่วคราวเพื่อปรับปรุงความแม่นยำและความเสถียร</span>
       </div>
-      <div id="studentProfileList" class="student-profile-grid"></div>
-      <p id="studentProfileEmpty" class="hidden" style="text-align:center;color:#94a3b8;font-size:.78rem;padding:14px 4px;line-height:1.5;">ยังไม่มีโปรไฟล์นักเรียนในอุปกรณ์นี้<br>กรุณาให้ครูหรือผู้ปกครองเข้าสู่ระบบและเพิ่มโปรไฟล์ก่อน</p>
     </div>
-    <p id="authError" style="color:#fca5a5;font-size:0.78rem;min-height:1.2em;margin-bottom:10px;font-weight:600;"></p>
-    <button id="authSubmitBtn" onclick="app.submitAuth()" class="btn btn-primary btn-lg" style="width:100%;margin-bottom:10px;">
-      <i class="fa-solid fa-right-to-bracket"></i> เข้าสู่ระบบ
-    </button>
-    <p style="font-size:0.66rem;color:#64748b;text-align:center;line-height:1.5;">
-      <i class="fa-solid fa-shield-halved"></i> ครูและผู้ปกครองใช้บัญชี Supabase ระบบเดียวเท่านั้น นักเรียนใช้ PIN 4 หลัก
-    </p>
+
+    <!-- Compatibility elements kept hidden so the existing application can boot safely. -->
+    <div class="hidden" aria-hidden="true">
+      <button id="authRoleParentBtn"></button>
+      <button id="authRoleTeacherBtn"></button>
+      <button id="authRoleStudentBtn"></button>
+      <div id="authModeSwitch"></div>
+      <button id="authModeLoginBtn"></button>
+      <button id="authModeSignupBtn"></button>
+      <div id="authSignupNameWrap"></div>
+      <div id="authEmailWrap"></div>
+      <div id="authPasswordWrap"></div>
+      <div id="authStudentPanel"></div>
+      <div id="studentProfileList"></div>
+      <p id="studentProfileEmpty"></p>
+      <input id="authName">
+      <input id="authEmail">
+      <input id="authPassword">
+      <p id="authError"></p>
+      <button id="authSubmitBtn"></button>
+    </div>
   </div>
 </div>
 
@@ -180,8 +183,10 @@
       <button class="tab-btn" data-tab="roster" onclick="app.switchMenuTab('roster')">
         <i class="fa-solid fa-users" style="margin-right:6px;"></i><span id="rosterTabLabel">รายชื่อนักเรียน</span>
       </button>
-      <button class="tab-btn" data-tab="physical" onclick="app.switchMenuTab('physical')">
-        <i class="fa-solid fa-universal-access" style="margin-right:6px;"></i>โหมดท่าทาง
+      <button type="button" class="tab-btn gesture-development-tab" data-tab="physical"
+              disabled aria-disabled="true" title="กำลังพัฒนา">
+        <i class="fa-solid fa-person-walking-arrow-loop-left" style="margin-right:6px;"></i>
+        โหมดท่าทาง <span class="dev-badge">กำลังพัฒนา</span>
       </button>
       <button class="tab-btn" data-tab="accessibility" onclick="app.switchMenuTab('accessibility')">
         <i class="fa-solid fa-volume-high" style="margin-right:6px;"></i>โหมดเสียง
@@ -886,5 +891,6 @@ function doPost(e) {
 <script src="./assets/js/security-upgrade.js"></script>
 <script src="./assets/js/accessibility-controls.js"></script>
 <script src="./assets/js/role-access.js"></script>
+<script src="./assets/js/direct-role-mode.js"></script>
 </body>
 </html>
