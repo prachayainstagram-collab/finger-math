@@ -1,0 +1,12 @@
+window.FM_CONFIG = {
+  SUPABASE_URL: "https://kzyvymdhsbzoevsfgdlm.supabase.co",
+  SUPABASE_ANON_KEY: "sb_publishable_Fe4cFWrzwb8kWClZrY7-4g_WI8R8rSV",
+  REQUIRE_CLOUD_AUTH: true,
+  ALLOW_OFFLINE_GUEST: false,
+  CAMERA_CONFIDENCE: 0.70,
+  GESTURE_CONFIDENCE: 0.65,
+  STUDENT_PIN_LENGTH: 4,
+  DATA_RETENTION_DAYS: 365,
+  GOOGLE_SHEETS_ENABLED: false,
+  GOOGLE_SHEETS_WEBAPP_URL: ""
+};
