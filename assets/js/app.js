@@ -364,7 +364,7 @@ class EmotionAnalyzer {
       happy:{emoji:'😊',label:'มีความสุข 😊',sub:'เยี่ยมมาก! ทำต่อไปนะ',color:'#10b981',ambientColor:'rgba(16,185,129,0.15)'},
       excited:{emoji:'🤩',label:'ตื่นเต้นสนุกสนาน! 🤩',sub:'พลังงานดีมาก! ไปต่อ!',color:'#f59e0b',ambientColor:'rgba(245,158,11,0.15)'},
       focused:{emoji:'🧐',label:'มีสมาธิ กำลังคิด 🧐',sub:'โฟกัสดีมาก! เก่งมาก',color:'#00d4ff',ambientColor:'rgba(0,212,255,0.12)'},
-      anxious:{emoji:'😟',label:'ดูเหมือนกังวลนิดหน่อย 😟',sub:'ไม่เป็นไร ค่อย ๆ คิดนะ',color:'#ef4444',ambientColor:'rgba(239,68,68,0.12)'},
+      anxious:{emoji:'😟',label:'ละสายตาจากหน้าจอ',sub:'กลับมามองโจทย์เมื่อพร้อมนะ',color:'#ef4444',ambientColor:'rgba(239,68,68,0.12)'},
       neutral:{emoji:'😐',label:'สงบ พร้อมตอบ 😌',sub:'เตรียมพร้อมดีแล้ว!',color:'#94a3b8',ambientColor:'transparent'},
     };
     const st=STATES[this.currentEmotion]||STATES.neutral;
@@ -804,6 +804,18 @@ class HandTracker{
 class QuestionManager{
   constructor(){this.q=null;}
   generate(level,mode,topic,rng,difficulty){
+    if(mode==='large_number'){
+      const max=difficulty==='easy'?30:(difficulty==='hard'?99:60);
+      const useAdd=rng.next()>0.35;
+      let a,b,answer,text;
+      if(useAdd){
+        a=rng.nextInt(6,max-5); b=rng.nextInt(1,Math.min(29,max-a)); answer=a+b; text=`${a} + ${b} = ?`;
+      }else{
+        a=rng.nextInt(12,max); b=rng.nextInt(1,a-1); answer=a-b; text=`${a} - ${b} = ?`;
+      }
+      const q={text,instruction:'ตอบ 2 จังหวะ: ชูหลักสิบก่อน แล้วชูหลักหน่วย',answerCheck:f=>f===Math.floor(answer/10),modeName:'เลขเกิน 10 · สองจังหวะ',answerText:String(answer),topic:8,answerValue:answer,answerDigits:[Math.floor(answer/10),answer%10],answerStage:0};
+      this.q=q;return q;
+    }
     if(String(mode||'').startsWith('physical_'))return this.generatePhysical(mode,rng,difficulty);
     let t=topic?parseInt(topic):this._pick(level,mode);
     const mx=difficulty==='easy'?5:10;
@@ -907,7 +919,8 @@ function getSkillDimension(topic){
     4:'Basic Multiplication',
     5:'Number Comparison',
     6:'Odd/Even Classification',
-    7:'Accessible True/False Gesture Response'
+    7:'Accessible True/False Gesture Response',
+    8:'Place Value and Two-stage Finger Encoding' 
   };
   return map[topic]||'Mixed Skills';
 }
@@ -1532,7 +1545,7 @@ class GameManager{
     const MAP={pretest:{cls:'badge-pre',txt:'📋 ประเมินก่อนเรียน'},posttest:{cls:'badge-post',txt:'🏁 ประเมินหลังเรียน'},
       skill_assessment:{cls:'badge-pre',txt:'🧾 ประเมินทักษะ'},home_practice:{cls:'badge-practice',txt:'🏠 ฝึกที่บ้าน'},
       practice:{cls:'badge-practice',txt:'✏️ ฝึกหัด'},practice_topic:{cls:'badge-practice',txt:'✏️ ฝึกเฉพาะหัวข้อ'},accessibility_voice:{cls:'badge-pre',txt:'🔊 โหมดเสียง'},
-      accessibility_physical_head:{cls:'badge-practice',txt:'♿ พยักหน้า/ส่ายหัว'},accessibility_physical_face:{cls:'badge-practice',txt:'♿ ยิ้ม/หน้านิ่ง'}};
+      accessibility_physical_head:{cls:'badge-practice',txt:'♿ พยักหน้า/ส่ายหัว'},accessibility_physical_face:{cls:'badge-practice',txt:'♿ ยิ้ม/หน้านิ่ง'},large_number:{cls:'badge-post',txt:'🔢 เลขเกิน 10'}};
     const m2=MAP[m]||MAP.practice;
     DOM.hudTestBadge.className='badge '+m2.cls;
     DOM.hudTestBadge.innerText=m2.txt;
@@ -1554,6 +1567,11 @@ class GameManager{
     const q=this.qMgr.generate(this.score.level,this.gameMode,this.classTopic,this.rng,this.difficulty);
     DOM.questionMode.innerHTML=`<i class="fa-solid fa-bolt" style="color:#fcd34d;"></i> ${q.modeName}`;
     DOM.questionText.innerText=q.text;DOM.instructionText.innerText=q.instruction;
+    if(this.gameMode==='large_number'){
+      q.answerStage=0;
+      DOM.instructionText.innerText='จังหวะที่ 1/2 · ชูเลขหลักสิบ';
+      DOM.hudFingers.innerText='—';
+    }
     this.timeLeft=CONFIG.timePerQuestion;this.lastFrame=performance.now();
     this.isHolding=false;this.holdElapsed=0;
     this.pendingPhysicalGesture='none';
@@ -1603,7 +1621,10 @@ class GameManager{
     DOM.hudFingers.innerText=f;
     if(this.accessibilityMode&&conf>=CONFIG.confThreshold)this.speech.finger(f,false);
     if(conf<CONFIG.confThreshold)return;
-    const ok=this.qMgr.q?.answerCheck(f);
+    let ok;
+    if(this.gameMode==='large_number'&&this.qMgr.q?.answerDigits){
+      ok=f===this.qMgr.q.answerDigits[this.qMgr.q.answerStage||0];
+    }else ok=this.qMgr.q?.answerCheck(f);
     if(ok){if(!this.isHolding){this.isHolding=true;this.holdElapsed=0;DOM.holdRing.classList.add('active');}}
     else{if(this.isHolding){this.isHolding=false;this.holdElapsed=0;DOM.holdRing.classList.remove('active');DOM.holdFill.style.strokeDashoffset='283';}}
   }
@@ -1668,7 +1689,15 @@ class GameManager{
             if(isOk)this.handleOk(responseTime);
             else this.handleBad('ยังไม่ถูก ลองใหม่อีกครั้ง',`คำตอบที่ถูกคือ: ${this.qMgr.q?.answerText ?? '—'}`,g);
           }else{
-            this.handleOk(responseTime);
+            if(this.gameMode==='large_number'&&this.qMgr.q?.answerStage===0){
+              this.qMgr.q.answerStage=1;
+              this.isHolding=false;this.holdElapsed=0;
+              DOM.holdRing.classList.remove('active');DOM.holdFill.style.strokeDashoffset='283';
+              DOM.instructionText.innerText=`ยืนยันหลักสิบแล้ว · จังหวะที่ 2/2 ชูเลขหลักหน่วย`;
+              DOM.questionMode.innerHTML='<i class="fa-solid fa-layer-group" style="color:#fcd34d;"></i> หลักหน่วย';
+              this.timeLeft=Math.max(this.timeLeft,5);
+              if(this.accessibilityMode)this.speech.speak('ถูกต้อง ต่อไปชูเลขหลักหน่วย');
+            }else this.handleOk(responseTime);
           }
         }
       }
@@ -1799,7 +1828,7 @@ class GameManager{
     const EMOMAP={happy:{emoji:'😊',label:'มีความสุข',color:'#10b981'},
       excited:{emoji:'🤩',label:'ตื่นเต้น',color:'#f59e0b'},
       focused:{emoji:'🧐',label:'มีสมาธิ',color:'#00d4ff'},
-      anxious:{emoji:'😟',label:'กังวล',color:'#ef4444'},
+      anxious:{emoji:'😟',label:'ละสายตา',color:'#ef4444'},
       neutral:{emoji:'😐',label:'สงบ',color:'#94a3b8'}};
     DOM.emotionSummaryContent.innerHTML='';
     if(emoSummary&&emoSummary.length){
@@ -1811,7 +1840,7 @@ class GameManager{
         DOM.emotionSummaryContent.appendChild(el);
       });
     } else {
-      DOM.emotionSummaryContent.innerHTML='<p style="font-size:0.78rem;color:#64748b;padding:4px;">ไม่พบข้อมูลอารมณ์ (ต้องการกล้อง)</p>';
+      DOM.emotionSummaryContent.innerHTML='<p style="font-size:0.78rem;color:#64748b;padding:4px;">ไม่พบข้อมูลพฤติกรรมการมองหน้าจอ (ต้องการกล้อง)</p>';
     }
 
     DOM.finalQuestionLog.innerHTML='';
