@@ -52,6 +52,7 @@ const DOM={
   finalQuestionLog:$('finalQuestionLog'),sessionTypeBadge:$('sessionTypeBadge'),
   startPlayerName:$('startPlayerName'),startClassroom:$('startClassroom'),
   startQuestionCount:$('startQuestionCount'),startDifficulty:$('startDifficulty'),
+  gradeBandHint:$('gradeBandHint'),difficultyHint:$('difficultyHint'),difficultyMeterFill:$('difficultyMeterFill'),gradeRecommendation:$('gradeRecommendation'),
   leaderboardModal:$('leaderboardModal'),leaderboardList:$('leaderboardList'),
   dashboardModal:$('dashboardModal'),customConfirmModal:$('customConfirmModal'),
   levelUpOverlay:$('levelUpOverlay'),btnPause:$('btnPause'),
@@ -803,9 +804,25 @@ class HandTracker{
 
 class QuestionManager{
   constructor(){this.q=null;}
-  generate(level,mode,topic,rng,difficulty){
+  _fingerMax(difficulty,gradeBand){
+    const map={
+      primary_low:{easy:5,medium:8,hard:10},
+      primary_high:{easy:7,medium:10,hard:10},
+      secondary:{easy:8,medium:10,hard:10}
+    };
+    return (map[gradeBand]||map.primary_low)[difficulty]||8;
+  }
+  _largeNumberMax(difficulty,gradeBand){
+    const map={
+      primary_low:{easy:20,medium:30,hard:50},
+      primary_high:{easy:30,medium:60,hard:99},
+      secondary:{easy:60,medium:99,hard:99}
+    };
+    return (map[gradeBand]||map.primary_high)[difficulty]||60;
+  }
+  generate(level,mode,topic,rng,difficulty,gradeBand='primary_low'){
     if(mode==='large_number'){
-      const max=difficulty==='easy'?30:(difficulty==='hard'?99:60);
+      const max=this._largeNumberMax(difficulty,gradeBand);
       const useAdd=rng.next()>0.35;
       let a,b,answer,text;
       if(useAdd){
@@ -816,9 +833,9 @@ class QuestionManager{
       const q={text,instruction:'ตอบ 2 จังหวะ: ชูหลักสิบก่อน แล้วชูหลักหน่วย',answerCheck:f=>f===Math.floor(answer/10),modeName:'เลขเกิน 10 · สองจังหวะ',answerText:String(answer),topic:8,answerValue:answer,answerDigits:[Math.floor(answer/10),answer%10],answerStage:0};
       this.q=q;return q;
     }
-    if(String(mode||'').startsWith('physical_'))return this.generatePhysical(mode,rng,difficulty);
-    let t=topic?parseInt(topic):this._pick(level,mode);
-    const mx=difficulty==='easy'?5:10;
+    if(String(mode||'').startsWith('physical_'))return this.generatePhysical(mode,rng,difficulty,gradeBand);
+    let t=topic?parseInt(topic):this._pick(level,mode,gradeBand);
+    const mx=this._fingerMax(difficulty,gradeBand);
     let q={text:'',instruction:'',answerCheck:null,modeName:'',answerText:'',topic:t};
     switch(t){
       case 1:{const n=rng.nextInt(0,mx);q.modeName='แสดงตัวเลข';q.text=`ชู ${n} นิ้ว`;q.instruction='ชูนิ้วให้ครบตามตัวเลข';q.answerCheck=f=>f===n;q.answerText=String(n);break;}
@@ -831,8 +848,8 @@ class QuestionManager{
     }
     this.q=q;return q;
   }
-  generatePhysical(mode,rng,difficulty){
-    const mx=difficulty==='easy'?5:10;
+  generatePhysical(mode,rng,difficulty,gradeBand='primary_low'){
+    const mx=this._fingerMax(difficulty,gradeBand);
     const trueCase=rng.next()>0.5;
     const kind=rng.nextInt(1,4);
     let text='',answer=true,answerText='';
@@ -877,7 +894,18 @@ class QuestionManager{
       topic:7
     };
   }
-  _pick(l){if(l<=2)return 1;if(l===3)return 2;if(l===4)return 3;if(l===5)return 4;return Math.floor(Math.random()*6)+1;}
+  _pick(l,mode,gradeBand='primary_low'){
+    if(gradeBand==='primary_low'){
+      if(l<=2)return 1; if(l===3)return 2; if(l===4)return 3; if(l===5)return 5;
+      const pool=[1,2,3,5,6]; return pool[Math.floor(Math.random()*pool.length)];
+    }
+    if(gradeBand==='primary_high'){
+      if(l<=2)return 2; if(l===3)return 3; if(l===4)return 5; if(l===5)return 4;
+      const pool=[2,3,4,5,6]; return pool[Math.floor(Math.random()*pool.length)];
+    }
+    if(l<=2)return 2; if(l===3)return 3; if(l===4)return 4; if(l===5)return 6;
+    const pool=[2,3,4,5,6]; return pool[Math.floor(Math.random()*pool.length)];
+  }
 }
 
 class ScoreManager{
@@ -1091,7 +1119,8 @@ class GameManager{
     this.tracker=new HandTracker(DOM.video,DOM.canvas,DOM.faceCanvas,(f,c)=>this.onHand(f,c),(g,c,l)=>this.onFaceGesture(g,c,l));
     this.state='menu';this.gameMode='practice';this.testType='practice';
     this.classTopic=null;this.playerName='';this.classroom='';
-    this.difficulty='medium';this.totalQ=10;this.qIdx=0;
+    this.gradeBand=localStorage.getItem('fingerMath_gradeBand')||'primary_low';
+    this.difficulty=localStorage.getItem('fingerMath_difficulty')||'medium';this.totalQ=10;this.qIdx=0;
     this.holdTime=1.2;this.seed=0;this.rng=null;
     this.timeLeft=CONFIG.timePerQuestion;this.lastFrame=performance.now();
     this.sessStart=0;this.isHolding=false;this.holdElapsed=0;
@@ -1115,6 +1144,7 @@ class GameManager{
       if(this.accessibilityMode&&e.key.toLowerCase()==='h'){e.preventDefault();this.speech.help();}
     });
     this.updateVoiceModeUI();
+    this.initEntrySelectorUI();
   }
   // ── Theme toggle (Space / Kids) ──
   applyTheme(theme,silent=false){
@@ -1125,6 +1155,44 @@ class GameManager{
     this.updateMenuSubtitle();
   }
   toggleTheme(){this.applyTheme(this.theme==='kids'?'space':'kids');}
+  initEntrySelectorUI(){
+    const savedBand=localStorage.getItem('fingerMath_gradeBand')||this.gradeBand||'primary_low';
+    const savedDiff=localStorage.getItem('fingerMath_difficulty')||this.difficulty||DOM.startDifficulty?.value||'medium';
+    this.setGradeBand(savedBand,{silent:true,preserveDifficulty:true});
+    this.setDifficultyLevel(savedDiff,{silent:true});
+  }
+  setGradeBand(band,opts={}){
+    const bands={
+      primary_low:{label:'ประถมต้น',placeholder:'เช่น ป.2/1',recommended:'easy',hint:'เหมาะกับเด็ก ป.1–3 ที่กำลังเริ่มต้นนับนิ้ว เรียนรู้จำนวน 0–10 และค่อย ๆ ฝึกบวก–ลบอย่างมั่นใจ',plan:'เริ่มจากฝึกนับนิ้ว 0–10 ก่อน แล้วค่อยไปโหมดบวก–ลบ'},
+      primary_high:{label:'ประถมปลาย',placeholder:'เช่น ป.5/2',recommended:'medium',hint:'เหมาะกับเด็ก ป.4–6 ที่พร้อมเพิ่มความเร็ว ฝึกเลขเกิน 10 และต่อยอดเข้าสู่จินตคณิต',plan:'แนะนำเริ่มจากบวก–ลบ แล้วต่อด้วยเลขเกิน 10 และห้องเรียนจินตคณิต'},
+      secondary:{label:'มัธยม',placeholder:'เช่น ม.1/1',recommended:'hard',hint:'เหมาะกับ ม.1–3 ที่ต้องการโจทย์ท้าทายกว่าเดิม เน้นความเร็ว ความแม่น และการคิดในใจ',plan:'แนะนำเริ่มด้วยจินตคณิตหรือคิดเร็ว แล้วใช้โหมดท้าทายเพื่อจับเวลา'}
+    };
+    const info=bands[band]||bands.primary_low;
+    this.gradeBand=band;
+    localStorage.setItem('fingerMath_gradeBand',band);
+    document.querySelectorAll('[data-grade-band]').forEach(btn=>btn.classList.toggle('active',btn.dataset.gradeBand===band));
+    if(DOM.gradeBandHint)DOM.gradeBandHint.innerHTML=`<strong>${info.label}</strong> · ${info.hint}`;
+    if(DOM.startClassroom && (!DOM.startClassroom.value || opts.forcePlaceholder))DOM.startClassroom.placeholder=info.placeholder;
+    if(DOM.gradeRecommendation)DOM.gradeRecommendation.innerHTML=`<i class="fa-solid fa-lightbulb"></i><div><strong>เส้นทางแนะนำสำหรับ${info.label}</strong><span>${info.plan}</span></div>`;
+    if(!opts.preserveDifficulty){
+      const next=opts.silent?(localStorage.getItem('fingerMath_difficulty')||this.difficulty||info.recommended):info.recommended;
+      this.setDifficultyLevel(next,{silent:true});
+    }
+  }
+  setDifficultyLevel(level,opts={}){
+    const meta={
+      easy:{label:'ง่าย',width:'34%',hint:'โจทย์สั้น ตัวเลขเล็ก เหมาะสำหรับเริ่มฝึกหรือทบทวนพื้นฐาน'},
+      medium:{label:'ปานกลาง',width:'67%',hint:'เพิ่มการคิดในใจและสลับรูปแบบโจทย์ เหมาะกับการฝึกประจำวัน'},
+      hard:{label:'ท้าทาย',width:'100%',hint:'ตอบเร็วขึ้น โจทย์หลากหลายขึ้น เหมาะสำหรับผู้เรียนที่พร้อมขยับระดับ'}
+    };
+    const info=meta[level]||meta.medium;
+    this.difficulty=level;
+    localStorage.setItem('fingerMath_difficulty',level);
+    if(DOM.startDifficulty)DOM.startDifficulty.value=level;
+    document.querySelectorAll('[data-difficulty-level]').forEach(btn=>btn.classList.toggle('active',btn.dataset.difficultyLevel===level));
+    if(DOM.difficultyMeterFill)DOM.difficultyMeterFill.style.width=info.width;
+    if(DOM.difficultyHint)DOM.difficultyHint.innerHTML=`<strong>${info.label}</strong> · ${info.hint}`;
+  }
   updateMenuSubtitle(){
     if(!DOM.menuSubtitle)return;
     DOM.menuSubtitle.innerText=this.theme==='kids'
@@ -1500,7 +1568,8 @@ class GameManager{
     this.playerName=(DOM.startPlayerName.value.trim())||'ไม่ระบุชื่อ';
     this.classroom=(DOM.startClassroom.value.trim())||'—';
     this.totalQ=parseInt(DOM.startQuestionCount.value)||10;
-    this.difficulty=DOM.startDifficulty.value||'medium';
+    this.gradeBand=this.gradeBand||localStorage.getItem('fingerMath_gradeBand')||'primary_low';
+    this.difficulty=DOM.startDifficulty.value||this.difficulty||'medium';
     this.holdTime=parseFloat($('practiceHoldTime')?.value||1.2);
     this.gameMode=mode;this.testType=mode;
     this.physicalMode=mode.startsWith('physical_');
@@ -1564,7 +1633,7 @@ class GameManager{
     this.qIdx++;
     if(this.totalQ!==999&&this.qIdx>this.totalQ){this.endGame();return;}
     DOM.hudLevel.innerText=this.totalQ===999?String(this.qIdx):`${this.qIdx}/${this.totalQ}`;
-    const q=this.qMgr.generate(this.score.level,this.gameMode,this.classTopic,this.rng,this.difficulty);
+    const q=this.qMgr.generate(this.score.level,this.gameMode,this.classTopic,this.rng,this.difficulty,this.gradeBand);
     DOM.questionMode.innerHTML=`<i class="fa-solid fa-bolt" style="color:#fcd34d;"></i> ${q.modeName}`;
     DOM.questionText.innerText=q.text;DOM.instructionText.innerText=q.instruction;
     if(this.gameMode==='large_number'){

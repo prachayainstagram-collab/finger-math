@@ -152,7 +152,29 @@
           <input type="text" id="startClassroom" placeholder="เช่น ป.3/1" class="inp">
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="menu-preset-block">
+        <label class="lbl" style="color:#c4b5fd;">เลือกช่วงชั้นสำหรับเริ่มเล่น</label>
+        <div class="grade-band-grid">
+          <button type="button" class="grade-band-btn active" data-grade-band="primary_low" onclick="app.setGradeBand('primary_low')">
+            <span class="grade-band-kicker">Primary 1</span>
+            <strong>ประถมต้น</strong>
+            <small>ป.1–3 · เริ่มจากนับนิ้วและบวก–ลบ 0–10</small>
+          </button>
+          <button type="button" class="grade-band-btn" data-grade-band="primary_high" onclick="app.setGradeBand('primary_high')">
+            <span class="grade-band-kicker">Primary 2</span>
+            <strong>ประถมปลาย</strong>
+            <small>ป.4–6 · ฝึกคิดเร็ว เลขเกิน 10 และจินตคณิต</small>
+          </button>
+          <button type="button" class="grade-band-btn" data-grade-band="secondary" onclick="app.setGradeBand('secondary')">
+            <span class="grade-band-kicker">Secondary</span>
+            <strong>มัธยม</strong>
+            <small>ม.1–3 · โจทย์ท้าทายมากขึ้นและเน้นความเร็ว</small>
+          </button>
+        </div>
+        <div id="gradeBandHint" class="grade-band-hint">ประถมต้น · เหมาะกับเด็กที่กำลังเริ่มนับนิ้ว เรียนรู้ค่าของจำนวน และตอบโจทย์ง่าย ๆ ก่อน</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;">
         <div>
           <label class="lbl" style="color:#fcd34d;">จำนวนข้อ</label>
           <select id="startQuestionCount" class="inp">
@@ -164,11 +186,27 @@
         </div>
         <div>
           <label class="lbl" style="color:#6ee7b7;">ระดับความยาก</label>
-          <select id="startDifficulty" class="inp">
-            <option value="easy">ง่าย (ป.1–2)</option>
-            <option value="medium" selected>ปานกลาง (ป.3–4)</option>
-            <option value="hard">ยาก (ป.5–6)</option>
+          <select id="startDifficulty" class="inp hidden" aria-hidden="true" tabindex="-1">
+            <option value="easy">ง่าย</option>
+            <option value="medium" selected>ปานกลาง</option>
+            <option value="hard">ท้าทาย</option>
           </select>
+          <div class="difficulty-shell">
+            <div class="difficulty-meter"><span id="difficultyMeterFill"></span></div>
+            <div class="difficulty-pill-row">
+              <button type="button" class="difficulty-pill" data-difficulty-level="easy" onclick="app.setDifficultyLevel('easy')">ง่าย</button>
+              <button type="button" class="difficulty-pill active" data-difficulty-level="medium" onclick="app.setDifficultyLevel('medium')">ปานกลาง</button>
+              <button type="button" class="difficulty-pill" data-difficulty-level="hard" onclick="app.setDifficultyLevel('hard')">ท้าทาย</button>
+            </div>
+            <div id="difficultyHint" class="grade-band-hint">ปานกลาง · เพิ่มการคิดในใจและสลับรูปแบบโจทย์ เหมาะกับการฝึกประจำวัน</div>
+          </div>
+        </div>
+      </div>
+      <div id="gradeRecommendation" class="grade-recommendation">
+        <i class="fa-solid fa-lightbulb"></i>
+        <div>
+          <strong>เส้นทางแนะนำ:</strong>
+          <span>เริ่มจากฝึกนับนิ้ว 0–10 ก่อน แล้วค่อยไปโหมดบวก–ลบ</span>
         </div>
       </div>
     </div>
