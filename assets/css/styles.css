@@ -843,3 +843,10 @@ body.theme-kids .student-access-panel,body.theme-kids .student-profile-card{back
   .direct-role-grid{grid-template-columns:1fr}
   .direct-role-card{min-height:128px}
 }
+/* V8 cleanup: remove the obsolete floating role/menu panel. Navigation now lives in the main tab bar. */
+.menu-tabs-right,
+body.ux-v4 .menu-tabs-right{
+  display:none !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+}

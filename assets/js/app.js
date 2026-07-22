@@ -1549,6 +1549,7 @@ class GameManager{
     this.speech.help();
   }
   setupResponsiveMenu(){
+    return; // V8 uses the new primary tab navigation; disable the obsolete floating menu.
     const firstTab=document.querySelector('.tab-btn[data-tab]');
     const bar=firstTab&&firstTab.parentElement;
     if(!bar||bar.classList.contains('menu-tabs-right'))return;
