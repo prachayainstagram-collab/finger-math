@@ -561,6 +561,11 @@ class HandTracker{
     // is the left card; internally we assign by palm center in the raw frame.
     this.handAssignmentHistory=[];
     this.lastStableHands={left:null,right:null};
+    // Multi-frame smoothing for finger values. A single noisy frame must not
+    // change the answer shown to the learner.
+    this.valueHistories={left:[],right:[],total:[]};
+    this.missingHandFrames=0;
+    this.lastStableTotal=0;
   }
 
   setGestureMode(mode='off'){
@@ -608,7 +613,7 @@ class HandTracker{
     this.startFailed=false;
     // Init hands
     this.hands=new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
-    this.hands.setOptions({maxNumHands:2,modelComplexity:1,minDetectionConfidence:0.65,minTrackingConfidence:0.55});
+    this.hands.setOptions({maxNumHands:2,modelComplexity:1,minDetectionConfidence:0.72,minTrackingConfidence:0.70});
     this.hands.onResults(r=>this.processHands(r));
 
     // Init face mesh
@@ -835,6 +840,61 @@ class HandTracker{
     return this._emptyGesture(now<this.neutralReadyAt?'รอเริ่มตอบด้วยสีหน้า':'ยิ้ม หรือทำหน้านิ่ง');
   }
 
+  _angle(a,b,c){
+    const ab={x:a.x-b.x,y:a.y-b.y,z:(a.z||0)-(b.z||0)};
+    const cb={x:c.x-b.x,y:c.y-b.y,z:(c.z||0)-(b.z||0)};
+    const dot=ab.x*cb.x+ab.y*cb.y+ab.z*cb.z;
+    const ma=Math.hypot(ab.x,ab.y,ab.z), mb=Math.hypot(cb.x,cb.y,cb.z);
+    if(ma<1e-6||mb<1e-6)return 0;
+    return Math.acos(Math.max(-1,Math.min(1,dot/(ma*mb))))*180/Math.PI;
+  }
+
+  _fingerState(lm,modelLabel=''){
+    const d=(a,b)=>Math.hypot((a.x-b.x),(a.y-b.y),((a.z||0)-(b.z||0))*0.35);
+    const wrist=lm[0];
+    const fingers=[];
+    // Index, middle, ring, pinky: use joint straightness plus tip distance.
+    [[5,6,7,8],[9,10,11,12],[13,14,15,16],[17,18,19,20]].forEach(ids=>{
+      const [mcp,pip,dip,tip]=ids;
+      const pipAngle=this._angle(lm[mcp],lm[pip],lm[dip]);
+      const dipAngle=this._angle(lm[pip],lm[dip],lm[tip]);
+      const tipFar=d(lm[tip],wrist)>d(lm[pip],wrist)*1.16;
+      const extended=pipAngle>154 && dipAngle>145 && tipFar;
+      const certainty=Math.max(0,Math.min(1,((pipAngle-135)/35)*0.55+((dipAngle-130)/40)*0.25+(tipFar?0.2:0)));
+      fingers.push({extended,certainty});
+    });
+    // Thumb is orientation sensitive. Use joint straightness and separation
+    // from the index MCP rather than comparing only x/y coordinates.
+    const thumbMcpAngle=this._angle(lm[1],lm[2],lm[3]);
+    const thumbIpAngle=this._angle(lm[2],lm[3],lm[4]);
+    const palmWidth=Math.max(0.025,d(lm[5],lm[17]));
+    const separation=d(lm[4],lm[5])/palmWidth;
+    const thumbFar=d(lm[4],wrist)>d(lm[3],wrist)*1.08;
+    const thumbExtended=thumbMcpAngle>138 && thumbIpAngle>145 && separation>0.72 && thumbFar;
+    const thumbCertainty=Math.max(0,Math.min(1,((thumbMcpAngle-120)/45)*0.3+((thumbIpAngle-125)/50)*0.3+((separation-0.55)/0.6)*0.25+(thumbFar?0.15:0)));
+    const open=[thumbExtended,...fingers.map(x=>x.extended)];
+    const count=open.filter(Boolean).length;
+    const digit=(thumbExtended?5:0)+fingers.filter(x=>x.extended).length;
+    const certainty=(thumbCertainty+fingers.reduce((a,b)=>a+b.certainty,0))/5;
+    return {open,count,digit:Math.max(0,Math.min(9,digit)),certainty};
+  }
+
+  _stableValue(key,value,confidence=1,windowSize=9,minVotes=5){
+    const now=performance.now();
+    const arr=this.valueHistories[key]||(this.valueHistories[key]=[]);
+    arr.push({value,time:now,confidence:Number(confidence)||0});
+    while(arr.length>windowSize)arr.shift();
+    const weighted=new Map();
+    arr.forEach(x=>weighted.set(x.value,(weighted.get(x.value)||0)+Math.max(.35,x.confidence)));
+    let best=value,bestWeight=-1;
+    weighted.forEach((w,v)=>{if(w>bestWeight){bestWeight=w;best=v;}});
+    const votes=arr.filter(x=>x.value===best).length;
+    const stable=votes>=Math.min(minVotes,Math.ceil(arr.length*.6));
+    return {value:best,stable,votes,total:arr.length,score:bestWeight};
+  }
+
+  _clearValueHistory(key){if(this.valueHistories[key])this.valueHistories[key]=[];}
+
   processHands(r){
     this.hCtx.save();
     this.hCtx.clearRect(0,0,this.c.width,this.c.height);
@@ -853,17 +913,19 @@ class HandTracker{
       landmarks.forEach((lm,i)=>{
         drawConnectors(this.hCtx,lm,HAND_CONNECTIONS,{color:'rgba(0,212,255,0.75)',lineWidth:2.5});
         drawLandmarks(this.hCtx,lm,{color:'#f59e0b',lineWidth:2,radius:3.5});
-        const fingers=this.count(lm);
-        const digit=this.fingerMathDigit(lm);
         const hd=handedness[i];
         const modelLabel=String(hd?.label||hd?.classification?.[0]?.label||'').toLowerCase();
-        const conf=Number(hd?.score||hd?.classification?.[0]?.score||0.78);
+        const modelConf=Number(hd?.score||hd?.classification?.[0]?.score||0.78);
+        const state=this._fingerState(lm,modelLabel);
+        const fingers=state.count;
+        const digit=state.digit;
+        const conf=Math.max(0,Math.min(1,modelConf*0.62+state.certainty*0.38));
         // Palm center is more stable than wrist and less affected by wrist crossing.
         const palmIds=[0,5,9,13,17];
         const centerX=palmIds.reduce((s,id)=>s+Number(lm[id]?.x||0),0)/palmIds.length;
         const centerY=palmIds.reduce((s,id)=>s+Number(lm[id]?.y||0),0)/palmIds.length;
         tf+=fingers;tc+=conf;
-        detected.push({modelLabel,digit,fingers,confidence:conf,wristX:Number(lm[0]?.x||0.5),centerX,centerY});
+        detected.push({modelLabel,digit,fingers,confidence:conf,state,wristX:Number(lm[0]?.x||0.5),centerX,centerY});
       });
 
       // The mental-math game requires two hands. Assign them by horizontal
@@ -881,29 +943,44 @@ class HandTracker{
           const recent=this.handAssignmentHistory.map(x=>x[side]).filter(Boolean);
           if(!recent.length)return null;
           const latest=recent[recent.length-1];
-          const digits=recent.map(x=>x.digit);
-          const digit=digits.sort((a,b)=>digits.filter(v=>v===a).length-digits.filter(v=>v===b).length).pop();
-          return {...latest,digit};
+          const sm=this._stableValue(side,latest.digit,latest.confidence,9,5);
+          return {...latest,digit:sm.value,stable:sm.stable,stabilityVotes:sm.votes,stabilityFrames:sm.total};
         };
         handDigits.left=stableSide('left');
         handDigits.right=stableSide('right');
-        handDigits.bothVisible=true;
+        handDigits.bothVisible=!!(handDigits.left?.stable&&handDigits.right?.stable);
+        this.missingHandFrames=0;
         this.lastStableHands={left:handDigits.left,right:handDigits.right};
       }else{
         // Do not guess a side from one hand during two-hand mental math.
         // Keep it only as raw diagnostic data to avoid false left/right values.
-        this.handAssignmentHistory=[];
-        this.lastStableHands={left:null,right:null};
+        this.missingHandFrames++;
+        if(this.missingHandFrames>4){
+          this.handAssignmentHistory=[];
+          this.lastStableHands={left:null,right:null};
+          this._clearValueHistory('left');this._clearValueHistory('right');
+        }
       }
       handDigits.raw=detected;
       this.lastConf=tc/Math.max(1,landmarks.length);
     }else{
       DOM.camWrapper.classList.remove('detected');
       this.lastConf=0;
-      this.handAssignmentHistory=[];
-      this.lastStableHands={left:null,right:null};
+      this.missingHandFrames++;
+      if(this.missingHandFrames>4){
+        this.handAssignmentHistory=[];
+        this.lastStableHands={left:null,right:null};
+        this._clearValueHistory('left');this._clearValueHistory('right');this._clearValueHistory('total');
+      }
     }
     this.hCtx.restore();
+    if(landmarks.length>0){
+      const totalStable=this._stableValue('total',tf,this.lastConf,7,4);
+      if(totalStable.stable)this.lastStableTotal=totalStable.value;
+      tf=totalStable.stable?totalStable.value:this.lastStableTotal;
+    }else if(this.missingHandFrames>4){
+      this.lastStableTotal=0;tf=0;
+    }else tf=this.lastStableTotal;
     const cp=Math.round(this.lastConf*100);
     DOM.hudConf.innerText=cp>0?cp+'%':'—';
     DOM.confidenceFill.style.width=cp+'%';
@@ -915,21 +992,10 @@ class HandTracker{
     }
   }
 
-  fingerMathDigit(lm){
-    const d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-    const thumbOpen=d(lm[4],lm[17])>d(lm[3],lm[17]);
-    let value=thumbOpen?5:0;
-    [8,12,16,20].forEach((tip,i)=>{if(lm[tip].y<lm[[6,10,14,18][i]].y)value+=1;});
-    return Math.max(0,Math.min(9,value));
-  }
+  fingerMathDigit(lm){return this._fingerState(lm).digit;}
 
-  count(lm){
-    let c=0;
-    const d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-    if(d(lm[4],lm[17])>d(lm[3],lm[17]))c++;
-    [8,12,16,20].forEach((t,i)=>{if(lm[t].y<lm[[6,10,14,18][i]].y)c++;});
-    return c;
-  }
+  count(lm){return this._fingerState(lm).count;}
+
 }
 
 class QuestionManager{
