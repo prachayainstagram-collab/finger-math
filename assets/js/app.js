@@ -1,13 +1,22 @@
 (function(){
-  const l=document.getElementById('particleLayer');
-  const s=['+','-','×','÷','=','π','√','∞','²','%'];
-  for(let i=0;i<14;i++){
-    const p=document.createElement('div');p.className='particle';
-    p.innerText=s[i%s.length];
-    p.style.left=Math.random()*100+'vw';
-    p.style.animationDuration=(Math.random()*12+12)+'s';
-    p.style.animationDelay=(Math.random()*8)+'s';
-    l.appendChild(p);
+  const layer=document.getElementById('particleLayer');
+  if(!layer)return;
+  layer.innerHTML='';
+  layer.classList.add('math-particle-layer');
+  const symbols=['1','2','3','4','5','6','7','8','9','0','+','−','×','÷','=','π','√','∞','²','%','Σ','△'];
+  const count=window.matchMedia('(max-width: 700px)').matches?16:26;
+  for(let i=0;i<count;i++){
+    const item=document.createElement('span');
+    item.className='particle math-particle';
+    item.textContent=symbols[i%symbols.length];
+    item.style.setProperty('--x-start',(Math.random()*96+2).toFixed(2)+'vw');
+    item.style.setProperty('--x-drift',((Math.random()*22)-11).toFixed(2)+'vw');
+    item.style.setProperty('--scale',(0.7+Math.random()*1.15).toFixed(2));
+    item.style.setProperty('--blur',(Math.random()*0.7).toFixed(2)+'px');
+    item.style.setProperty('--opacity',(0.08+Math.random()*0.14).toFixed(2));
+    item.style.animationDuration=(20+Math.random()*24).toFixed(1)+'s';
+    item.style.animationDelay=(-Math.random()*42).toFixed(1)+'s';
+    layer.appendChild(item);
   }
 })();
 
