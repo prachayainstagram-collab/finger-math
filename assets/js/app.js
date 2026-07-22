@@ -1806,7 +1806,7 @@ class GameManager{
   _createTracker(){
     return new HandTracker(
       DOM.video,DOM.canvas,DOM.faceCanvas,
-      (f,c)=>this.onHand(f,c),
+      (f,c,h)=>this.onHand(f,c,h),
       (g,c,l)=>this.onFaceGesture(g,c,l)
     );
   }
@@ -1944,6 +1944,60 @@ class GameManager{
     const q=this.qMgr.generate(this.score.level,this.gameMode,this.classTopic,this.rng,this.difficulty,this.gradeBand);
     DOM.questionMode.innerHTML=`<i class="fa-solid fa-bolt" style="color:#fcd34d;"></i> ${q.modeName}`;
     DOM.questionText.innerText=q.text;DOM.instructionText.innerText=q.instruction;
+    if(this.gameMode==='mental_two_hand'){
+      DOM.instructionText.innerText='มือซ้ายของผู้เล่น = หลักสิบ • มือขวาของผู้เล่น = หลักหน่วย';
+      DOM.hudFingers.innerText='ซ้าย — | ขวา —';
+    }
+    if(this.gameMode==='large_number'){
+      q.answerStage=0;
+      DOM.instructionText.innerText='จังหวะที่ 1/2 · ชูเลขหลักสิบ';
+      DOM.hudFingers.innerText='—';
+    }
+    this.timeLeft=CONFIG.timePerQuestion;this.lastFrame=performance.now();
+    this.isHolding=false;this.holdElapsed=0;
+    this.pendingPhysicalGesture='none';
+    this.pendingPhysicalOk=true;
+    if(this.tracker?.resetGestureState)this.tracker.resetGestureState(false);
+    this.gestureReadyAt=this.physicalMode?performance.now()+(this.physicalControl==='face'?1250:850):0; // กันการตอบทันทีตอนเปลี่ยนข้อ
+    DOM.holdRing.classList.remove('active');
+    DOM.holdFill.style.strokeDashoffset='283';
+    DOM.feedbackContainer.classList.add('hidden');
+    DOM.questionText.classList.remove('anim-pop');
+    void DOM.questionText.offsetWidth;
+    DOM.questionText.classList.add('anim-pop');
+    if(this.accessibilityMode){
+      this.state='speaking';
+      DOM.instructionText.innerText='กำลังอ่านโจทย์...';
+      DOM.timerText.innerText='รอเสียงจบ';
+      DOM.timerBar.style.width='100%';
+      this.speech.question(q,this.qIdx,this.totalQ).then(()=>{
+        if(this.state==='speaking'){
+          this.timeLeft=CONFIG.timePerQuestion;
+          this.lastFrame=performance.now();
+          this.state='playing';
+          DOM.instructionText.innerText='เริ่มตอบได้';
+        }
+      });
+    }
+  }
+  repeatCurrentQuestion(){
+    if(!this.accessibilityMode || !this.qMgr.q)return;
+    this.state='speaking';
+    DOM.instructionText.innerText='กำลังอ่านโจทย์ซ้ำ...';
+    DOM.timerText.innerText='รอเสียงจบ';
+    this.speech.question(this.qMgr.q,this.qIdx,this.totalQ).then(()=>{
+      if(this.state==='speaking'){
+        this.lastFrame=performance.now();
+        this.state='playing';
+        DOM.instructionText.innerText='เริ่มตอบได้';
+      }
+    });
+  }
+  onHand(f,conf,hands=null){
+    if(this.physicalMode){
+      if(this.state!=='playing')return;
+      return; // โหมดท่าทางไม่ใช้จำนวนนิ้ว
+    }
     if(this.gameMode==='mental_two_hand'){
       const detectedLeft=hands?.left?.digit;
       const detectedRight=hands?.right?.digit;
