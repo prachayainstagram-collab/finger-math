@@ -496,6 +496,10 @@ class HandTracker{
     // สถานะเชื่อมต่อกล้อง/สตรีม สำหรับควบคุมการหยุด/ลองใหม่
     this.mediaStream=null;
     this.startFailed=false;
+    // Stable two-hand assignment. In the mirrored learner view, physical left
+    // is the left card; internally we assign by palm center in the raw frame.
+    this.handAssignmentHistory=[];
+    this.lastStableHands={left:null,right:null};
   }
 
   setGestureMode(mode='off'){
@@ -773,45 +777,71 @@ class HandTracker{
   processHands(r){
     this.hCtx.save();
     this.hCtx.clearRect(0,0,this.c.width,this.c.height);
+    // Mirror only the learner display. The model coordinates stay raw.
     this.hCtx.translate(this.c.width,0);this.hCtx.scale(-1,1);
     this.hCtx.drawImage(r.image,0,0,this.c.width,this.c.height);
+
     let tf=0,tc=0;
-    const handDigits={left:null,right:null,raw:[],mapping:'physical-user-hands'};
-    if(r.multiHandLandmarks&&r.multiHandedness&&r.multiHandLandmarks.length>0){
+    const handDigits={left:null,right:null,raw:[],mapping:'position-stable-v2',bothVisible:false};
+    const landmarks=Array.isArray(r.multiHandLandmarks)?r.multiHandLandmarks:[];
+    const handedness=Array.isArray(r.multiHandedness)?r.multiHandedness:[];
+
+    if(landmarks.length>0){
       DOM.camWrapper.classList.add('detected');
       const detected=[];
-      r.multiHandLandmarks.forEach((lm,i)=>{
-        drawConnectors(this.hCtx,lm,HAND_CONNECTIONS,{color:'rgba(0,212,255,0.7)',lineWidth:2.5});
+      landmarks.forEach((lm,i)=>{
+        drawConnectors(this.hCtx,lm,HAND_CONNECTIONS,{color:'rgba(0,212,255,0.75)',lineWidth:2.5});
         drawLandmarks(this.hCtx,lm,{color:'#f59e0b',lineWidth:2,radius:3.5});
         const fingers=this.count(lm);
         const digit=this.fingerMathDigit(lm);
-        const modelLabel=String(r.multiHandedness[i]?.label||'').toLowerCase();
-        const conf=r.multiHandedness[i]?.score||0.7;
-        const wristX=Number(lm?.[0]?.x ?? 0.5);
+        const hd=handedness[i];
+        const modelLabel=String(hd?.label||hd?.classification?.[0]?.label||'').toLowerCase();
+        const conf=Number(hd?.score||hd?.classification?.[0]?.score||0.78);
+        // Palm center is more stable than wrist and less affected by wrist crossing.
+        const palmIds=[0,5,9,13,17];
+        const centerX=palmIds.reduce((s,id)=>s+Number(lm[id]?.x||0),0)/palmIds.length;
+        const centerY=palmIds.reduce((s,id)=>s+Number(lm[id]?.y||0),0)/palmIds.length;
         tf+=fingers;tc+=conf;
-        detected.push({modelLabel,digit,fingers,confidence:conf,wristX});
+        detected.push({modelLabel,digit,fingers,confidence:conf,wristX:Number(lm[0]?.x||0.5),centerX,centerY});
       });
 
-      /*
-       * MediaPipe handedness assumes a mirrored selfie frame. We send the
-       * original camera frame to the model and mirror only the canvas for the
-       * learner. Therefore its Left/Right label is opposite to the learner's
-       * physical hand. With two hands, wrist position is even more reliable:
-       * in the original frame the learner's physical LEFT hand has the larger
-       * x coordinate, while the physical RIGHT hand has the smaller x.
-       */
+      // The mental-math game requires two hands. Assign them by horizontal
+      // position in the raw camera frame, not by MediaPipe's sometimes flipped
+      // handedness label. For a front-facing camera, the learner's physical
+      // left hand is on the raw frame's right side (larger x).
       if(detected.length>=2){
-        const sorted=[...detected].sort((a,b)=>a.wristX-b.wristX);
-        handDigits.right=sorted[0];
-        handDigits.left=sorted[sorted.length-1];
-      }else if(detected.length===1){
-        const item=detected[0];
-        const physicalLabel=item.modelLabel==='left'?'right':item.modelLabel==='right'?'left':(item.wristX>=0.5?'left':'right');
-        handDigits[physicalLabel]=item;
+        const pair=[...detected].sort((a,b)=>a.centerX-b.centerX).slice(0,2);
+        const physicalRight=pair[0];
+        const physicalLeft=pair[1];
+        this.handAssignmentHistory.push({left:physicalLeft,right:physicalRight,time:performance.now()});
+        if(this.handAssignmentHistory.length>5)this.handAssignmentHistory.shift();
+        // Median-like vote by recent digit/position to reduce swapping on one bad frame.
+        const stableSide=(side)=>{
+          const recent=this.handAssignmentHistory.map(x=>x[side]).filter(Boolean);
+          if(!recent.length)return null;
+          const latest=recent[recent.length-1];
+          const digits=recent.map(x=>x.digit);
+          const digit=digits.sort((a,b)=>digits.filter(v=>v===a).length-digits.filter(v=>v===b).length).pop();
+          return {...latest,digit};
+        };
+        handDigits.left=stableSide('left');
+        handDigits.right=stableSide('right');
+        handDigits.bothVisible=true;
+        this.lastStableHands={left:handDigits.left,right:handDigits.right};
+      }else{
+        // Do not guess a side from one hand during two-hand mental math.
+        // Keep it only as raw diagnostic data to avoid false left/right values.
+        this.handAssignmentHistory=[];
+        this.lastStableHands={left:null,right:null};
       }
       handDigits.raw=detected;
-      this.lastConf=tc/r.multiHandLandmarks.length;
-    } else {DOM.camWrapper.classList.remove('detected');this.lastConf=0;}
+      this.lastConf=tc/Math.max(1,landmarks.length);
+    }else{
+      DOM.camWrapper.classList.remove('detected');
+      this.lastConf=0;
+      this.handAssignmentHistory=[];
+      this.lastStableHands={left:null,right:null};
+    }
     this.hCtx.restore();
     const cp=Math.round(this.lastConf*100);
     DOM.hudConf.innerText=cp>0?cp+'%':'—';
@@ -1915,67 +1945,24 @@ class GameManager{
     DOM.questionMode.innerHTML=`<i class="fa-solid fa-bolt" style="color:#fcd34d;"></i> ${q.modeName}`;
     DOM.questionText.innerText=q.text;DOM.instructionText.innerText=q.instruction;
     if(this.gameMode==='mental_two_hand'){
-      DOM.instructionText.innerText='มือซ้ายของผู้เล่น = หลักสิบ • มือขวาของผู้เล่น = หลักหน่วย';
-      DOM.hudFingers.innerText='ซ้าย — | ขวา —';
-    }
-    if(this.gameMode==='large_number'){
-      q.answerStage=0;
-      DOM.instructionText.innerText='จังหวะที่ 1/2 · ชูเลขหลักสิบ';
-      DOM.hudFingers.innerText='—';
-    }
-    this.timeLeft=CONFIG.timePerQuestion;this.lastFrame=performance.now();
-    this.isHolding=false;this.holdElapsed=0;
-    this.pendingPhysicalGesture='none';
-    this.pendingPhysicalOk=true;
-    if(this.tracker?.resetGestureState)this.tracker.resetGestureState(false);
-    this.gestureReadyAt=this.physicalMode?performance.now()+(this.physicalControl==='face'?1250:850):0; // กันการตอบทันทีตอนเปลี่ยนข้อ
-    DOM.holdRing.classList.remove('active');
-    DOM.holdFill.style.strokeDashoffset='283';
-    DOM.feedbackContainer.classList.add('hidden');
-    DOM.questionText.classList.remove('anim-pop');
-    void DOM.questionText.offsetWidth;
-    DOM.questionText.classList.add('anim-pop');
-    if(this.accessibilityMode){
-      this.state='speaking';
-      DOM.instructionText.innerText='กำลังอ่านโจทย์...';
-      DOM.timerText.innerText='รอเสียงจบ';
-      DOM.timerBar.style.width='100%';
-      this.speech.question(q,this.qIdx,this.totalQ).then(()=>{
-        if(this.state==='speaking'){
-          this.timeLeft=CONFIG.timePerQuestion;
-          this.lastFrame=performance.now();
-          this.state='playing';
-          DOM.instructionText.innerText='เริ่มตอบได้';
-        }
-      });
-    }
-  }
-  repeatCurrentQuestion(){
-    if(!this.accessibilityMode || !this.qMgr.q)return;
-    this.state='speaking';
-    DOM.instructionText.innerText='กำลังอ่านโจทย์ซ้ำ...';
-    DOM.timerText.innerText='รอเสียงจบ';
-    this.speech.question(this.qMgr.q,this.qIdx,this.totalQ).then(()=>{
-      if(this.state==='speaking'){
-        this.lastFrame=performance.now();
-        this.state='playing';
-        DOM.instructionText.innerText='เริ่มตอบได้';
-      }
-    });
-  }
-  onHand(f,conf,hands=null){
-    if(this.physicalMode){
-      if(this.state!=='playing')return;
-      return; // โหมดท่าทางไม่ใช้จำนวนนิ้ว
-    }
-    if(this.gameMode==='mental_two_hand'){
       const detectedLeft=hands?.left?.digit;
       const detectedRight=hands?.right?.digit;
       const left=this.mentalSwapHands?detectedRight:detectedLeft;
       const right=this.mentalSwapHands?detectedLeft:detectedRight;
-      const both=Number.isInteger(left)&&Number.isInteger(right);
+      const both=hands?.bothVisible===true&&Number.isInteger(left)&&Number.isInteger(right);
       const value=both?(left*10+right):null;
-      DOM.hudFingers.innerText=both?`ซ้าย ${left}สิบ | ขวา ${right}หน่วย = ${value}`:`ซ้าย ${Number.isInteger(left)?left:'—'} | ขวา ${Number.isInteger(right)?right:'—'}`;
+      DOM.hudFingers.innerText=both?`ซ้าย ${left} สิบ | ขวา ${right} หน่วย = ${value}`:'กรุณาชูสองมือให้เห็นพร้อมกัน';
+      const leftValue=document.getElementById('mentalLeftValue');
+      const rightValue=document.getElementById('mentalRightValue');
+      const combinedValue=document.getElementById('mentalCombinedValue');
+      const status=document.getElementById('mentalHandStatus');
+      if(leftValue)leftValue.textContent=Number.isInteger(left)?left:'—';
+      if(rightValue)rightValue.textContent=Number.isInteger(right)?right:'—';
+      if(combinedValue)combinedValue.textContent=both?String(value):'—';
+      if(status){
+        status.textContent=both?'แยกมือสำเร็จ • ค้างมือไว้เพื่อยืนยัน':'ยังไม่เห็นสองมือชัดเจน • แยกมือออกจากกันและวางกลางกล้อง';
+        status.dataset.ready=both?'true':'false';
+      }
       if(this.state!=='playing')return;
       if(!both || conf<CONFIG.confThreshold){
         if(this.isHolding){this.isHolding=false;this.holdElapsed=0;DOM.holdRing.classList.remove('active');DOM.holdFill.style.strokeDashoffset='283';}
