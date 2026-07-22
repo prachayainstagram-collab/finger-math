@@ -776,12 +776,21 @@ class HandTracker{
     this.hCtx.translate(this.c.width,0);this.hCtx.scale(-1,1);
     this.hCtx.drawImage(r.image,0,0,this.c.width,this.c.height);
     let tf=0,tc=0;
+    const handDigits={left:null,right:null,raw:[]};
     if(r.multiHandLandmarks&&r.multiHandedness&&r.multiHandLandmarks.length>0){
       DOM.camWrapper.classList.add('detected');
       r.multiHandLandmarks.forEach((lm,i)=>{
         drawConnectors(this.hCtx,lm,HAND_CONNECTIONS,{color:'rgba(0,212,255,0.7)',lineWidth:2.5});
         drawLandmarks(this.hCtx,lm,{color:'#f59e0b',lineWidth:2,radius:3.5});
-        tf+=this.count(lm);tc+=(r.multiHandedness[i]?.score||0.7);
+        const fingers=this.count(lm);
+        const digit=this.fingerMathDigit(lm);
+        const label=String(r.multiHandedness[i]?.label||'').toLowerCase();
+        const conf=r.multiHandedness[i]?.score||0.7;
+        tf+=fingers;tc+=conf;
+        const item={label,digit,fingers,confidence:conf};
+        handDigits.raw.push(item);
+        if(label==='left')handDigits.left=item;
+        if(label==='right')handDigits.right=item;
       });
       this.lastConf=tc/r.multiHandLandmarks.length;
     } else {DOM.camWrapper.classList.remove('detected');this.lastConf=0;}
@@ -790,7 +799,15 @@ class HandTracker{
     DOM.hudConf.innerText=cp>0?cp+'%':'—';
     DOM.confidenceFill.style.width=cp+'%';
     DOM.confidenceFill.style.background=cp>=80?'#10b981':cp>=60?'#f59e0b':'#ef4444';
-    if(this.cb)this.cb(tf,this.lastConf);
+    if(this.cb)this.cb(tf,this.lastConf,handDigits);
+  }
+
+  fingerMathDigit(lm){
+    const d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+    const thumbOpen=d(lm[4],lm[17])>d(lm[3],lm[17]);
+    let value=thumbOpen?5:0;
+    [8,12,16,20].forEach((tip,i)=>{if(lm[tip].y<lm[[6,10,14,18][i]].y)value+=1;});
+    return Math.max(0,Math.min(9,value));
   }
 
   count(lm){
@@ -861,7 +878,26 @@ class QuestionManager{
     const q={text,instruction:'ตอบ 2 จังหวะ: ชูหลักสิบก่อน แล้วชูหลักหน่วย',answerCheck:f=>f===Math.floor(answer/10),modeName,answerText:String(answer),topic:8,answerValue:answer,answerDigits:[Math.floor(answer/10),answer%10],answerStage:0};
     this.q=q;return q;
   }
+  _makeMentalTwoHandQuestion(rng,difficulty,gradeBand='primary_high'){
+    const max=gradeBand==='primary_low'?39:(gradeBand==='primary_high'?79:99);
+    const ops=gradeBand==='primary_low'?['read','add']:gradeBand==='primary_high'?['read','add','sub']:['add','sub','mul'];
+    const op=ops[rng.nextInt(0,ops.length-1)];
+    let a,b,answer,text;
+    if(op==='read'){
+      answer=rng.nextInt(0,max);text=`แสดงเลข ${answer}`;
+    }else if(op==='add'){
+      a=rng.nextInt(1,max-5);b=rng.nextInt(1,Math.min(25,max-a));answer=a+b;text=`${a} + ${b} = ?`;
+    }else if(op==='sub'){
+      a=rng.nextInt(10,max);b=rng.nextInt(1,a);answer=a-b;text=`${a} - ${b} = ?`;
+    }else{
+      a=rng.nextInt(2,9);b=rng.nextInt(2,9);answer=a*b;if(answer>99){answer=81;a=9;b=9;}text=`${a} × ${b} = ?`;
+    }
+    const tens=Math.floor(answer/10),units=answer%10;
+    const q={text,instruction:'มือซ้ายแสดงหลักสิบ • มือขวาแสดงหลักหน่วย พร้อมกัน',answerCheck:v=>v===answer,modeName:'จินตคณิตสองมือ',answerText:String(answer),topic:10,answerValue:answer,answerDigits:[tens,units],twoHand:true};
+    this.q=q;return q;
+  }
   generate(level,mode,topic,rng,difficulty,gradeBand='primary_low'){
+    if(mode==='mental_two_hand')return this._makeMentalTwoHandQuestion(rng,difficulty,gradeBand);
     if(mode==='large_number')return this._makeLargeNumberQuestion(rng,difficulty,gradeBand);
     if(String(mode||'').startsWith('physical_'))return this.generatePhysical(mode,rng,difficulty,gradeBand);
     let t=topic?parseInt(topic):this._pick(level,mode,gradeBand);
@@ -1162,12 +1198,13 @@ class GameManager{
     this.physicalMode=false;this.currentGesture='none';this.physicalControl='head';this.pendingPhysicalGesture='none';this.pendingPhysicalOk=true;this.gestureReadyAt=0;
     this.qMgr=new QuestionManager();
     this.score=new ScoreManager();
-    this.tracker=new HandTracker(DOM.video,DOM.canvas,DOM.faceCanvas,(f,c)=>this.onHand(f,c),(g,c,l)=>this.onFaceGesture(g,c,l));
+    this.tracker=new HandTracker(DOM.video,DOM.canvas,DOM.faceCanvas,(f,c,h)=>this.onHand(f,c,h),(g,c,l)=>this.onFaceGesture(g,c,l));
     this.state='menu';this.gameMode='practice';this.testType='practice';
     this.classTopic=null;this.playerName='';this.classroom='';
     this.gradeBand=localStorage.getItem('fingerMath_gradeBand')||'primary_low';
     this.selectedMissionTier=localStorage.getItem('fingerMath_v8_tier')||'starter';
     this.currentMissionMeta=null;
+    this.mentalSwapHands=localStorage.getItem('fingerMath_mentalSwapHands')==='1';
     this.difficulty=localStorage.getItem('fingerMath_difficulty')||'medium';this.totalQ=10;this.qIdx=0;
     this.holdTime=1.2;this.seed=0;this.rng=null;
     this.timeLeft=CONFIG.timePerQuestion;this.lastFrame=performance.now();
@@ -1408,6 +1445,11 @@ class GameManager{
       dateTime:sessionRecord.dateTime
     });
     localStorage.setItem('fingerMath_v8_progress',JSON.stringify(rows.slice(-200)));
+  }
+  toggleMentalHandMapping(){
+    this.mentalSwapHands=!this.mentalSwapHands;
+    localStorage.setItem('fingerMath_mentalSwapHands',this.mentalSwapHands?'1':'0');
+    return this.mentalSwapHands;
   }
   updateMenuSubtitle(){
     if(!DOM.menuSubtitle)return;
@@ -1794,6 +1836,7 @@ class GameManager{
     document.body.classList.toggle('physical-head-mode',mode==='physical_head');
     document.body.classList.toggle('physical-face-mode',mode==='physical_face');
     if(mode==='voice_accessibility'){this.ensureVoiceMode();}
+    if(mode==='mental_two_hand')this.testType='mental_two_hand';
     this.userRole=studentSession?'student':(mode.startsWith('teacher_')?'teacher':(mode==='voice_accessibility'?'accessibility':(this.physicalMode?'physical_accessibility':'parent')));
     if(mode==='teacher_pretest')this.testType='pretest';
     if(mode==='teacher_posttest')this.testType='posttest';
@@ -1802,6 +1845,7 @@ class GameManager{
     if(mode==='voice_accessibility')this.testType='accessibility_voice';
     if(mode==='physical_head')this.testType='accessibility_physical_head';
     if(mode==='physical_face')this.testType='accessibility_physical_face';
+    if(mode==='mental_two_hand')this.testType='mental_two_hand';
     if(this.physicalMode){this.classTopic=null;}
     else if(topicOverride){this.classTopic=String(topicOverride);}
     else if(mode==='teacher_pretest'||mode==='teacher_posttest'||mode==='teacher_assessment'){
@@ -1830,7 +1874,7 @@ class GameManager{
     const MAP={pretest:{cls:'badge-pre',txt:'📋 ประเมินก่อนเรียน'},posttest:{cls:'badge-post',txt:'🏁 ประเมินหลังเรียน'},
       skill_assessment:{cls:'badge-pre',txt:'🧾 ประเมินทักษะ'},home_practice:{cls:'badge-practice',txt:'🏠 ฝึกที่บ้าน'},
       practice:{cls:'badge-practice',txt:'✏️ ฝึกหัด'},practice_topic:{cls:'badge-practice',txt:'✏️ ฝึกเฉพาะหัวข้อ'},accessibility_voice:{cls:'badge-pre',txt:'🔊 โหมดเสียง'},
-      accessibility_physical_head:{cls:'badge-practice',txt:'♿ พยักหน้า/ส่ายหัว'},accessibility_physical_face:{cls:'badge-practice',txt:'♿ ยิ้ม/หน้านิ่ง'},large_number:{cls:'badge-post',txt:'🔢 เลขเกิน 10'}};
+      accessibility_physical_head:{cls:'badge-practice',txt:'♿ พยักหน้า/ส่ายหัว'},accessibility_physical_face:{cls:'badge-practice',txt:'♿ ยิ้ม/หน้านิ่ง'},large_number:{cls:'badge-post',txt:'🔢 เลขเกิน 10'},mental_two_hand:{cls:'badge-post',txt:'👐 จินตคณิตสองมือ'}};
     const m2=MAP[m]||MAP.practice;
     DOM.hudTestBadge.className='badge '+m2.cls;
     DOM.hudTestBadge.innerText=m2.txt;
@@ -1852,6 +1896,10 @@ class GameManager{
     const q=this.qMgr.generate(this.score.level,this.gameMode,this.classTopic,this.rng,this.difficulty,this.gradeBand);
     DOM.questionMode.innerHTML=`<i class="fa-solid fa-bolt" style="color:#fcd34d;"></i> ${q.modeName}`;
     DOM.questionText.innerText=q.text;DOM.instructionText.innerText=q.instruction;
+    if(this.gameMode==='mental_two_hand'){
+      DOM.instructionText.innerText='มือซ้าย = หลักสิบ • มือขวา = หลักหน่วย';
+      DOM.hudFingers.innerText='L— | R—';
+    }
     if(this.gameMode==='large_number'){
       q.answerStage=0;
       DOM.instructionText.innerText='จังหวะที่ 1/2 · ชูเลขหลักสิบ';
@@ -1897,10 +1945,28 @@ class GameManager{
       }
     });
   }
-  onHand(f,conf){
+  onHand(f,conf,hands=null){
     if(this.physicalMode){
       if(this.state!=='playing')return;
       return; // โหมดท่าทางไม่ใช้จำนวนนิ้ว
+    }
+    if(this.gameMode==='mental_two_hand'){
+      const detectedLeft=hands?.left?.digit;
+      const detectedRight=hands?.right?.digit;
+      const left=this.mentalSwapHands?detectedRight:detectedLeft;
+      const right=this.mentalSwapHands?detectedLeft:detectedRight;
+      const both=Number.isInteger(left)&&Number.isInteger(right);
+      const value=both?(left*10+right):null;
+      DOM.hudFingers.innerText=both?`L${left} | R${right} = ${value}`:`L${Number.isInteger(left)?left:'—'} | R${Number.isInteger(right)?right:'—'}`;
+      if(this.state!=='playing')return;
+      if(!both || conf<CONFIG.confThreshold){
+        if(this.isHolding){this.isHolding=false;this.holdElapsed=0;DOM.holdRing.classList.remove('active');DOM.holdFill.style.strokeDashoffset='283';}
+        return;
+      }
+      const ok=this.qMgr.q?.answerCheck(value);
+      if(ok){if(!this.isHolding){this.isHolding=true;this.holdElapsed=0;DOM.holdRing.classList.add('active');}}
+      else if(this.isHolding){this.isHolding=false;this.holdElapsed=0;DOM.holdRing.classList.remove('active');DOM.holdFill.style.strokeDashoffset='283';}
+      return;
     }
     if(this.state!=='playing'){DOM.hudFingers.innerText=f;return;}
     DOM.hudFingers.innerText=f;
@@ -2085,8 +2151,8 @@ class GameManager{
     this.recordV8Progress(sessionRecord);
     this._autoSyncSession(sessionRecord);
     DOM.ui.classList.add('hidden');DOM.gameOverModal.classList.remove('hidden');
-    const TL={pretest:'📋 ประเมินก่อนเรียน',posttest:'🏁 ประเมินหลังเรียน',skill_assessment:'🧾 ประเมินทักษะ',home_practice:'🏠 ฝึกที่บ้าน',practice:'✏️ ฝึกหัด',practice_topic:'✏️ ฝึกเฉพาะหัวข้อ',accessibility_voice:'🔊 โหมดเสียง',accessibility_physical_head:'♿ พยักหน้า/ส่ายหัว',accessibility_physical_face:'♿ ยิ้ม/หน้านิ่ง'};
-    const TC={pretest:'badge-pre',posttest:'badge-post',skill_assessment:'badge-pre',home_practice:'badge-practice',practice:'badge-practice',practice_topic:'badge-practice',accessibility_voice:'badge-pre',accessibility_physical_head:'badge-practice',accessibility_physical_face:'badge-practice'};
+    const TL={pretest:'📋 ประเมินก่อนเรียน',posttest:'🏁 ประเมินหลังเรียน',skill_assessment:'🧾 ประเมินทักษะ',home_practice:'🏠 ฝึกที่บ้าน',practice:'✏️ ฝึกหัด',practice_topic:'✏️ ฝึกเฉพาะหัวข้อ',accessibility_voice:'🔊 โหมดเสียง',accessibility_physical_head:'♿ พยักหน้า/ส่ายหัว',accessibility_physical_face:'♿ ยิ้ม/หน้านิ่ง',mental_two_hand:'👐 จินตคณิตสองมือ'};
+    const TC={pretest:'badge-pre',posttest:'badge-post',skill_assessment:'badge-pre',home_practice:'badge-practice',practice:'badge-practice',practice_topic:'badge-practice',accessibility_voice:'badge-pre',accessibility_physical_head:'badge-practice',accessibility_physical_face:'badge-practice',mental_two_hand:'badge-post'};
     DOM.sessionTypeBadge.innerText=TL[this.testType]||this.testType;
     DOM.sessionTypeBadge.className='badge '+(TC[this.testType]||'badge-practice');
     DOM.gameOverTitle.innerText=this.theme==='kids'?'เก่งมากเลย!':title;

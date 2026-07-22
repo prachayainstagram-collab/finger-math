@@ -6,11 +6,12 @@
     <span class="wow-mascot-label">ศูนย์การเรียนรู้</span>
   </button>
   <div id="wowLabModal" class="wow-modal hidden"><div class="wow-dialog"><button class="wow-close" data-wow-close>×</button>
-  <div class="wow-head"><span>Finger Math Universe 7</span><h2>ศูนย์การเรียนรู้แบบว้าว</h2><p>เลขเกิน 10 · จินตคณิต · สัญญาณการมองหน้าจอ · แบบประเมิน UX</p></div>
+  <div class="wow-head"><span>Finger Math Universe V8</span><h2>ศูนย์การเรียนรู้แบบว้าว</h2><p>จินตคณิตสองมือ · เลขเกิน 10 · ลูกคิด · สัญญาณการมองหน้าจอ · แบบประเมิน UX</p></div>
   <div class="wow-grid">
    <button class="wow-card wow-card-featured" id="openFingerCoach"><b>🖐️ ฝึกชูนิ้วก่อนเล่น</b><span>ดูภาพมือ ฟังเสียง และลองทำตามทีละจำนวน 0–10</span></button>
    <button class="wow-card" id="startLargeNumber"><b>🔢 เลขเกิน 10</b><span>เรียนตัวอย่างหลักสิบ → หลักหน่วย ก่อนเริ่มตอบได้ถึง 99</span></button>
-   <button class="wow-card" id="openAbacus"><b>🧮 ห้องเรียนจินตคณิต</b><span>ลูกคิดเสมือน ภาพกระพริบ และฝึกสร้างภาพในใจ</span></button>
+   <button class="wow-card wow-card-featured" id="openTwoHandMental"><b>👐 จินตคณิตสองมือ 00–99</b><span>มือซ้ายเป็นหลักสิบ มือขวาเป็นหลักหน่วย เรียนค่านิ้ว 0–9 และฝึกบวกเลขสองหลัก</span></button>
+   <button class="wow-card" id="openAbacus"><b>🧮 ห้องเรียนจินตคณิตลูกคิด</b><span>ลูกคิดเสมือน ภาพกระพริบ และฝึกสร้างภาพในใจ</span></button>
    <button class="wow-card" id="openAttention"><b>👀 Engagement Lens</b><span>ดูการมองหน้าจอ การละสายตา และใบหน้าหลุดเฟรม ไม่วินิจฉัยอารมณ์</span></button>
    <button class="wow-card" id="openSurvey"><b>📝 แบบประเมินหน้าเว็บ</b><span>ประเมินความง่าย ความชัดเจน ความสนุก และความมั่นใจ</span></button>
   </div>
@@ -49,6 +50,49 @@
   function showLargeDemo(){panel.innerHTML=`<div class="large-demo"><span class="lesson-chip">ตัวอย่างเลขเกิน 10</span><h3>ตอบ 27 ด้วยนิ้วอย่างไร?</h3><p>ระบบใช้ 2 จังหวะ เพื่อให้เด็กเข้าใจค่าประจำหลัก</p><div class="place-value-demo"><div><b>จังหวะที่ 1 · หลักสิบ</b>${handPicture(2)}<strong>ชู 2 นิ้ว</strong><span>หมายถึง 2 สิบ = 20</span></div><div class="demo-arrow">→</div><div><b>จังหวะที่ 2 · หลักหน่วย</b>${handPicture(7)}<strong>ชู 7 นิ้ว</strong><span>หมายถึง 7 หน่วย</span></div></div><div class="demo-equation">20 + 7 = <b>27</b></div><div class="wow-actions"><button id="replayLargeDemo">🔊 ฟังคำสอน</button><button id="beginLargeGame">เริ่มเล่นจริง</button></div></div>`;document.getElementById('replayLargeDemo').onclick=()=>speakThai('เลขยี่สิบเจ็ด ให้ชูสองนิ้วเป็นหลักสิบก่อน จากนั้นชูเจ็ดนิ้วเป็นหลักหน่วย');document.getElementById('beginLargeGame').onclick=()=>{modal.classList.add('hidden');if(window.app)app.startGame('large_number');};speakThai('เลขยี่สิบเจ็ด ให้ชูสองนิ้วเป็นหลักสิบก่อน จากนั้นชูเจ็ดนิ้วเป็นหลักหน่วย');}
   document.getElementById('openFingerCoach').onclick=()=>{panel.innerHTML=coachHTML();bindCoach();};
   document.getElementById('startLargeNumber').onclick=()=>{showLargeDemo();};
+  function digitFingerDescription(n){
+    n=Math.max(0,Math.min(9,Number(n)||0));
+    if(n===0)return 'กำมือหรือพับนิ้วทั้งหมด';
+    if(n<5)return `ชูนิ้วทั่วไป ${n} นิ้ว โดยยังพับนิ้วโป้ง`;
+    if(n===5)return 'ชูนิ้วโป้งเพียงนิ้วเดียว นิ้วโป้งมีค่า 5';
+    return `ชูนิ้วโป้งเป็น 5 และเพิ่มนิ้วทั่วไปอีก ${n-5} นิ้ว`;
+  }
+  function digitHandSvg(n,side='right'){
+    n=Math.max(0,Math.min(9,Number(n)||0));
+    const thumb=n>=5;
+    const ones=n>=5?n-5:n;
+    const xs=[48,70,92,114],heights=[76,88,82,68];
+    const fingers=xs.map((x,i)=>{const on=i<ones;const h=on?heights[i]:24;const y=98-h;return `<rect x="${x}" y="${y}" width="16" height="${h}" rx="8" class="${on?'finger-on':'finger-off'}"/>`;}).join('');
+    return `<svg class="hand-svg ${side==='left'?'flip-hand':''}" viewBox="0 0 170 180" role="img" aria-label="${side==='left'?'มือซ้าย':'มือขวา'} แสดงเลข ${n}"><rect x="38" y="88" width="100" height="68" rx="34" class="palm"/>${fingers}<rect x="18" y="102" width="54" height="22" rx="11" transform="rotate(-30 18 102)" class="${thumb?'finger-on':'finger-off'}"/><rect x="68" y="146" width="42" height="30" rx="14" class="wrist"/></svg>`;
+  }
+  function twoHandNumberPicture(n){
+    n=Math.max(0,Math.min(99,Number(n)||0));
+    const tens=Math.floor(n/10),units=n%10;
+    return `<div class="two-hand-number"><div class="place-hand-card"><span>มือซ้าย · หลักสิบ</span>${digitHandSvg(tens,'left')}<strong>${tens} สิบ = ${tens*10}</strong><small>${digitFingerDescription(tens)}</small></div><div class="two-hand-equals">+</div><div class="place-hand-card"><span>มือขวา · หลักหน่วย</span>${digitHandSvg(units,'right')}<strong>${units} หน่วย</strong><small>${digitFingerDescription(units)}</small></div></div><div class="two-hand-result">${tens*10} + ${units} = <b>${n}</b></div>`;
+  }
+  function twoHandLessonHTML(){
+    return `<div class="mental-two-hand-lesson"><div class="coach-title"><div><span class="lesson-chip">Finger Place Value Mental Math</span><h3>👐 จินตคณิตสองมือ 00–99</h3><p>มือซ้ายแทนหลักสิบ มือขวาแทนหลักหน่วย และแสดงคำตอบพร้อมกัน</p></div><button id="twoHandSpeak" class="sound-btn">🔊 ฟังคำสอน</button></div>
+      <div class="mental-rule-grid"><div><b>มือซ้าย</b><strong>หลักสิบ</strong><span>เลข 2 หมายถึง 20</span></div><div><b>มือขวา</b><strong>หลักหน่วย</strong><span>เลข 7 หมายถึง 7</span></div><div><b>นิ้วโป้ง</b><strong>มีค่า 5</strong><span>โป้ง + 2 นิ้ว = 7</span></div></div>
+      <div class="lesson-stage-tabs"><button data-mental-step="digits" class="active">1. เรียนค่านิ้ว 0–9</button><button data-mental-step="place">2. ฝึกเลขสองหลัก</button><button data-mental-step="add">3. ฝึกบวกสองหลัก</button></div>
+      <div id="mentalLessonStage"></div>
+      <div class="camera-hand-note"><b>การตั้งค่ามือของกล้อง</b><span id="mentalHandMapStatus">ระบบใช้ข้อมูล Left/Right จากกล้อง หากมือสลับกันให้กดปุ่มด้านล่าง</span><button id="mentalSwapHands" class="sound-btn">⇄ สลับมือซ้าย–ขวาของกล้อง</button></div>
+      <div class="wow-actions"><button id="mentalPracticeGame" class="primary-wow-btn">เริ่มเล่นด้วยกล้อง</button></div></div>`;
+  }
+  let mentalDigit=7,mentalNumber=27;
+  function renderMentalStage(step='digits'){
+    const stage=document.getElementById('mentalLessonStage');if(!stage)return;
+    document.querySelectorAll('[data-mental-step]').forEach(b=>b.classList.toggle('active',b.dataset.mentalStep===step));
+    if(step==='digits'){
+      stage.innerHTML=`<div class="mental-digit-picker">${Array.from({length:10},(_,i)=>`<button data-mental-digit="${i}" class="${i===mentalDigit?'active':''}">${i}</button>`).join('')}</div><div class="digit-teach-card">${digitHandSvg(mentalDigit,'right')}<div><div class="giant-number">${mentalDigit}</div><h4>${digitFingerDescription(mentalDigit)}</h4><p>${mentalDigit>=5?'จำง่าย: นิ้วโป้งมีค่า 5 แล้วนับนิ้วอื่นเพิ่มทีละ 1':'นิ้วทั่วไปแต่ละนิ้วมีค่า 1'}</p></div></div>`;
+      document.querySelectorAll('[data-mental-digit]').forEach(b=>b.onclick=()=>{mentalDigit=Number(b.dataset.mentalDigit);renderMentalStage('digits');speakThai(`เลข ${mentalDigit} ${digitFingerDescription(mentalDigit)}`);});
+    }else if(step==='place'){
+      stage.innerHTML=`<div class="number-picker mental-number-picker">${[12,20,27,35,48,54,63,79,86,99].map(n=>`<button data-mental-number="${n}" class="${n===mentalNumber?'active':''}">${n}</button>`).join('')}</div><div id="mentalNumberPicture">${twoHandNumberPicture(mentalNumber)}</div>`;
+      document.querySelectorAll('[data-mental-number]').forEach(b=>b.onclick=()=>{mentalNumber=Number(b.dataset.mentalNumber);renderMentalStage('place');const t=Math.floor(mentalNumber/10),u=mentalNumber%10;speakThai(`เลข ${mentalNumber} มือซ้ายแสดง ${t} เป็นหลักสิบ มือขวาแสดง ${u} เป็นหลักหน่วย`);});
+    }else{
+      stage.innerHTML=`<div class="mental-add-example"><h4>ตัวอย่าง 23 + 14 = 37</h4><div class="mental-add-flow"><div><b>เริ่มที่ 23</b>${twoHandNumberPicture(23)}</div><div class="demo-arrow">→</div><div><b>เพิ่ม 14</b><p>เพิ่มหลักสิบ 1 และหลักหน่วย 4</p></div><div class="demo-arrow">→</div><div><b>คำตอบ 37</b>${twoHandNumberPicture(37)}</div></div><div class="notice">กรณีมีการทด เช่น 28 + 17: หลักหน่วยได้ 15 ให้เก็บ 5 ที่มือขวาและทด 1 ไปเพิ่มที่มือซ้าย จึงได้ 45</div></div>`;
+    }
+  }
+  document.getElementById('openTwoHandMental').onclick=()=>{panel.innerHTML=twoHandLessonHTML();document.querySelectorAll('[data-mental-step]').forEach(b=>b.onclick=()=>renderMentalStage(b.dataset.mentalStep));document.getElementById('twoHandSpeak').onclick=()=>speakThai('จินตคณิตสองมือ มือซ้ายเป็นหลักสิบ มือขวาเป็นหลักหน่วย นิ้วโป้งมีค่า 5 และนิ้วอื่นมีค่าทีละ 1');document.getElementById('mentalSwapHands').onclick=()=>{if(window.app){const swapped=app.toggleMentalHandMapping();document.getElementById('mentalHandMapStatus').textContent=swapped?'เปิดโหมดสลับมือแล้ว: มือซ้ายและขวาจากกล้องถูกสลับกัน':'โหมดปกติ: ใช้ Left/Right ที่กล้องตรวจพบ';}};document.getElementById('mentalPracticeGame').onclick=()=>{modal.classList.add('hidden');if(window.app)app.startGame('mental_two_hand');};renderMentalStage('digits');speakThai('เริ่มจากเรียนค่านิ้ว ศูนย์ถึงเก้า นิ้วโป้งมีค่า 5 นิ้วอื่นมีค่าทีละ 1');};
   function abacusHTML(){return `<h3>🧮 จินตคณิต 3 ขั้น</h3><div class="abacus-steps"><div><b>1. เห็น</b><p>ดูจำนวนบนลูกคิด</p></div><div><b>2. จำลอง</b><p>หลับตานึกภาพเม็ดลูกคิด</p></div><div><b>3. คิดเร็ว</b><p>บวก–ลบจากภาพในใจ</p></div></div><div class="soroban" id="soroban"></div><div class="wow-actions"><button id="abacusRandom">สุ่มจำนวน</button><button id="flashTrain">เริ่ม Flash 5 จำนวน</button></div><div id="abacusAnswer" class="big-answer">0</div>`}
   function drawSoroban(n=0){const el=document.getElementById('soroban');if(!el)return;const digits=String(n).padStart(2,'0').split('').map(Number);el.innerHTML=digits.map((d,i)=>`<div class="rod"><span>${i?'หน่วย':'สิบ'}</span><i class="beam"></i>${[0,1,2,3,4].map(k=>`<b class="bead ${k<d%5?'on':''}"></b>`).join('')}<em>${d}</em></div>`).join('');document.getElementById('abacusAnswer').textContent=n;}
   document.getElementById('openAbacus').onclick=()=>{panel.innerHTML=abacusHTML();drawSoroban(0);document.getElementById('abacusRandom').onclick=()=>drawSoroban(Math.floor(Math.random()*100));document.getElementById('flashTrain').onclick=async()=>{let sum=0;for(let i=0;i<5;i++){const n=1+Math.floor(Math.random()*9);sum+=n;document.getElementById('abacusAnswer').textContent=n;await new Promise(r=>setTimeout(r,800));document.getElementById('abacusAnswer').textContent='•';await new Promise(r=>setTimeout(r,250));}document.getElementById('abacusAnswer').textContent='คำตอบ = ?';setTimeout(()=>document.getElementById('abacusAnswer').textContent='เฉลย '+sum,2500);};};

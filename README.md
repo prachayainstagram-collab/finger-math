@@ -22,3 +22,9 @@ git push origin main
 ```
 
 ไม่จำเป็นต้องรัน schema.sql ใหม่สำหรับการเปลี่ยนหน้าจอนี้
+
+## V8 Two-Hand Mental Math
+- Left hand represents tens and right hand represents units.
+- Each hand digit uses thumb = 5 and each other finger = 1, supporting digits 0-9.
+- New camera game mode: mental_two_hand (00-99).
+- The Learning Center includes lessons for finger values, place value, two-digit addition, carrying, and camera hand swapping.
