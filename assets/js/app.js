@@ -776,22 +776,40 @@ class HandTracker{
     this.hCtx.translate(this.c.width,0);this.hCtx.scale(-1,1);
     this.hCtx.drawImage(r.image,0,0,this.c.width,this.c.height);
     let tf=0,tc=0;
-    const handDigits={left:null,right:null,raw:[]};
+    const handDigits={left:null,right:null,raw:[],mapping:'physical-user-hands'};
     if(r.multiHandLandmarks&&r.multiHandedness&&r.multiHandLandmarks.length>0){
       DOM.camWrapper.classList.add('detected');
+      const detected=[];
       r.multiHandLandmarks.forEach((lm,i)=>{
         drawConnectors(this.hCtx,lm,HAND_CONNECTIONS,{color:'rgba(0,212,255,0.7)',lineWidth:2.5});
         drawLandmarks(this.hCtx,lm,{color:'#f59e0b',lineWidth:2,radius:3.5});
         const fingers=this.count(lm);
         const digit=this.fingerMathDigit(lm);
-        const label=String(r.multiHandedness[i]?.label||'').toLowerCase();
+        const modelLabel=String(r.multiHandedness[i]?.label||'').toLowerCase();
         const conf=r.multiHandedness[i]?.score||0.7;
+        const wristX=Number(lm?.[0]?.x ?? 0.5);
         tf+=fingers;tc+=conf;
-        const item={label,digit,fingers,confidence:conf};
-        handDigits.raw.push(item);
-        if(label==='left')handDigits.left=item;
-        if(label==='right')handDigits.right=item;
+        detected.push({modelLabel,digit,fingers,confidence:conf,wristX});
       });
+
+      /*
+       * MediaPipe handedness assumes a mirrored selfie frame. We send the
+       * original camera frame to the model and mirror only the canvas for the
+       * learner. Therefore its Left/Right label is opposite to the learner's
+       * physical hand. With two hands, wrist position is even more reliable:
+       * in the original frame the learner's physical LEFT hand has the larger
+       * x coordinate, while the physical RIGHT hand has the smaller x.
+       */
+      if(detected.length>=2){
+        const sorted=[...detected].sort((a,b)=>a.wristX-b.wristX);
+        handDigits.right=sorted[0];
+        handDigits.left=sorted[sorted.length-1];
+      }else if(detected.length===1){
+        const item=detected[0];
+        const physicalLabel=item.modelLabel==='left'?'right':item.modelLabel==='right'?'left':(item.wristX>=0.5?'left':'right');
+        handDigits[physicalLabel]=item;
+      }
+      handDigits.raw=detected;
       this.lastConf=tc/r.multiHandLandmarks.length;
     } else {DOM.camWrapper.classList.remove('detected');this.lastConf=0;}
     this.hCtx.restore();
@@ -1897,8 +1915,8 @@ class GameManager{
     DOM.questionMode.innerHTML=`<i class="fa-solid fa-bolt" style="color:#fcd34d;"></i> ${q.modeName}`;
     DOM.questionText.innerText=q.text;DOM.instructionText.innerText=q.instruction;
     if(this.gameMode==='mental_two_hand'){
-      DOM.instructionText.innerText='มือซ้าย = หลักสิบ • มือขวา = หลักหน่วย';
-      DOM.hudFingers.innerText='L— | R—';
+      DOM.instructionText.innerText='มือซ้ายของผู้เล่น = หลักสิบ • มือขวาของผู้เล่น = หลักหน่วย';
+      DOM.hudFingers.innerText='ซ้าย — | ขวา —';
     }
     if(this.gameMode==='large_number'){
       q.answerStage=0;
@@ -1957,7 +1975,7 @@ class GameManager{
       const right=this.mentalSwapHands?detectedLeft:detectedRight;
       const both=Number.isInteger(left)&&Number.isInteger(right);
       const value=both?(left*10+right):null;
-      DOM.hudFingers.innerText=both?`L${left} | R${right} = ${value}`:`L${Number.isInteger(left)?left:'—'} | R${Number.isInteger(right)?right:'—'}`;
+      DOM.hudFingers.innerText=both?`ซ้าย ${left}สิบ | ขวา ${right}หน่วย = ${value}`:`ซ้าย ${Number.isInteger(left)?left:'—'} | ขวา ${Number.isInteger(right)?right:'—'}`;
       if(this.state!=='playing')return;
       if(!both || conf<CONFIG.confThreshold){
         if(this.isHolding){this.isHolding=false;this.holdElapsed=0;DOM.holdRing.classList.remove('active');DOM.holdFill.style.strokeDashoffset='283';}

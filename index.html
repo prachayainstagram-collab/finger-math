@@ -91,7 +91,7 @@
 
 <!-- ════ START MENU ════ -->
 <div id="screenMenu" class="screen hidden" style="z-index:20;align-items:center;justify-content:flex-start;overflow-y:auto;padding:1.5rem 1rem;">
-  <div class="menu-shell" style="max-width:720px;width:100%;margin:0 auto;padding-bottom:2rem;">
+  <div class="menu-shell organized-v8-shell" style="max-width:1040px;width:100%;margin:0 auto;padding-bottom:2rem;">
 
     <!-- Formal top navigation -->
     <nav class="topnav">
@@ -106,7 +106,7 @@
       </div>
     </nav>
 
-    <div style="text-align:center;margin-bottom:1.75rem;">
+    <div class="organized-hero" style="text-align:center;margin-bottom:1.25rem;">
       <div style="display:flex;justify-content:center;margin-bottom:0.75rem;">
         <div class="theme-toggle-pill" id="themeTogglePill" onclick="app.toggleTheme()">
           <i class="fa-solid fa-shuffle"></i> <span id="themeToggleLabel">โหมด: อวกาศ</span>
@@ -137,7 +137,9 @@
       </div>
     </div>
 
-    <div class="card" style="padding:1.25rem;margin-bottom:1.25rem;">
+    <div class="organized-section-heading"><span>1</span><div><strong>ตั้งค่าก่อนเริ่มกิจกรรม</strong><small>กรอกข้อมูล เลือกช่วงชั้น และกำหนดความยาก</small></div></div>
+
+    <div class="card organized-setup-card" style="padding:1.25rem;margin-bottom:1.25rem;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;">
         <i class="fa-solid fa-user-astronaut" style="color:#a78bfa;"></i>
         <span style="font-size:0.78rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#a78bfa;">ข้อมูลผู้เรียน</span>
@@ -217,7 +219,11 @@
         </div>
       </div>
 
-      <div id="v8MissionHub" class="v8-mission-hub">
+    </div>
+
+    <div class="organized-section-heading"><span>2</span><div><strong>เลือกเส้นทางการเรียนรู้</strong><small>เลือก Level หรือ Mission ที่เหมาะกับผู้เรียน แล้วเริ่มเล่นได้ทันที</small></div></div>
+
+    <div id="v8MissionHub" class="v8-mission-hub">
         <div class="v8-mission-head">
           <div>
             <span class="v8-kicker">V8 FULL SYSTEM</span>
@@ -229,9 +235,11 @@
         <div id="v8TierTabs" class="v8-tier-tabs"></div>
         <div id="v8MissionList" class="v8-mission-grid"></div>
       </div>
-    </div>
 
-    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:1.25rem;flex-wrap:wrap;">
+
+    <div class="organized-section-heading organized-tools-heading"><span>3</span><div><strong>เครื่องมือและโหมดเพิ่มเติม</strong><small>พื้นที่ผู้ปกครอง ครู รายชื่อนักเรียน และโหมดช่วยการเข้าถึง</small></div></div>
+
+    <div class="organized-role-tabs" style="display:flex;gap:8px;justify-content:center;margin-bottom:1.25rem;flex-wrap:wrap;">
       <button class="tab-btn active" data-tab="parent" onclick="app.switchMenuTab('parent')">
         <i class="fa-solid fa-house-user" style="margin-right:6px;"></i>ผู้ปกครองใช้ที่บ้าน
       </button>
@@ -342,7 +350,7 @@
       </div>
     </div>
 
-    <div id="tabParent">
+    <div id="tabParent" class="organized-workspace-panel">
       <div class="role-workspace-banner parent-workspace-banner">
         <i class="fa-solid fa-house-user"></i>
         <div><strong>พื้นที่ผู้ปกครอง</strong><span>ฝึกที่บ้าน จัดการโปรไฟล์ลูก และดูความคืบหน้าที่จำเป็น</span></div>
@@ -377,7 +385,7 @@
       </div>
     </div>
 
-    <div id="tabTeacher" class="hidden">
+    <div id="tabTeacher" class="hidden organized-workspace-panel">
       <div class="role-workspace-banner teacher-workspace-banner">
         <i class="fa-solid fa-chalkboard-user"></i>
         <div><strong>พื้นที่ครู</strong><span>ประเมินนักเรียน จัดการรายชื่อ คลังโจทย์ และรายงานผล</span></div>
