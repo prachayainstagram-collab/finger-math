@@ -39,7 +39,7 @@
     const stats=document.createElement('div');stats.className='teacher-grid-3';stats.innerHTML=`<div class="teacher-stat-card"><i class="fa-solid fa-users"></i><strong id="teacherStatStudents">—</strong><span>นักเรียนในรายชื่อ</span></div><div class="teacher-stat-card"><i class="fa-solid fa-list-check"></i><strong id="teacherStatSessions">—</strong><span>กิจกรรมที่บันทึก</span></div><div class="teacher-stat-card"><i class="fa-solid fa-bullseye"></i><strong id="teacherStatAccuracy">—</strong><span>ความแม่นยำเฉลี่ย</span></div>`;overview.appendChild(stats);
     const quick=document.createElement('div');quick.className='teacher-section-card';quick.style.marginTop='12px';quick.innerHTML='<h3 style="margin:0 0 12px;color:#172033">งานที่ใช้บ่อย</h3>';
     const qg=document.createElement('div');qg.className='teacher-action-grid';qg.append(
-      action('fa-solid fa-circle-play','เริ่มประเมินก่อนเรียน','เลือกนักเรียนและเริ่ม Pre-Assessment',()=>{show('assessment');setTimeout(()=>app.startGame('teacher_pretest'),50)}),
+      action('fa-solid fa-circle-play','เริ่มประเมิน','เปิดขั้นตอนประเมินแบบแยกส่วน',()=>show('assessment')),
       action('fa-solid fa-user-plus','เพิ่มหรือนำเข้านักเรียน','ไปยังหน้ารายชื่อนักเรียนและนำเข้า CSV',()=>show('students')),
       action('fa-solid fa-chart-bar','เปิด Dashboard','ดูภาพรวมคะแนนและความก้าวหน้า',()=>app.showDashboard()),
       action('fa-solid fa-file-csv','ส่งออก CSV','ดาวน์โหลดข้อมูลผลการทำกิจกรรม',()=>app.exportCSV())
@@ -49,8 +49,99 @@
     if(roster){roster.classList.remove('hidden');students.appendChild(roster)}
     if(uploadCard)students.appendChild(uploadCard);
 
-    const assess=page('assessment');assess.appendChild(makeHead('ASSESSMENT','ประเมินทักษะ','เลือกนักเรียน หัวข้อ และรูปแบบการประเมินโดยไม่ปะปนกับเครื่องมืออื่น'));
-    [banner,info,studentSelect,skillGrid,modeGrid].forEach(el=>el&&assess.appendChild(el));
+    const assess=page('assessment');assess.appendChild(makeHead('ASSESSMENT','ประเมินผลแบบเป็นขั้นตอน','ทำทีละขั้น: เลือกนักเรียน → ตั้งค่าโจทย์ → เลือกรูปแบบ → ตรวจสอบและเริ่ม'));
+    const assessWizard=document.createElement('div');assessWizard.className='teacher-assessment-wizard';
+    assessWizard.innerHTML=`
+      <div class="teacher-assess-steps" role="tablist" aria-label="ขั้นตอนการประเมิน">
+        <button type="button" class="active" data-assess-step="1"><span>1</span><b>นักเรียน</b><small>เลือกผู้รับการประเมิน</small></button>
+        <button type="button" data-assess-step="2"><span>2</span><b>ตั้งค่าโจทย์</b><small>หัวข้อ จำนวนข้อ ความยาก</small></button>
+        <button type="button" data-assess-step="3"><span>3</span><b>รูปแบบ</b><small>ก่อนเรียน ทักษะ หลังเรียน</small></button>
+        <button type="button" data-assess-step="4"><span>4</span><b>ตรวจสอบ</b><small>ยืนยันก่อนเริ่ม</small></button>
+      </div>
+      <div class="teacher-assess-stage">
+        <section class="teacher-assess-panel active" data-assess-panel="1">
+          <div class="teacher-assess-title"><span>ขั้นที่ 1</span><h3>เลือกนักเรียน</h3><p>เลือกจากรายชื่อที่บันทึกไว้ หรือกรอกชื่อผู้เรียนในช่องข้อมูลด้านบน</p></div>
+          <div id="teacherAssessmentStudentSlot" class="teacher-assess-slot"></div>
+          <div class="teacher-assess-note"><i class="fa-solid fa-circle-info"></i><span>ควรตรวจสอบชื่อและห้องเรียนให้ถูกต้องก่อนเริ่ม เพราะข้อมูลจะถูกใช้ในรายงานผล</span></div>
+        </section>
+        <section class="teacher-assess-panel" data-assess-panel="2">
+          <div class="teacher-assess-title"><span>ขั้นที่ 2</span><h3>ตั้งค่าโจทย์</h3><p>เลือกเฉพาะสิ่งที่ต้องการประเมินในรอบนี้</p></div>
+          <div id="teacherAssessmentSkillSlot" class="teacher-assess-slot"></div>
+          <div class="teacher-assess-setting-grid">
+            <label><span>จำนวนข้อ</span><select id="teacherAssessmentQuestionCount" class="inp"><option value="5">5 ข้อ</option><option value="10" selected>10 ข้อ</option><option value="20">20 ข้อ</option></select></label>
+            <label><span>ระดับความยาก</span><select id="teacherAssessmentDifficulty" class="inp"><option value="easy">ง่าย</option><option value="medium" selected>ปานกลาง</option><option value="hard">ท้าทาย</option></select></label>
+          </div>
+          <div class="teacher-assess-pass"><i class="fa-solid fa-award"></i><div><strong>เกณฑ์แนะนำ</strong><span>ความแม่นยำอย่างน้อย 80% และเวลาตอบเฉลี่ยไม่เกิน 5 วินาที</span></div></div>
+        </section>
+        <section class="teacher-assess-panel" data-assess-panel="3">
+          <div class="teacher-assess-title"><span>ขั้นที่ 3</span><h3>เลือกรูปแบบการประเมิน</h3><p>เลือกเพียงหนึ่งรูปแบบสำหรับรอบนี้</p></div>
+          <div class="teacher-assess-type-grid">
+            <button type="button" data-assess-mode="teacher_pretest"><i class="fa-solid fa-circle-play"></i><strong>ก่อนเรียน</strong><small>ใช้ตรวจพื้นฐานก่อนเริ่มบทเรียน</small></button>
+            <button type="button" class="active" data-assess-mode="teacher_assessment"><i class="fa-solid fa-clipboard-check"></i><strong>ประเมินทักษะ</strong><small>ใช้ประเมินรายหัวข้อระหว่างเรียน</small></button>
+            <button type="button" data-assess-mode="teacher_posttest"><i class="fa-solid fa-flag-checkered"></i><strong>หลังเรียน</strong><small>ใช้เปรียบเทียบผลหลังจบบทเรียน</small></button>
+          </div>
+        </section>
+        <section class="teacher-assess-panel" data-assess-panel="4">
+          <div class="teacher-assess-title"><span>ขั้นที่ 4</span><h3>ตรวจสอบก่อนเริ่ม</h3><p>ตรวจรายละเอียดให้ครบ แล้วเริ่มประเมินเมื่อพร้อม</p></div>
+          <div id="teacherAssessmentReview" class="teacher-assess-review"></div>
+          <button type="button" id="teacherAssessmentStart" class="teacher-assess-start"><i class="fa-solid fa-play"></i><span><strong>เริ่มประเมิน</strong><small>เปิดกล้องและเริ่มจับเวลา</small></span></button>
+          <div id="teacherAssessmentError" class="teacher-assess-error hidden"></div>
+        </section>
+      </div>
+      <div class="teacher-assess-footer">
+        <button type="button" id="teacherAssessBack" class="btn btn-ghost" disabled><i class="fa-solid fa-arrow-left"></i> ย้อนกลับ</button>
+        <span id="teacherAssessStepText">ขั้นที่ 1 จาก 4</span>
+        <button type="button" id="teacherAssessNext" class="btn btn-primary">ถัดไป <i class="fa-solid fa-arrow-right"></i></button>
+      </div>`;
+    assess.appendChild(assessWizard);
+    const studentSlot=assessWizard.querySelector('#teacherAssessmentStudentSlot');
+    if(studentSelect){studentSelect.style.marginBottom='0';studentSlot.appendChild(studentSelect)}
+    const skillSlot=assessWizard.querySelector('#teacherAssessmentSkillSlot');
+    if(skillGrid){skillGrid.style.marginBottom='0';skillSlot.appendChild(skillGrid)}
+    if(banner)banner.remove();if(info)info.remove();if(modeGrid)modeGrid.remove();
+
+    let assessStep=1,assessMode='teacher_assessment';
+    const panels=[...assessWizard.querySelectorAll('[data-assess-panel]')];
+    const stepBtns=[...assessWizard.querySelectorAll('[data-assess-step]')];
+    const modeBtns=[...assessWizard.querySelectorAll('[data-assess-mode]')];
+    const backBtn=assessWizard.querySelector('#teacherAssessBack');
+    const nextBtn=assessWizard.querySelector('#teacherAssessNext');
+    const stepText=assessWizard.querySelector('#teacherAssessStepText');
+    const review=assessWizard.querySelector('#teacherAssessmentReview');
+    const err=assessWizard.querySelector('#teacherAssessmentError');
+    const qCount=assessWizard.querySelector('#teacherAssessmentQuestionCount');
+    const qDiff=assessWizard.querySelector('#teacherAssessmentDifficulty');
+    function studentName(){
+      const sel=$('teacherStudentSelect');
+      if(sel&&sel.value){const o=sel.options[sel.selectedIndex];return (o?.textContent||'').replace(/^.*?—\s*/,'').trim()||o?.textContent||''}
+      return $('startPlayerName')?.value?.trim()||'';
+    }
+    function topicName(){const s=$('testTopicSelect');return s?.options?.[s.selectedIndex]?.textContent||'ประเมินรวมทุกทักษะ'}
+    function modeName(){return assessMode==='teacher_pretest'?'ประเมินก่อนเรียน':assessMode==='teacher_posttest'?'ประเมินหลังเรียน':'ประเมินทักษะ'}
+    function refreshReview(){
+      if(!review)return;
+      review.innerHTML=`<div><span>นักเรียน</span><strong>${studentName()||'ยังไม่ได้เลือก'}</strong></div><div><span>หัวข้อ</span><strong>${topicName()}</strong></div><div><span>จำนวนข้อ</span><strong>${qCount.value} ข้อ</strong></div><div><span>ความยาก</span><strong>${qDiff.options[qDiff.selectedIndex].textContent}</strong></div><div><span>รูปแบบ</span><strong>${modeName()}</strong></div>`;
+    }
+    function setAssessStep(n){
+      assessStep=Math.max(1,Math.min(4,n));
+      panels.forEach(p=>p.classList.toggle('active',Number(p.dataset.assessPanel)===assessStep));
+      stepBtns.forEach(b=>{const k=Number(b.dataset.assessStep);b.classList.toggle('active',k===assessStep);b.classList.toggle('done',k<assessStep)});
+      backBtn.disabled=assessStep===1;nextBtn.classList.toggle('hidden',assessStep===4);stepText.textContent=`ขั้นที่ ${assessStep} จาก 4`;err.classList.add('hidden');
+      if(assessStep===4)refreshReview();
+    }
+    stepBtns.forEach(b=>b.onclick=()=>setAssessStep(Number(b.dataset.assessStep)));
+    backBtn.onclick=()=>setAssessStep(assessStep-1);nextBtn.onclick=()=>setAssessStep(assessStep+1);
+    modeBtns.forEach(b=>b.onclick=()=>{assessMode=b.dataset.assessMode;modeBtns.forEach(x=>x.classList.toggle('active',x===b))});
+    qCount.onchange=()=>{if($('startQuestionCount'))$('startQuestionCount').value=qCount.value};
+    qDiff.onchange=()=>{if($('startDifficulty'))$('startDifficulty').value=qDiff.value;app.setDifficultyLevel?.(qDiff.value,{silent:true})};
+    assessWizard.querySelector('#teacherAssessmentStart').onclick=async()=>{
+      const name=studentName();
+      if(!name){err.textContent='กรุณาเลือกนักเรียนหรือกรอกชื่อผู้เรียนก่อนเริ่มประเมิน';err.classList.remove('hidden');setAssessStep(1);return;}
+      if($('startQuestionCount'))$('startQuestionCount').value=qCount.value;
+      if($('startDifficulty'))$('startDifficulty').value=qDiff.value;
+      await app.startGame(assessMode);
+    };
+    setAssessStep(1);
 
     const questions=page('questions');questions.appendChild(makeHead('QUESTION BANK','คลังโจทย์','เพิ่มโจทย์ภาษาไทย–อังกฤษ กำหนดระดับความยาก และจัดการโจทย์บน Supabase'));
     if(questionCard)questions.appendChild(questionCard);else questions.innerHTML+='<div class="teacher-empty-note">ยังไม่พบส่วนคลังโจทย์</div>';
