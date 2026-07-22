@@ -1,7 +1,10 @@
 (function(){
   const KEY='fmu_usability_assessments_v1';
   const css=document.createElement('link');css.rel='stylesheet';css.href='./assets/css/wow-learning-lab.css';document.head.appendChild(css);
-  const html=`<button id="wowLabBtn" class="wow-lab-fab" aria-label="เปิดศูนย์การเรียนรู้ใหม่">✨ WOW Lab</button>
+  const html=`<button id="wowLabBtn" class="wow-lab-fab wow-mascot-fab" aria-label="เปิดศูนย์การเรียนรู้ Finger Math" title="เปิดศูนย์การเรียนรู้">
+    <img src="./assets/images/wow-mascot.webp" alt="มาสคอต Finger Math" class="wow-mascot-image">
+    <span class="wow-mascot-label">ศูนย์การเรียนรู้</span>
+  </button>
   <div id="wowLabModal" class="wow-modal hidden"><div class="wow-dialog"><button class="wow-close" data-wow-close>×</button>
   <div class="wow-head"><span>Finger Math Universe 7</span><h2>ศูนย์การเรียนรู้แบบว้าว</h2><p>เลขเกิน 10 · จินตคณิต · สัญญาณการมองหน้าจอ · แบบประเมิน UX</p></div>
   <div class="wow-grid">
