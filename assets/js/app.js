@@ -52,7 +52,7 @@ const DOM={
   finalQuestionLog:$('finalQuestionLog'),sessionTypeBadge:$('sessionTypeBadge'),
   startPlayerName:$('startPlayerName'),startClassroom:$('startClassroom'),
   startQuestionCount:$('startQuestionCount'),startDifficulty:$('startDifficulty'),
-  gradeBandHint:$('gradeBandHint'),difficultyHint:$('difficultyHint'),difficultyMeterFill:$('difficultyMeterFill'),gradeRecommendation:$('gradeRecommendation'),
+  gradeBandHint:$('gradeBandHint'),difficultyHint:$('difficultyHint'),difficultyMeterFill:$('difficultyMeterFill'),gradeRecommendation:$('gradeRecommendation'),gradeQuickButtons:$('gradeQuickButtons'),v8MissionTitle:$('v8MissionTitle'),v8MissionSubtitle:$('v8MissionSubtitle'),v8TierTabs:$('v8TierTabs'),v8MissionList:$('v8MissionList'),v8ProgressSummary:$('v8ProgressSummary'),
   leaderboardModal:$('leaderboardModal'),leaderboardList:$('leaderboardList'),
   dashboardModal:$('dashboardModal'),customConfirmModal:$('customConfirmModal'),
   levelUpOverlay:$('levelUpOverlay'),btnPause:$('btnPause'),
@@ -820,30 +820,78 @@ class QuestionManager{
     };
     return (map[gradeBand]||map.primary_high)[difficulty]||60;
   }
-  generate(level,mode,topic,rng,difficulty,gradeBand='primary_low'){
-    if(mode==='large_number'){
-      const max=this._largeNumberMax(difficulty,gradeBand);
-      const useAdd=rng.next()>0.35;
-      let a,b,answer,text;
-      if(useAdd){
-        a=rng.nextInt(6,max-5); b=rng.nextInt(1,Math.min(29,max-a)); answer=a+b; text=`${a} + ${b} = ?`;
-      }else{
-        a=rng.nextInt(12,max); b=rng.nextInt(1,a-1); answer=a-b; text=`${a} - ${b} = ?`;
-      }
-      const q={text,instruction:'ตอบ 2 จังหวะ: ชูหลักสิบก่อน แล้วชูหลักหน่วย',answerCheck:f=>f===Math.floor(answer/10),modeName:'เลขเกิน 10 · สองจังหวะ',answerText:String(answer),topic:8,answerValue:answer,answerDigits:[Math.floor(answer/10),answer%10],answerStage:0};
-      this.q=q;return q;
+  _largeOperationPool(gradeBand,difficulty){
+    if(gradeBand==='primary_low')return ['add','sub'];
+    if(gradeBand==='primary_high')return ['add','sub','mul'];
+    return ['add','sub','mul','div'];
+  }
+  _makeLargeNumberQuestion(rng,difficulty,gradeBand='primary_high'){
+    const max=this._largeNumberMax(difficulty,gradeBand);
+    const pool=this._largeOperationPool(gradeBand,difficulty);
+    const op=pool[rng.nextInt(0,pool.length-1)];
+    let a,b,answer,text,modeName='เลขเกิน 10 · สองจังหวะ';
+    if(op==='add'){
+      a=rng.nextInt(gradeBand==='primary_low'?6:10,max-5);
+      b=rng.nextInt(1,Math.min(gradeBand==='secondary'?39:29,max-a));
+      answer=a+b; text=`${a} + ${b} = ?`;
+    }else if(op==='sub'){
+      a=rng.nextInt(gradeBand==='primary_low'?12:20,max);
+      b=rng.nextInt(1,Math.min(a-1,gradeBand==='secondary'?45:35));
+      answer=a-b; text=`${a} - ${b} = ?`;
+    }else if(op==='mul'){
+      const leftMax=gradeBand==='secondary'?12:9;
+      const rightMax=gradeBand==='secondary'?9:5;
+      let safe=0;
+      do{
+        a=rng.nextInt(2,leftMax);
+        b=rng.nextInt(2,rightMax);
+        answer=a*b;
+        safe++;
+      }while(answer>99 && safe<40);
+      text=`${a} × ${b} = ?`;
+      modeName=gradeBand==='secondary'?'คูณท้าทาย · สองจังหวะ':'คูณพื้นฐาน · สองจังหวะ';
+    }else{
+      b=rng.nextInt(2,9);
+      const maxAnswer=Math.max(6,Math.min(Math.floor(99/b),12));
+      answer=rng.nextInt(gradeBand==='secondary'?6:3,maxAnswer);
+      a=answer*b;
+      text=`${a} ÷ ${b} = ?`;
+      modeName='หารลงตัว · สองจังหวะ';
     }
+    const q={text,instruction:'ตอบ 2 จังหวะ: ชูหลักสิบก่อน แล้วชูหลักหน่วย',answerCheck:f=>f===Math.floor(answer/10),modeName,answerText:String(answer),topic:8,answerValue:answer,answerDigits:[Math.floor(answer/10),answer%10],answerStage:0};
+    this.q=q;return q;
+  }
+  generate(level,mode,topic,rng,difficulty,gradeBand='primary_low'){
+    if(mode==='large_number')return this._makeLargeNumberQuestion(rng,difficulty,gradeBand);
     if(String(mode||'').startsWith('physical_'))return this.generatePhysical(mode,rng,difficulty,gradeBand);
     let t=topic?parseInt(topic):this._pick(level,mode,gradeBand);
+    if(t===8)return this._makeLargeNumberQuestion(rng,difficulty,gradeBand);
     const mx=this._fingerMax(difficulty,gradeBand);
     let q={text:'',instruction:'',answerCheck:null,modeName:'',answerText:'',topic:t};
     switch(t){
-      case 1:{const n=rng.nextInt(0,mx);q.modeName='แสดงตัวเลข';q.text=`ชู ${n} นิ้ว`;q.instruction='ชูนิ้วให้ครบตามตัวเลข';q.answerCheck=f=>f===n;q.answerText=String(n);break;}
-      case 2:{const a=rng.nextInt(0,Math.floor(mx/2)),b=rng.nextInt(0,mx-a);q.modeName='การบวก';q.text=`${a} + ${b} = ?`;q.instruction='คิดในใจแล้วชูนิ้วตอบ';q.answerCheck=f=>f===a+b;q.answerText=String(a+b);break;}
-      case 3:{const a=rng.nextInt(1,mx),b=rng.nextInt(0,a);q.modeName='การลบ';q.text=`${a} - ${b} = ?`;q.instruction='คิดในใจแล้วชูนิ้วตอบ';q.answerCheck=f=>f===a-b;q.answerText=String(a-b);break;}
-      case 4:{const P=[[0,1],[1,1],[1,2],[1,3],[1,4],[1,5],[2,1],[2,2],[2,3],[2,4],[2,5],[3,1],[3,2],[3,3],[4,1],[4,2],[5,1],[5,2]];const p=P[rng.nextInt(0,P.length-1)];q.modeName='การคูณ';q.text=`${p[0]} × ${p[1]} = ?`;q.instruction='คิดในใจแล้วชูนิ้วตอบ';q.answerCheck=f=>f===p[0]*p[1];q.answerText=String(p[0]*p[1]);break;}
-      case 5:{const tv=rng.nextInt(1,9),more=rng.next()>0.5;q.modeName='เปรียบเทียบ';q.text=more?`> ${tv}`:`< ${tv}`;q.instruction=more?`ชูนิ้วให้มากกว่า ${tv}`:`ชูนิ้วให้น้อยกว่า ${tv}`;q.answerCheck=f=>more?(f>tv&&f<=10):(f<tv);q.answerText=more?`จำนวนที่มากกว่า ${tv}`:`จำนวนที่น้อยกว่า ${tv}`;break;}
+      case 1:{
+        const maxN=gradeBand==='primary_low'?mx:Math.min(10,mx);
+        const n=rng.nextInt(0,maxN);q.modeName='แสดงตัวเลข';q.text=`ชู ${n} นิ้ว`;q.instruction='ชูนิ้วให้ครบตามตัวเลข';q.answerCheck=f=>f===n;q.answerText=String(n);break;}
+      case 2:{
+        let a,b;
+        if(gradeBand==='primary_low'){a=rng.nextInt(0,Math.floor(mx/2));b=rng.nextInt(0,Math.min(10-a,mx));}
+        else if(gradeBand==='primary_high'){a=rng.nextInt(2,10);b=rng.nextInt(1,10);}
+        else{a=rng.nextInt(4,10);b=rng.nextInt(2,10);}
+        q.modeName='การบวก';q.text=`${a} + ${b} = ?`;q.instruction='คิดในใจแล้วชูนิ้วตอบ';q.answerCheck=f=>f===a+b;q.answerText=String(a+b);break;}
+      case 3:{
+        let a,b;
+        if(gradeBand==='primary_low'){a=rng.nextInt(1,mx);b=rng.nextInt(0,a);}
+        else if(gradeBand==='primary_high'){a=rng.nextInt(4,10);b=rng.nextInt(1,a);}
+        else{a=rng.nextInt(6,10);b=rng.nextInt(1,a-1);}
+        q.modeName='การลบ';q.text=`${a} - ${b} = ?`;q.instruction='คิดในใจแล้วชูนิ้วตอบ';q.answerCheck=f=>f===a-b;q.answerText=String(a-b);break;}
+      case 4:{
+        let pairs=[[0,1],[1,1],[1,2],[1,3],[1,4],[1,5],[2,1],[2,2],[2,3],[2,4],[2,5],[3,1],[3,2],[3,3],[4,1],[4,2],[5,1],[5,2]];
+        if(gradeBand==='primary_high')pairs=[[2,2],[2,3],[2,4],[2,5],[3,3],[3,4],[3,5],[4,4],[4,5],[5,5],[6,2],[6,3],[7,2],[8,2],[9,1]];
+        if(gradeBand==='secondary')pairs=[[3,4],[3,5],[4,4],[4,5],[5,5],[6,4],[6,5],[7,4],[7,5],[8,4],[8,5],[9,4],[9,5],[10,3],[10,4]];
+        const p=pairs[rng.nextInt(0,pairs.length-1)];q.modeName='การคูณ';q.text=`${p[0]} × ${p[1]} = ?`;q.instruction='คิดในใจแล้วชูนิ้วตอบ';q.answerCheck=f=>f===p[0]*p[1];q.answerText=String(p[0]*p[1]);break;}
+      case 5:{const tv=rng.nextInt(gradeBand==='secondary'?2:1,gradeBand==='primary_low'?9:8),more=rng.next()>0.5;q.modeName='เปรียบเทียบ';q.text=more?`> ${tv}`:`< ${tv}`;q.instruction=more?`ชูนิ้วให้มากกว่า ${tv}`:`ชูนิ้วให้น้อยกว่า ${tv}`;q.answerCheck=f=>more?(f>tv&&f<=10):(f<tv);q.answerText=more?`จำนวนที่มากกว่า ${tv}`:`จำนวนที่น้อยกว่า ${tv}`;break;}
       case 6:{const ev=rng.next()>0.5;q.modeName='คู่ หรือ คี่';q.text=ev?'เลขคู่':'เลขคี่';q.instruction=ev?'ชูนิ้วจำนวนคู่ (2, 4, 6…)':'ชูนิ้วจำนวนคี่ (1, 3, 5…)';q.answerCheck=f=>ev?(f%2===0&&f>0):(f%2!==0);q.answerText=ev?'2, 4, 6, 8 หรือ 10':'1, 3, 5, 7 หรือ 9';break;}
+      case 9:{let divisor=rng.nextInt(2,gradeBand==='secondary'?5:4);let answer=rng.nextInt(1,Math.min(10,gradeBand==='primary_high'?10:6));let dividend=divisor*answer;q.modeName='การหาร';q.text=`${dividend} ÷ ${divisor} = ?`;q.instruction='คิดในใจแล้วชูนิ้วตอบ';q.answerCheck=f=>f===answer;q.answerText=String(answer);break;}
       default:{const n=rng.nextInt(0,10);q.modeName='แสดงตัวเลข';q.text=`ชู ${n} นิ้ว`;q.instruction='ชูนิ้วให้ครบ';q.answerCheck=f=>f===n;q.answerText=String(n);}
     }
     this.q=q;return q;
@@ -854,23 +902,21 @@ class QuestionManager{
     const kind=rng.nextInt(1,4);
     let text='',answer=true,answerText='';
     if(kind===1){
-      const a=rng.nextInt(0,Math.floor(mx/2)),b=rng.nextInt(0,mx-a);
+      const a=rng.nextInt(0,Math.floor(mx/2)),b=rng.nextInt(0,Math.min(10,mx-a));
       const correct=a+b;
       const shown=trueCase?correct:Math.max(0,Math.min(10,correct+(rng.next()>0.5?1:-1)));
       text=`${a} + ${b} = ${shown}`;
       answer=shown===correct;
       answerText=`${a} + ${b} = ${correct}`;
     }else if(kind===2){
-      const a=rng.nextInt(1,mx),b=rng.nextInt(0,a);
+      const a=rng.nextInt(1,Math.min(10,mx)),b=rng.nextInt(0,a);
       const correct=a-b;
       const shown=trueCase?correct:Math.max(0,Math.min(10,correct+(rng.next()>0.5?1:-1)));
       text=`${a} - ${b} = ${shown}`;
       answer=shown===correct;
       answerText=`${a} - ${b} = ${correct}`;
     }else if(kind===3){
-      const a=rng.nextInt(0,mx),b=rng.nextInt(0,mx);
-      answer=a>b;
-      if(!trueCase)answer=!answer;
+      const a=rng.nextInt(0,Math.min(10,mx)),b=rng.nextInt(0,Math.min(10,mx));
       text=trueCase?`${a} มากกว่า ${b}`:`${a} น้อยกว่า ${b}`;
       const real=a>b?'มากกว่า':'ไม่มากกว่า';
       answerText=`${a} ${real} ${b}`;
@@ -901,10 +947,10 @@ class QuestionManager{
     }
     if(gradeBand==='primary_high'){
       if(l<=2)return 2; if(l===3)return 3; if(l===4)return 5; if(l===5)return 4;
-      const pool=[2,3,4,5,6]; return pool[Math.floor(Math.random()*pool.length)];
+      const pool=[2,3,4,5,6,8,9]; return pool[Math.floor(Math.random()*pool.length)];
     }
-    if(l<=2)return 2; if(l===3)return 3; if(l===4)return 4; if(l===5)return 6;
-    const pool=[2,3,4,5,6]; return pool[Math.floor(Math.random()*pool.length)];
+    if(l<=2)return 2; if(l===3)return 3; if(l===4)return 4; if(l===5)return 8;
+    const pool=[2,3,4,5,6,8,9]; return pool[Math.floor(Math.random()*pool.length)];
   }
 }
 
@@ -1120,6 +1166,8 @@ class GameManager{
     this.state='menu';this.gameMode='practice';this.testType='practice';
     this.classTopic=null;this.playerName='';this.classroom='';
     this.gradeBand=localStorage.getItem('fingerMath_gradeBand')||'primary_low';
+    this.selectedMissionTier=localStorage.getItem('fingerMath_v8_tier')||'starter';
+    this.currentMissionMeta=null;
     this.difficulty=localStorage.getItem('fingerMath_difficulty')||'medium';this.totalQ=10;this.qIdx=0;
     this.holdTime=1.2;this.seed=0;this.rng=null;
     this.timeLeft=CONFIG.timePerQuestion;this.lastFrame=performance.now();
@@ -1160,13 +1208,86 @@ class GameManager{
     const savedDiff=localStorage.getItem('fingerMath_difficulty')||this.difficulty||DOM.startDifficulty?.value||'medium';
     this.setGradeBand(savedBand,{silent:true,preserveDifficulty:true});
     this.setDifficultyLevel(savedDiff,{silent:true});
+    this.setMissionTier(this.selectedMissionTier,{silent:true});
+  }
+  getStructuredBands(){
+    return {
+      primary_low:{
+        label:'ประถมต้น',placeholder:'เช่น ป.2/1',recommended:'easy',
+        hint:'เหมาะกับเด็ก ป.1–3 ที่กำลังเริ่มต้นนับนิ้ว เรียนรู้จำนวน 0–10 และค่อย ๆ ฝึกบวก–ลบอย่างมั่นใจ',
+        plan:'เริ่มจากฝึกนับนิ้ว 0–10 ก่อน แล้วค่อยไปโหมดบวก–ลบ',
+        quick:[
+          {label:'นับนิ้ว 0–10',sub:'ฝึกชูนิ้วตามจำนวนแบบพื้นฐาน',mode:'home_practice',topic:1,difficulty:'easy'},
+          {label:'บวกเลขง่าย',sub:'บวกคำตอบไม่เกิน 10 เหมาะเริ่มต้น',mode:'home_practice',topic:2,difficulty:'easy'},
+          {label:'ฝึกสุ่มพื้นฐาน',sub:'สุ่มโจทย์ง่ายสำหรับประถมต้น',mode:'home_practice',topic:null,difficulty:'easy'}
+        ],
+        tiers:{
+          starter:{label:'Level 1 เริ่มต้น',desc:'สร้างความคุ้นเคยกับนิ้วและจำนวน',missions:[
+            {key:'pl_count',title:'รู้จักจำนวนนิ้ว',desc:'ฝึกชูนิ้วให้ตรงกับตัวเลข 0–10',mode:'home_practice',topic:1,difficulty:'easy',questionCount:5,tag1:'ตัวเลข',tag2:'เริ่มต้น'},
+            {key:'pl_add',title:'บวกไม่เกิน 10',desc:'บวกจำนวนง่าย ๆ เพื่อให้คิดเร็วขึ้น',mode:'home_practice',topic:2,difficulty:'easy',questionCount:5,tag1:'บวก',tag2:'พื้นฐาน'},
+            {key:'pl_even',title:'คู่หรือคี่',desc:'สังเกตจำนวนคู่และคี่จากนิ้วมือ',mode:'home_practice',topic:6,difficulty:'easy',questionCount:5,tag1:'ตรรกะ',tag2:'สังเกต'}]},
+          builder:{label:'Level 2 คล่องขึ้น',desc:'ต่อยอดการคิดและการสังเกต',missions:[
+            {key:'pl_sub',title:'ลบอย่างมั่นใจ',desc:'ฝึกลบจำนวนที่ไม่เกิน 10 ให้คล่อง',mode:'home_practice',topic:3,difficulty:'medium',questionCount:10,tag1:'ลบ',tag2:'แม่นยำ'},
+            {key:'pl_compare',title:'มากกว่า น้อยกว่า',desc:'แยกแยะค่าของจำนวนจากโจทย์เปรียบเทียบ',mode:'home_practice',topic:5,difficulty:'medium',questionCount:10,tag1:'เปรียบเทียบ',tag2:'คิดไว'},
+            {key:'pl_mix',title:'คละพื้นฐาน',desc:'สุ่มโจทย์พื้นฐานหลากหลายรูปแบบ',mode:'home_practice',topic:null,difficulty:'medium',questionCount:10,tag1:'คละโจทย์',tag2:'ทบทวน'}]},
+          master:{label:'Level 3 พร้อมขยับ',desc:'เตรียมตัวขึ้นประถมปลาย',missions:[
+            {key:'pl_combo',title:'คอมโบคณิต',desc:'คละบวก ลบ คู่คี่ และเปรียบเทียบในชุดเดียว',mode:'home_practice',topic:null,difficulty:'hard',questionCount:10,tag1:'คละโจทย์',tag2:'ท้าทาย'},
+            {key:'pl_mul_intro',title:'คูณเบื้องต้น',desc:'เริ่มรู้จักการคูณแบบคำตอบไม่เกิน 10',mode:'home_practice',topic:4,difficulty:'easy',questionCount:5,tag1:'คูณ',tag2:'ต่อยอด'},
+            {key:'pl_review',title:'บทสรุปประถมต้น',desc:'เก็บคะแนนและทบทวนก่อนขึ้นด่านถัดไป',mode:'home_practice',topic:null,difficulty:'medium',questionCount:10,tag1:'สรุป',tag2:'ประเมิน'}]}
+        }
+      },
+      primary_high:{
+        label:'ประถมปลาย',placeholder:'เช่น ป.5/2',recommended:'medium',
+        hint:'เหมาะกับเด็ก ป.4–6 ที่พร้อมเพิ่มความเร็ว ฝึกเลขเกิน 10 และต่อยอดเข้าสู่จินตคณิต',
+        plan:'แนะนำเริ่มจากบวก–ลบ แล้วต่อด้วยเลขเกิน 10 และห้องเรียนจินตคณิต',
+        quick:[
+          {label:'บวก–ลบคล่อง',sub:'โจทย์สุ่มระดับประถมปลาย',mode:'home_practice',topic:null,difficulty:'medium'},
+          {label:'เลขเกิน 10',sub:'ตอบสองจังหวะ ฝึกหลักสิบและหลักหน่วย',mode:'large_number',topic:null,difficulty:'medium'},
+          {label:'คูณและเปรียบเทียบ',sub:'ฝึกคูณพื้นฐานและคิดไว',mode:'home_practice',topic:4,difficulty:'medium'}
+        ],
+        tiers:{
+          starter:{label:'Level 1 ปรับพื้น',desc:'ปูพื้นฐานก่อนโจทย์ยาก',missions:[
+            {key:'ph_addsub',title:'บวก–ลบประถมปลาย',desc:'ทบทวนบวก–ลบให้ไวขึ้นและแม่นขึ้น',mode:'home_practice',topic:null,difficulty:'medium',questionCount:10,tag1:'บวกลบ',tag2:'คล่อง'},
+            {key:'ph_mul',title:'คูณพื้นฐาน',desc:'ตารางคูณและคูณคำตอบไม่เกิน 10',mode:'home_practice',topic:4,difficulty:'medium',questionCount:10,tag1:'คูณ',tag2:'พื้นฐาน'},
+            {key:'ph_compare',title:'เปรียบเทียบและคู่คี่',desc:'ฝึกตรรกะและความเร็วในการตัดสินใจ',mode:'home_practice',topic:5,difficulty:'medium',questionCount:10,tag1:'ตรรกะ',tag2:'วิเคราะห์'}]},
+          builder:{label:'Level 2 เลขเกิน 10',desc:'เน้นหลักสิบ หลักหน่วย และจินตภาพ',missions:[
+            {key:'ph_large_addsub',title:'เลขเกิน 10',desc:'ตอบสองจังหวะ ฝึกค่าประจำหลัก',mode:'large_number',topic:null,difficulty:'medium',questionCount:10,tag1:'สองจังหวะ',tag2:'หลักสิบ'},
+            {key:'ph_mix_hard',title:'คละโจทย์ยากขึ้น',desc:'สุ่มโจทย์คณิตหลายแบบในระดับสูงขึ้น',mode:'home_practice',topic:null,difficulty:'hard',questionCount:10,tag1:'คละโจทย์',tag2:'ฝึกสปีด'},
+            {key:'ph_mulfast',title:'คูณคิดไว',desc:'เพิ่มความคล่องในการคูณพื้นฐาน',mode:'home_practice',topic:4,difficulty:'hard',questionCount:10,tag1:'คูณ',tag2:'คิดเร็ว'}]},
+          master:{label:'Level 3 ก่อนขึ้นมัธยม',desc:'ความยากสูงและเน้นจับเวลา',missions:[
+            {key:'ph_large_master',title:'โจทย์สองหลักคละแบบ',desc:'สุ่มบวก ลบ คูณ ในคำตอบสองหลัก',mode:'large_number',topic:null,difficulty:'hard',questionCount:10,tag1:'สองหลัก',tag2:'ท้าทาย'},
+            {key:'ph_div_intro',title:'หารลงตัวเบื้องต้น',desc:'เตรียมพื้นฐานการหารก่อนเข้า ม.1',mode:'home_practice',topic:9,difficulty:'medium',questionCount:10,tag1:'หาร',tag2:'ต่อยอด'},
+            {key:'ph_final',title:'สรุปประถมปลาย',desc:'ทดสอบความพร้อมก่อนขยับไปมัธยม',mode:'home_practice',topic:null,difficulty:'hard',questionCount:10,tag1:'สรุป',tag2:'พร้อมต่อยอด'}]}
+        }
+      },
+      secondary:{
+        label:'มัธยม',placeholder:'เช่น ม.1/1',recommended:'hard',
+        hint:'เหมาะกับ ม.1–3 ที่ต้องการโจทย์ท้าทายกว่าเดิม เน้นความเร็ว ความแม่น และการคิดในใจ',
+        plan:'แนะนำเริ่มด้วยจินตคณิตหรือคิดเร็ว แล้วใช้โหมดท้าทายเพื่อจับเวลา',
+        quick:[
+          {label:'คิดเร็ว 2 หลัก',sub:'บวก ลบ คูณ หาร แบบสองจังหวะ',mode:'large_number',topic:null,difficulty:'hard'},
+          {label:'สุ่มโจทย์มัธยม',sub:'โจทย์คละยากขึ้นสำหรับมัธยม',mode:'home_practice',topic:null,difficulty:'hard'},
+          {label:'คูณ–หารท้าทาย',sub:'โจทย์เข้มข้นขึ้น เน้นคิดในใจ',mode:'home_practice',topic:4,difficulty:'hard'}
+        ],
+        tiers:{
+          starter:{label:'Level 1 Warm up',desc:'เข้าสู่โหมดคิดไวสำหรับมัธยม',missions:[
+            {key:'sc_mix',title:'สุ่มโจทย์มัธยม',desc:'คละโจทย์บวก ลบ คูณ เปรียบเทียบแบบจับเวลา',mode:'home_practice',topic:null,difficulty:'hard',questionCount:10,tag1:'คละโจทย์',tag2:'warm up'},
+            {key:'sc_mul',title:'คูณระดับมัธยม',desc:'คูณโจทย์ยากขึ้นเพื่อสร้างความแม่นยำ',mode:'home_practice',topic:4,difficulty:'hard',questionCount:10,tag1:'คูณ',tag2:'แม่นยำ'},
+            {key:'sc_div',title:'หารลงตัว',desc:'ฝึกหารลงตัวก่อนเข้าสู่โจทย์สองหลัก',mode:'home_practice',topic:9,difficulty:'hard',questionCount:10,tag1:'หาร',tag2:'ตรรกะ'}]},
+          builder:{label:'Level 2 Speed Drill',desc:'โจทย์สองหลักคละแบบ',missions:[
+            {key:'sc_large_mix',title:'คิดเร็ว 2 หลัก',desc:'บวก ลบ คูณ หาร คำตอบสองหลักแบบสองจังหวะ',mode:'large_number',topic:null,difficulty:'hard',questionCount:10,tag1:'สองหลัก',tag2:'speed'},
+            {key:'sc_large_more',title:'โจทย์เร็วต่อเนื่อง',desc:'เล่นต่อเนื่องเพื่อฝึกสมาธิและความเร็ว',mode:'large_number',topic:null,difficulty:'hard',questionCount:20,tag1:'20 ข้อ',tag2:'focus'},
+            {key:'sc_logic',title:'คู่คี่และเปรียบเทียบ',desc:'โจทย์ไว ๆ เพื่อฝึกการตัดสินใจ',mode:'home_practice',topic:6,difficulty:'hard',questionCount:10,tag1:'ตรรกะ',tag2:'reaction'}]},
+          master:{label:'Level 3 Challenge',desc:'บทสรุปแบบเต็มระบบ',missions:[
+            {key:'sc_master_mix',title:'Challenge รอบชิง',desc:'คละโจทย์มัธยมพร้อมจับเวลาและเก็บคะแนนสูงสุด',mode:'large_number',topic:null,difficulty:'hard',questionCount:20,tag1:'challenge',tag2:'เต็มระบบ'},
+            {key:'sc_precision',title:'แม่นยำสูง',desc:'เน้นทำคะแนนให้ความแม่นยำเกิน 85%',mode:'home_practice',topic:null,difficulty:'hard',questionCount:10,tag1:'accuracy',tag2:'target'},
+            {key:'sc_final',title:'บทสรุปมัธยม',desc:'เก็บสถิติก่อนส่งขึ้น Dashboard ของครู',mode:'large_number',topic:null,difficulty:'hard',questionCount:10,tag1:'dashboard',tag2:'final'}]}
+        }
+      }
+    };
   }
   setGradeBand(band,opts={}){
-    const bands={
-      primary_low:{label:'ประถมต้น',placeholder:'เช่น ป.2/1',recommended:'easy',hint:'เหมาะกับเด็ก ป.1–3 ที่กำลังเริ่มต้นนับนิ้ว เรียนรู้จำนวน 0–10 และค่อย ๆ ฝึกบวก–ลบอย่างมั่นใจ',plan:'เริ่มจากฝึกนับนิ้ว 0–10 ก่อน แล้วค่อยไปโหมดบวก–ลบ'},
-      primary_high:{label:'ประถมปลาย',placeholder:'เช่น ป.5/2',recommended:'medium',hint:'เหมาะกับเด็ก ป.4–6 ที่พร้อมเพิ่มความเร็ว ฝึกเลขเกิน 10 และต่อยอดเข้าสู่จินตคณิต',plan:'แนะนำเริ่มจากบวก–ลบ แล้วต่อด้วยเลขเกิน 10 และห้องเรียนจินตคณิต'},
-      secondary:{label:'มัธยม',placeholder:'เช่น ม.1/1',recommended:'hard',hint:'เหมาะกับ ม.1–3 ที่ต้องการโจทย์ท้าทายกว่าเดิม เน้นความเร็ว ความแม่น และการคิดในใจ',plan:'แนะนำเริ่มด้วยจินตคณิตหรือคิดเร็ว แล้วใช้โหมดท้าทายเพื่อจับเวลา'}
-    };
+    const bands=this.getStructuredBands();
     const info=bands[band]||bands.primary_low;
     this.gradeBand=band;
     localStorage.setItem('fingerMath_gradeBand',band);
@@ -1174,6 +1295,17 @@ class GameManager{
     if(DOM.gradeBandHint)DOM.gradeBandHint.innerHTML=`<strong>${info.label}</strong> · ${info.hint}`;
     if(DOM.startClassroom && (!DOM.startClassroom.value || opts.forcePlaceholder))DOM.startClassroom.placeholder=info.placeholder;
     if(DOM.gradeRecommendation)DOM.gradeRecommendation.innerHTML=`<i class="fa-solid fa-lightbulb"></i><div><strong>เส้นทางแนะนำสำหรับ${info.label}</strong><span>${info.plan}</span></div>`;
+    if(DOM.gradeQuickButtons){
+      DOM.gradeQuickButtons.innerHTML='';
+      (info.quick||[]).forEach(item=>{
+        const btn=document.createElement('button');
+        btn.type='button';
+        btn.innerHTML=`<strong>${item.label}</strong><small>${item.sub}</small>`;
+        btn.onclick=()=>this.quickStartConfigured(band,item.mode,item.topic,item.difficulty);
+        DOM.gradeQuickButtons.appendChild(btn);
+      });
+    }
+    this.renderMissionHub();
     if(!opts.preserveDifficulty){
       const next=opts.silent?(localStorage.getItem('fingerMath_difficulty')||this.difficulty||info.recommended):info.recommended;
       this.setDifficultyLevel(next,{silent:true});
@@ -1192,6 +1324,90 @@ class GameManager{
     document.querySelectorAll('[data-difficulty-level]').forEach(btn=>btn.classList.toggle('active',btn.dataset.difficultyLevel===level));
     if(DOM.difficultyMeterFill)DOM.difficultyMeterFill.style.width=info.width;
     if(DOM.difficultyHint)DOM.difficultyHint.innerHTML=`<strong>${info.label}</strong> · ${info.hint}`;
+  }
+  setMissionTier(tier,opts={}){
+    this.selectedMissionTier=tier||'starter';
+    localStorage.setItem('fingerMath_v8_tier',this.selectedMissionTier);
+    this.renderMissionHub();
+  }
+  renderMissionHub(){
+    const bands=this.getStructuredBands();
+    const info=bands[this.gradeBand]||bands.primary_low;
+    const tiers=info.tiers||{};
+    if(!tiers[this.selectedMissionTier])this.selectedMissionTier=Object.keys(tiers)[0]||'starter';
+    const tierMeta=tiers[this.selectedMissionTier]||{label:'Level',desc:'',missions:[]};
+    if(DOM.v8MissionTitle)DOM.v8MissionTitle.innerText=`เส้นทาง ${info.label}`;
+    if(DOM.v8MissionSubtitle)DOM.v8MissionSubtitle.innerText=`${tierMeta.label} • ${tierMeta.desc}`;
+    if(DOM.v8TierTabs){
+      DOM.v8TierTabs.innerHTML='';
+      Object.entries(tiers).forEach(([key,val])=>{
+        const btn=document.createElement('button');
+        btn.type='button';btn.className='v8-tier-tab'+(key===this.selectedMissionTier?' active':'');
+        btn.innerHTML=`<strong>${val.label}</strong><small>${val.desc}</small>`;
+        btn.onclick=()=>this.setMissionTier(key);
+        DOM.v8TierTabs.appendChild(btn);
+      });
+    }
+    if(DOM.v8MissionList){
+      DOM.v8MissionList.innerHTML='';
+      (tierMeta.missions||[]).forEach(m=>{
+        const card=document.createElement('div');card.className='v8-mission-card';
+        const prog=this.getMissionProgress(m.key);
+        card.innerHTML=`<div><h4>${m.title}</h4><p>${m.desc}</p></div><div class="v8-chip-row"><span class="v8-chip">${m.tag1||info.label}</span><span class="v8-chip">${m.tag2||tierMeta.label}</span><span class="v8-chip">${m.questionCount||10} ข้อ</span></div><div class="v8-mini-progress">${prog}</div><button type="button" class="v8-launch-btn">เริ่มบทเรียนนี้</button>`;
+        card.querySelector('button').onclick=()=>this.startStructuredMission({band:this.gradeBand,tier:this.selectedMissionTier,...m});
+        DOM.v8MissionList.appendChild(card);
+      });
+    }
+    if(DOM.v8ProgressSummary){
+      DOM.v8ProgressSummary.innerHTML=this.getBandProgressSummary(this.gradeBand);
+    }
+  }
+  getMissionProgressStore(){
+    try{return JSON.parse(localStorage.getItem('fingerMath_v8_progress')||'[]');}catch(e){return []}
+  }
+  getMissionProgress(missionKey){
+    const rows=this.getMissionProgressStore().filter(r=>r.missionKey===missionKey);
+    if(!rows.length)return 'ยังไม่เคยเล่นบทเรียนนี้';
+    const best=Math.max(...rows.map(r=>Number(r.accuracy)||0));
+    const latest=rows[rows.length-1];
+    return `เล่นแล้ว ${rows.length} ครั้ง • ดีที่สุด ${best}% • ล่าสุด ${latest.accuracy}%`;
+  }
+  getBandProgressSummary(band){
+    const rows=this.getMissionProgressStore().filter(r=>r.band===band);
+    if(!rows.length)return '<strong>Progress</strong><span>ยังไม่มีสถิติของช่วงชั้นนี้</span><span>เริ่มเล่นบทเรียนแรกเพื่อเก็บความก้าวหน้า</span>';
+    const unique=new Set(rows.map(r=>r.missionKey)).size;
+    const best=Math.max(...rows.map(r=>Number(r.accuracy)||0));
+    const avg=(rows.reduce((a,b)=>a+(Number(b.accuracy)||0),0)/rows.length).toFixed(1);
+    const latest=rows[rows.length-1];
+    return `<strong>Progress ${rows.length} session</strong><span>ปลดล็อกแล้ว ${unique} บทเรียน • ค่าเฉลี่ย ${avg}%</span><span>ดีที่สุด ${best}% • ล่าสุด ${latest.title||'บทเรียน'} </span>`;
+  }
+  async quickStartConfigured(band,mode,topic=null,difficulty=null){
+    this.currentMissionMeta={band,tier:'quick',missionKey:`quick_${band}_${mode}_${topic||'mix'}`,title:'Quick Start'};
+    this.setGradeBand(band,{silent:true,preserveDifficulty:true});
+    if(difficulty)this.setDifficultyLevel(difficulty,{silent:true});
+    await this.startGame(mode,topic||null);
+  }
+  async startStructuredMission(mission){
+    this.currentMissionMeta={band:mission.band||this.gradeBand,tier:mission.tier||this.selectedMissionTier,missionKey:mission.key,title:mission.title};
+    this.setGradeBand(mission.band||this.gradeBand,{silent:true,preserveDifficulty:true});
+    if(mission.difficulty)this.setDifficultyLevel(mission.difficulty,{silent:true});
+    if(DOM.startQuestionCount && mission.questionCount)DOM.startQuestionCount.value=String(mission.questionCount);
+    await this.startGame(mission.mode||'home_practice',mission.topic==null?null:mission.topic);
+  }
+  recordV8Progress(sessionRecord){
+    if(!this.currentMissionMeta)return;
+    const rows=this.getMissionProgressStore();
+    rows.push({
+      band:this.currentMissionMeta.band||this.gradeBand,
+      tier:this.currentMissionMeta.tier||this.selectedMissionTier,
+      missionKey:this.currentMissionMeta.missionKey||'manual',
+      title:this.currentMissionMeta.title||'ภารกิจ',
+      accuracy:sessionRecord.accuracy,
+      score:sessionRecord.score,
+      avgResponseTime:sessionRecord.avgResponseTime,
+      dateTime:sessionRecord.dateTime
+    });
+    localStorage.setItem('fingerMath_v8_progress',JSON.stringify(rows.slice(-200)));
   }
   updateMenuSubtitle(){
     if(!DOM.menuSubtitle)return;
@@ -1866,6 +2082,7 @@ class GameManager{
       responses:this.responses,seed:this.seed,
     };
     ResearchStore.add(this.ownerId||this.getOwnerId(),sessionRecord);
+    this.recordV8Progress(sessionRecord);
     this._autoSyncSession(sessionRecord);
     DOM.ui.classList.add('hidden');DOM.gameOverModal.classList.remove('hidden');
     const TL={pretest:'📋 ประเมินก่อนเรียน',posttest:'🏁 ประเมินหลังเรียน',skill_assessment:'🧾 ประเมินทักษะ',home_practice:'🏠 ฝึกที่บ้าน',practice:'✏️ ฝึกหัด',practice_topic:'✏️ ฝึกเฉพาะหัวข้อ',accessibility_voice:'🔊 โหมดเสียง',accessibility_physical_head:'♿ พยักหน้า/ส่ายหัว',accessibility_physical_face:'♿ ยิ้ม/หน้านิ่ง'};
@@ -1981,6 +2198,8 @@ class GameManager{
     DOM.ui.classList.add('hidden');
     DOM.gameOverModal.classList.add('hidden');
     DOM.menu.classList.remove('hidden');
+    this.currentMissionMeta=null;
+    this.renderMissionHub();
   }
   async restartGame(){
     DOM.gameOverModal.classList.add('hidden');
