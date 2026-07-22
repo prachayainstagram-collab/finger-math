@@ -22,3 +22,36 @@ body.ux-v4 .wow-mascot-fab{right:22px!important;bottom:22px!important}
 .mental-live-panel{display:none;position:absolute;left:18px;right:18px;bottom:18px;z-index:50;background:rgba(7,18,40,.92);border:1px solid rgba(103,232,249,.35);border-radius:20px;padding:14px;backdrop-filter:blur(14px);box-shadow:0 18px 40px rgba(2,6,23,.35)}
 body.mental-live-active .mental-live-panel{display:block}.mental-live-grid{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:10px}.mental-hand-card{background:#111d36;border:1px solid #30466d;border-radius:15px;padding:10px;text-align:center;color:#fff}.mental-hand-card b{display:block;font-size:.74rem;color:#a5f3fc}.mental-hand-card strong{display:block;font-size:2rem;color:#fde047}.mental-combined strong{color:#6ee7b7}.mental-symbol{font-size:1.4rem;color:#67e8f9}.mental-hand-status{margin-top:9px;text-align:center;color:#fca5a5;font-size:.78rem;font-weight:800}.mental-hand-status[data-ready=true]{color:#86efac}
 @media(max-width:850px){body.ux-v4 .grade-band-grid,body.ux-v4 .v8-mission-grid{grid-template-columns:1fr!important}body.ux-v4 .organized-role-tabs{grid-template-columns:repeat(2,1fr)!important}.mental-live-grid{grid-template-columns:1fr auto 1fr}.mental-combined{grid-column:1/-1}.mental-live-panel{left:8px;right:8px;bottom:8px}}
+
+/* Compact mental-math game panel — prevents overlay and button collisions */
+.mental-live-panel{display:none!important;position:static!important;inset:auto!important;z-index:auto!important;background:#0d1a32!important;border:1px solid #294166!important;border-radius:18px!important;padding:12px 14px!important;backdrop-filter:none!important;box-shadow:0 10px 24px rgba(28,49,83,.12)!important;flex:0 0 auto;width:100%;}
+body.mental-live-active .mental-live-panel{display:block!important;}
+.mental-live-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px;}
+.mental-live-head>div{display:grid;gap:2px;}
+.mental-live-kicker{font-size:.64rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#67e8f9;}
+.mental-live-head strong{font-size:.82rem;color:#f8fafc;}
+.mental-live-grid{display:grid!important;grid-template-columns:minmax(0,1fr) 40px minmax(0,1fr) 30px minmax(0,1fr)!important;gap:8px!important;align-items:center!important;}
+.mental-hand-card{min-height:72px!important;background:#13213d!important;border:1px solid #2d4670!important;border-radius:13px!important;padding:8px 10px!important;display:grid!important;grid-template-columns:1fr auto!important;grid-template-rows:auto auto!important;align-items:center!important;text-align:left!important;color:#fff!important;}
+.mental-card-label{font-size:.7rem;font-weight:900;color:#a5f3fc;}
+.mental-hand-card strong{grid-row:1/3;grid-column:2;font-size:1.8rem!important;line-height:1;color:#fde047!important;margin-left:10px;}
+.mental-hand-card small{font-size:.68rem;color:#cbd5e1;}
+.mental-combined{background:linear-gradient(135deg,#123351,#134e4a)!important;border-color:#2dd4bf!important;}
+.mental-combined strong{color:#6ee7b7!important;}
+.mental-symbol{font-size:1rem!important;font-weight:900;text-align:center;color:#67e8f9!important;}
+.mental-hand-status{margin:0!important;border-radius:999px;padding:5px 10px;background:rgba(248,113,113,.12);color:#fca5a5!important;font-size:.68rem!important;font-weight:900!important;white-space:nowrap;}
+.mental-hand-status[data-ready=true]{background:rgba(74,222,128,.12);color:#86efac!important;}
+body.game-in-progress #wowLabBtn{display:none!important;}
+body.game-in-progress .wow-mascot-fab{display:none!important;}
+@media(max-width:900px){
+  .mental-live-head{align-items:flex-start;flex-direction:column;gap:6px;}
+  .mental-live-grid{grid-template-columns:1fr 24px 1fr!important;}
+  .mental-live-grid .mental-combined{grid-column:1/-1!important;}
+  .mental-live-grid .mental-symbol:nth-of-type(2){display:none!important;}
+}
+@media(max-width:560px){
+  .mental-live-panel{padding:10px!important;border-radius:14px!important;}
+  .mental-live-grid{grid-template-columns:1fr 1fr!important;gap:7px!important;}
+  .mental-live-grid .mental-symbol{display:none!important;}
+  .mental-live-grid .mental-combined{grid-column:1/-1!important;}
+  .mental-hand-card{min-height:64px!important;}
+}
