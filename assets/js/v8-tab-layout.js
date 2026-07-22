@@ -89,6 +89,18 @@
     const acc=$('tabAccessibility'),physical=$('tabPhysical');
     if(acc){acc.classList.remove('hidden');more.appendChild(acc)}
     if(physical){physical.classList.remove('hidden');more.appendChild(physical)}
+    const audioPanel=document.createElement('section');audioPanel.className='v8-audio-panel';
+    audioPanel.innerHTML=`<div class="v8-audio-heading"><div><span>AUDIO EXPERIENCE</span><h3>เสียงระหว่างกิจกรรม</h3><p>เปิดเพลงบรรเลงเบา ๆ เพื่อลดความเงียบ และเปิดเสียงตอบสนองเมื่อกดปุ่ม</p></div></div><div class="v8-audio-controls"><label class="v8-audio-toggle"><input id="v8MusicToggle" type="checkbox"><span><b>เพลงพื้นหลังระหว่างเล่น</b><small>เพลงสังเคราะห์ ไม่มีไฟล์เพลงภายนอก</small></span></label><label class="v8-audio-slider"><span>ระดับเพลง</span><input id="v8MusicVolume" type="range" min="0" max="1" step="0.05"></label><label class="v8-audio-toggle"><input id="v8EffectsToggle" type="checkbox"><span><b>เสียงกดปุ่มและเสียงเกม</b><small>เสียงปุ่ม คำตอบถูก ผิด และเลเวลอัป</small></span></label><label class="v8-audio-slider"><span>ระดับเอฟเฟกต์</span><input id="v8EffectsVolume" type="range" min="0" max="1" step="0.05"></label><button id="v8AudioTest" type="button" class="v8-audio-test"><i class="fa-solid fa-music"></i> ทดลองเสียง</button></div>`;
+    more.appendChild(audioPanel);
+    setTimeout(()=>{
+      const s=window.app?.sound;if(!s)return;
+      const mt=$('v8MusicToggle'),mv=$('v8MusicVolume'),et=$('v8EffectsToggle'),ev=$('v8EffectsVolume'),test=$('v8AudioTest');
+      if(mt){mt.checked=s.musicEnabled;mt.onchange=()=>{s.setMusicEnabled(mt.checked);if(mt.checked&&app.state==='playing')s.startMusic();};}
+      if(mv){mv.value=String(s.musicVolume);mv.oninput=()=>s.setMusicVolume(mv.value);}
+      if(et){et.checked=s.enabled;et.onchange=()=>s.setEnabled(et.checked);}
+      if(ev){ev.value=String(s.effectsVolume);ev.oninput=()=>s.setEffectsVolume(ev.value);}
+      if(test)test.onclick=()=>{s.unlock();s.click();setTimeout(()=>s.correct(),120);};
+    },120);
     const extra=document.createElement('div');extra.className='v8-category-grid';
     extra.append(
       button('fa-solid fa-eye','Engagement Lens','ดูการมองหน้าจอและการละสายตาโดยไม่วินิจฉัยอารมณ์',()=>openWow('openAttention'),'cyan'),

@@ -100,13 +100,21 @@ class SoundManager{
   constructor(){
     this.ctx=null;this.ok=false;
     this.enabled=localStorage.getItem('fm_sound_enabled')!=='0';
+    this.musicEnabled=localStorage.getItem('fm_music_enabled')!=='0';
+    this.effectsVolume=Math.max(0,Math.min(1,parseFloat(localStorage.getItem('fm_effects_volume')||'0.55')));
+    this.musicVolume=Math.max(0,Math.min(1,parseFloat(localStorage.getItem('fm_music_volume')||'0.22')));
+    this.musicTimer=null;this.musicRunning=false;this.musicStep=0;this.musicGain=null;
   }
   init(){
-    if(!this.enabled)return;
     try{
       const AC=window.AudioContext||window.webkitAudioContext;
       if(!AC)return;
-      if(!this.ok){this.ctx=new AC();this.ok=true;}
+      if(!this.ok){
+        this.ctx=new AC();this.ok=true;
+        this.musicGain=this.ctx.createGain();
+        this.musicGain.gain.value=this.musicVolume*0.16;
+        this.musicGain.connect(this.ctx.destination);
+      }
       if(this.ctx.state==='suspended')this.ctx.resume().catch(()=>{});
     }catch(e){console.warn('Audio init:',e);}
   }
@@ -116,11 +124,64 @@ class SoundManager{
     if(this.enabled){this.init();this.cheer();}
   }
   toggle(){this.setEnabled(!this.enabled);return this.enabled;}
-  _t(f,t,d,v=0.07){if(!this.enabled){return;}this.init();if(!this.ctx)return;const o=this.ctx.createOscillator(),g=this.ctx.createGain();o.type=t;o.frequency.setValueAtTime(f,this.ctx.currentTime);g.gain.setValueAtTime(v,this.ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,this.ctx.currentTime+d);o.connect(g);g.connect(this.ctx.destination);o.start();o.stop(this.ctx.currentTime+d);}
+  setEffectsVolume(v){this.effectsVolume=Math.max(0,Math.min(1,Number(v)||0));localStorage.setItem('fm_effects_volume',String(this.effectsVolume));}
+  setMusicVolume(v){this.musicVolume=Math.max(0,Math.min(1,Number(v)||0));localStorage.setItem('fm_music_volume',String(this.musicVolume));if(this.musicGain&&this.ctx)this.musicGain.gain.setTargetAtTime(this.musicVolume*0.16,this.ctx.currentTime,.05);}
+  setMusicEnabled(v){
+    this.musicEnabled=!!v;localStorage.setItem('fm_music_enabled',this.musicEnabled?'1':'0');
+    if(!this.musicEnabled)this.stopMusic();
+  }
+  toggleMusic(){this.setMusicEnabled(!this.musicEnabled);return this.musicEnabled;}
+  _t(f,t,d,v=0.07){
+    if(!this.enabled||this.effectsVolume<=0)return;
+    this.init();if(!this.ctx)return;
+    const o=this.ctx.createOscillator(),g=this.ctx.createGain();
+    o.type=t;o.frequency.setValueAtTime(f,this.ctx.currentTime);
+    g.gain.setValueAtTime(Math.max(.0001,v*this.effectsVolume),this.ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,this.ctx.currentTime+d);
+    o.connect(g);g.connect(this.ctx.destination);o.start();o.stop(this.ctx.currentTime+d);
+  }
+  click(){this._t(740,'sine',.055,.035);setTimeout(()=>this._t(920,'sine',.045,.022),35);}
   correct(){this._t(523,'sine',.1);setTimeout(()=>this._t(659,'sine',.2),100);}
   wrong(){this._t(150,'sawtooth',.3,.05);}
   levelUp(){[261,329,392,523].forEach((f,i)=>setTimeout(()=>this._t(f,'square',.15,.05),i*150));}
   cheer(){[440,550,660].forEach((f,i)=>setTimeout(()=>this._t(f,'triangle',.1,.04),i*80));}
+  _musicNote(freq,start,duration,volume=1,type='sine'){
+    if(!this.ctx||!this.musicGain)return;
+    const o=this.ctx.createOscillator(),g=this.ctx.createGain();
+    o.type=type;o.frequency.setValueAtTime(freq,start);
+    const peak=Math.max(.0001,this.musicVolume*0.055*volume);
+    g.gain.setValueAtTime(.0001,start);
+    g.gain.exponentialRampToValueAtTime(peak,start+.03);
+    g.gain.exponentialRampToValueAtTime(.0001,start+duration);
+    o.connect(g);g.connect(this.musicGain);o.start(start);o.stop(start+duration+.03);
+  }
+  _scheduleMusicBar(){
+    if(!this.musicRunning||!this.musicEnabled||!this.ctx)return;
+    const now=this.ctx.currentTime+.05;
+    const melodies=[
+      [523.25,659.25,783.99,659.25,587.33,659.25,493.88,587.33],
+      [440,523.25,659.25,523.25,392,493.88,587.33,493.88],
+      [493.88,587.33,698.46,587.33,523.25,659.25,783.99,659.25]
+    ];
+    const bass=[[130.81,196],[110,164.81],[123.47,185]][this.musicStep%3];
+    const melody=melodies[this.musicStep%melodies.length];
+    melody.forEach((f,i)=>this._musicNote(f,now+i*.42,.32,i%4===0?1:.72,'sine'));
+    [0,1.68].forEach((offset,i)=>this._musicNote(bass[i],now+offset,1.45,.7,'triangle'));
+    this.musicStep++;
+    this.musicTimer=setTimeout(()=>this._scheduleMusicBar(),3300);
+  }
+  startMusic(){
+    if(!this.musicEnabled||this.musicRunning)return;
+    this.init();if(!this.ctx)return;
+    this.musicRunning=true;this.musicStep=0;
+    if(this.musicGain)this.musicGain.gain.setTargetAtTime(this.musicVolume*0.16,this.ctx.currentTime,.08);
+    this._scheduleMusicBar();
+  }
+  stopMusic(){
+    this.musicRunning=false;
+    if(this.musicTimer){clearTimeout(this.musicTimer);this.musicTimer=null;}
+    if(this.musicGain&&this.ctx)this.musicGain.gain.setTargetAtTime(.0001,this.ctx.currentTime,.12);
+  }
 }
 
 
@@ -1929,6 +1990,7 @@ class GameManager{
       return;
     }
     if(this.tracker?.setGestureMode)this.tracker.setGestureMode(this.physicalMode?this.physicalControl:'off');
+    this.sound.startMusic();
     this.startSession();
   }
   _hash(s){let h=0;for(let i=0;i<s.length;i++)h=(Math.imul(31,h)+s.charCodeAt(i))|0;return Math.abs(h);}
@@ -2211,6 +2273,7 @@ class GameManager{
   }
   endGame(title='ภารกิจสำเร็จ!'){
     this.state='gameover';
+    this.sound.stopMusic();
     const tt=parseFloat(((performance.now()-this.sessStart)/1000).toFixed(1));
     const avgRT=this.responses.length?parseFloat((this.responses.reduce((a,b)=>a+(b.responseTime||0),0)/this.responses.length).toFixed(2)):0;
 
@@ -2331,6 +2394,7 @@ class GameManager{
   confirmClearLeaderboard(){ResearchStore.clear(this.getOwnerId());DOM.customConfirmModal.classList.add('hidden');alert('ล้างข้อมูลเรียบร้อยแล้ว');}
   // แก้ไข: ตอนกลับเมนูต้องปิดกล้องจริง ๆ (หยุด MediaStream) ไม่ใช่แค่ซ่อนหน้าจอ
   returnToMenu(){
+    this.sound.stopMusic();
     document.body.classList.remove('physical-mode','physical-head-mode','physical-face-mode');
     if(this.loopId){cancelAnimationFrame(this.loopId);this.loopId=null;}
     clearTimeout(this.cameraTimeoutId);
@@ -2355,6 +2419,7 @@ class GameManager{
     const camOk=await this._connectCamera();
     if(!camOk)return;
     if(this.tracker?.setGestureMode)this.tracker.setGestureMode(this.physicalMode?this.physicalControl:'off');
+    this.sound.startMusic();
     this.startSession();
   }
 }
@@ -2363,6 +2428,10 @@ function bootFingerMath(){
   if(window.app)return;
   window.app=new GameManager();
   app.setupResponsiveMenu();
+  document.addEventListener('click',e=>{
+    const target=e.target.closest('button,.btn,.tab-btn,.v8-primary-tab,.v8-category-card,.grade-band-btn,.difficulty-pill,.v8-launch-btn');
+    if(target&&!target.disabled&&window.app?.sound){window.app.sound.unlock();window.app.sound.click();}
+  },true);
   // เบราว์เซอร์สมัยใหม่ต้องได้รับ gesture ก่อนจึงอนุญาต AudioContext และเสียงพูด
   const unlock=()=>app.unlockAudioSystems();
   document.addEventListener('pointerdown',unlock,{once:true,capture:true});
