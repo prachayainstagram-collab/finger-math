@@ -619,11 +619,11 @@ class HandTracker{
       this.latestFaceLandmarks=r.multiFaceLandmarks;
       this.emotionAnalyzer.analyzeFace(r.multiFaceLandmarks);
       const ga=this.analyzeFaceGesture(r.multiFaceLandmarks[0]);
-      if(this.gestureCb)this.gestureCb(ga.gesture,ga.confidence,ga.label);
+      if(typeof this.gestureCb==='function'){try{this.gestureCb(ga.gesture,ga.confidence,ga.label);}catch(err){console.error('[FingerMath] face callback failed',err);}}
     } else {
       this.latestFaceLandmarks=null;
       this.emotionAnalyzer.analyzeFace(null);
-      if(this.gestureCb)this.gestureCb('none',0,'ไม่พบใบหน้า');
+      if(typeof this.gestureCb==='function'){try{this.gestureCb('none',0,'ไม่พบใบหน้า');}catch(err){console.error('[FingerMath] face callback failed',err);}}
     }
   }
 
@@ -847,7 +847,11 @@ class HandTracker{
     DOM.hudConf.innerText=cp>0?cp+'%':'—';
     DOM.confidenceFill.style.width=cp+'%';
     DOM.confidenceFill.style.background=cp>=80?'#10b981':cp>=60?'#f59e0b':'#ef4444';
-    if(this.cb)this.cb(tf,this.lastConf,handDigits);
+    if(typeof this.cb==='function'){
+      try{this.cb(tf,this.lastConf,handDigits);}catch(err){
+        console.error('[FingerMath] hand callback failed',err);
+      }
+    }
   }
 
   fingerMathDigit(lm){
@@ -1246,7 +1250,10 @@ class GameManager{
     this.physicalMode=false;this.currentGesture='none';this.physicalControl='head';this.pendingPhysicalGesture='none';this.pendingPhysicalOk=true;this.gestureReadyAt=0;
     this.qMgr=new QuestionManager();
     this.score=new ScoreManager();
-    this.tracker=new HandTracker(DOM.video,DOM.canvas,DOM.faceCanvas,(f,c,h)=>this.onHand(f,c,h),(g,c,l)=>this.onFaceGesture(g,c,l));
+    // Create stable callbacks once. This prevents callback `this` loss after camera reset.
+    this._boundOnHand=(f,c,h)=>GameManager.prototype.onHand.call(this,f,c,h);
+    this._boundOnFaceGesture=(g,c,l)=>GameManager.prototype.onFaceGesture.call(this,g,c,l);
+    this.tracker=null;
     this.state='menu';this.gameMode='practice';this.testType='practice';
     this.classTopic=null;this.playerName='';this.classroom='';
     this.gradeBand=localStorage.getItem('fingerMath_gradeBand')||'primary_low';
@@ -1265,7 +1272,7 @@ class GameManager{
     this._setup();
     this.applyTheme(this.theme,true);
   }
-  get emoAnalyzer(){return this.tracker.emotionAnalyzer;}
+  get emoAnalyzer(){return this.tracker?.emotionAnalyzer||{reset(){},getSummary(){return[];}};}
   _setup(){
     DOM.btnPause.addEventListener('click',()=>this.togglePause());
     DOM.btnRestart.addEventListener('click',()=>this.startSession());
@@ -1804,10 +1811,16 @@ class GameManager{
     }
   }
   _createTracker(){
+    if(typeof this._boundOnHand!=='function'){
+      this._boundOnHand=(f,c,h)=>GameManager.prototype.onHand.call(this,f,c,h);
+    }
+    if(typeof this._boundOnFaceGesture!=='function'){
+      this._boundOnFaceGesture=(g,c,l)=>GameManager.prototype.onFaceGesture.call(this,g,c,l);
+    }
     return new HandTracker(
       DOM.video,DOM.canvas,DOM.faceCanvas,
-      (f,c,h)=>this.onHand(f,c,h),
-      (g,c,l)=>this.onFaceGesture(g,c,l)
+      this._boundOnHand,
+      this._boundOnFaceGesture
     );
   }
   async _resetCameraTracker(){
@@ -1938,6 +1951,11 @@ class GameManager{
     this.lastFrame=performance.now();this.loop();
   }
   nextQ(){
+    // `nextQ` must never read frame variables such as f/hands. Those only exist in onHand().
+    if(!this.qMgr||!this.rng){
+      console.error('[FingerMath] Question engine is not ready');
+      return;
+    }
     this.qIdx++;
     if(this.totalQ!==999&&this.qIdx>this.totalQ){this.endGame();return;}
     DOM.hudLevel.innerText=this.totalQ===999?String(this.qIdx):`${this.qIdx}/${this.totalQ}`;
@@ -1994,6 +2012,10 @@ class GameManager{
     });
   }
   onHand(f,conf,hands=null){
+    // Normalize callback values so a malformed MediaPipe frame cannot freeze the game loop.
+    f=Number.isFinite(Number(f))?Number(f):0;
+    conf=Number.isFinite(Number(conf))?Number(conf):0;
+    hands=hands&&typeof hands==='object'?hands:null;
     if(this.physicalMode){
       if(this.state!=='playing')return;
       return; // โหมดท่าทางไม่ใช้จำนวนนิ้ว
