@@ -26,3 +26,31 @@ body[data-user-role="teacher"] .teacher-clean-page:not([data-teacher-page="overv
 body[data-user-role="teacher"] .teacher-section-card,body[data-user-role="teacher"] .teacher-settings-list,body[data-user-role="teacher"] .teacher-assessment-wizard{border-radius:16px!important;border-color:#e2e8f2!important;box-shadow:none!important}
 @media(max-width:1180px){body[data-user-role="teacher"] #teacherCleanShell.teacher-clean-shell{grid-template-columns:240px minmax(0,1fr)!important}.teacher-metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.teacher-pro-lower{grid-template-columns:1fr}.teacher-donut-layout{grid-template-columns:210px 1fr}}
 @media(max-width:760px){body[data-user-role="teacher"] #teacherCleanShell.teacher-clean-shell{display:block!important}.teacher-clean-sidebar{position:relative!important;height:auto!important}.teacher-clean-nav,.teacher-pro-extra-nav{grid-template-columns:repeat(2,minmax(0,1fr))!important}.teacher-pro-profile{margin-top:16px}.teacher-clean-main{padding:18px 12px 32px!important}.teacher-pro-topbar{align-items:flex-start;flex-direction:column}.teacher-date-filter{width:100%;display:grid;grid-template-columns:1fr 1fr}.teacher-date-filter label{grid-column:1/-1}.teacher-date-filter button{grid-column:1/-1}.teacher-metric-grid{grid-template-columns:1fr}.teacher-pro-lower{grid-template-columns:1fr}.teacher-donut-layout{grid-template-columns:1fr}.teacher-metric-card{min-height:150px}}
+
+
+/* Teacher workspace isolation and scroll stability */
+#teacherProHost{display:none}
+body[data-user-role="teacher"] #screenMenu{position:relative!important;height:100vh!important;min-height:100vh!important;overflow:hidden!important;padding:0!important;background:#f5f7fb!important;scroll-behavior:auto!important}
+body[data-user-role="teacher"] #screenMenu>*:not(#teacherProHost){display:none!important}
+body[data-user-role="teacher"] #teacherProHost{display:block!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;overflow:hidden!important;z-index:50!important;background:#f5f7fb!important}
+body[data-user-role="teacher"] #teacherCleanShell.teacher-clean-shell{display:grid!important;grid-template-columns:280px minmax(0,1fr)!important;width:100%!important;height:100%!important;min-height:0!important;max-width:none!important;margin:0!important;gap:0!important;overflow:hidden!important;background:#f5f7fb!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+body[data-user-role="teacher"] #teacherCleanShell .teacher-clean-sidebar{position:relative!important;top:auto!important;width:auto!important;height:100%!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;border-radius:0!important}
+body[data-user-role="teacher"] #teacherCleanShell .teacher-clean-main{height:100%!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;padding:28px 30px 46px!important;scroll-behavior:auto!important;overscroll-behavior:contain!important}
+body[data-user-role="teacher"] #teacherCleanShell .teacher-clean-page{display:none!important;width:100%!important;max-width:1500px!important;margin:0 auto!important}
+body[data-user-role="teacher"] #teacherCleanShell .teacher-clean-page.active{display:block!important}
+body[data-user-role="teacher"] #teacherCleanShell .teacher-clean-page:not([data-teacher-page="overview"]){background:#fff!important;border:1px solid #e2e8f2!important;border-radius:20px!important;padding:24px!important;box-shadow:0 10px 30px rgba(29,45,77,.06)!important}
+body[data-user-role="teacher"] #wowLabBtn,body[data-user-role="teacher"] .wow-lab-fab{display:none!important}
+body[data-user-role="teacher"] .teacher-clean-nav button,body[data-user-role="teacher"] .teacher-pro-extra-nav button{flex-shrink:0!important}
+body[data-user-role="teacher"] .teacher-clean-nav button:focus-visible,body[data-user-role="teacher"] .teacher-pro-extra-nav button:focus-visible{outline:3px solid rgba(103,232,249,.45)!important;outline-offset:2px!important}
+
+@media(max-width:900px){
+  body[data-user-role="teacher"] #teacherCleanShell.teacher-clean-shell{grid-template-columns:220px minmax(0,1fr)!important}
+  body[data-user-role="teacher"] #teacherCleanShell .teacher-clean-main{padding:22px 18px 36px!important}
+}
+@media(max-width:700px){
+  body[data-user-role="teacher"] #screenMenu{height:auto!important;min-height:100vh!important;overflow:auto!important}
+  body[data-user-role="teacher"] #teacherProHost{position:relative!important;height:auto!important;min-height:100vh!important;overflow:visible!important}
+  body[data-user-role="teacher"] #teacherCleanShell.teacher-clean-shell{display:block!important;height:auto!important;overflow:visible!important}
+  body[data-user-role="teacher"] #teacherCleanShell .teacher-clean-sidebar{height:auto!important;overflow:visible!important}
+  body[data-user-role="teacher"] #teacherCleanShell .teacher-clean-main{height:auto!important;overflow:visible!important;padding:16px 12px 28px!important}
+}

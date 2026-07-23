@@ -38,9 +38,13 @@
     const groups=groupRows(rows),tb=$('teacherDashTable');if(tb){if(!groups.length)tb.innerHTML='<tr><td colspan="5" class="teacher-empty-row">ยังไม่มีข้อมูลการประเมินในช่วงเวลานี้</td></tr>';else{let totalStu=0;tb.innerHTML=groups.map(g=>{const pa=mean(g.pre),po=mean(g.post),d=po-pa;totalStu+=g.students.size;return `<tr><td>${esc(g.room)}</td><td>${g.students.size}</td><td>${pa}%</td><td>${po}%</td><td class="teacher-positive">${d>=0?'+':''}${d}%</td></tr>`}).join('')+`<tr><td>รวมทั้งหมด</td><td>${new Set(rows.map(s=>s.playerName)).size}</td><td>${preAvg}%</td><td>${postAvg}%</td><td class="teacher-positive">${growth>=0?'+':''}${growth}%</td></tr>`}}
     const total=pre.length+post.length,prePct=total?Math.round(pre.length*100/total):50,postPct=total?100-prePct:50;const donut=$('teacherDonut');if(donut)donut.style.setProperty('--pre',prePct);if($('teacherDonutPre'))$('teacherDonutPre').textContent=prePct+'%';if($('teacherDonutPost'))$('teacherDonutPost').textContent=postPct+'%';if($('teacherPreCount'))$('teacherPreCount').textContent=`${pre.length} (${prePct}%)`;if($('teacherPostCount'))$('teacherPostCount').textContent=`${post.length} (${postPct}%)`;
   }
-  function navButton(icon,label,handler){const b=document.createElement('button');b.type='button';b.innerHTML=`<i class="${icon}"></i>${label}`;b.onclick=handler;return b}
+  function navButton(icon,label,handler){const b=document.createElement('button');b.type='button';b.innerHTML=`<i class="${icon}"></i>${label}`;b.onclick=e=>{e.preventDefault();e.stopPropagation();handler(e)};return b}
   function enhance(){
     const shell=$('teacherCleanShell'),side=shell?.querySelector('.teacher-clean-sidebar'),nav=side?.querySelector('.teacher-clean-nav'),overview=shell?.querySelector('[data-teacher-page="overview"]');if(!shell||!side||!nav||!overview||shell.dataset.proDone)return false;shell.dataset.proDone='1';
+    const screenMenu=$('screenMenu');
+    let host=$('teacherProHost');
+    if(screenMenu&&!host){host=document.createElement('div');host.id='teacherProHost';screenMenu.appendChild(host);}
+    if(host&&shell.parentElement!==host)host.appendChild(shell);
     side.querySelector('.teacher-clean-brand strong').textContent='FINGER MATH';
     const buttons=[...nav.querySelectorAll('button')];const byPage=p=>buttons.find(b=>b.dataset.teacherPage===p);
     const labels={overview:['fa-solid fa-border-all','ภาพรวม (Dashboard)'],students:['fa-regular fa-user-group','นักเรียน'],assessment:['fa-regular fa-clipboard','แบบทดสอบ'],questions:['fa-regular fa-file-lines','คลังโจทย์'],reports:['fa-solid fa-chart-line','ผลการเรียน'],settings:['fa-solid fa-gear','ตั้งค่า']};

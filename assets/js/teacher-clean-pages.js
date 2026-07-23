@@ -4,11 +4,15 @@
     const d=document.createElement('div');d.className='teacher-page-head';
     d.innerHTML=`<div><span>${kicker}</span><h2>${title}</h2><p>${desc}</p></div>`;return d;
   }
+  const teacherPageScroll={};
   function show(name){
+    const main=document.querySelector('#teacherCleanShell .teacher-clean-main');
+    const current=document.querySelector('.teacher-clean-page.active')?.dataset.teacherPage;
+    if(main&&current)teacherPageScroll[current]=main.scrollTop;
     document.querySelectorAll('.teacher-clean-page').forEach(p=>p.classList.toggle('active',p.dataset.teacherPage===name));
     document.querySelectorAll('.teacher-clean-nav button').forEach(b=>b.classList.toggle('active',b.dataset.teacherPage===name));
     localStorage.setItem('fingerMath_teacherPage',name);
-    document.getElementById('screenMenu')?.scrollTo({top:0,behavior:'smooth'});
+    requestAnimationFrame(()=>{if(main)main.scrollTop=teacherPageScroll[name]||0;});
   }
   function action(icon,title,desc,fn){
     const b=document.createElement('button');b.type='button';b.className='teacher-action-card';
@@ -31,7 +35,7 @@
       <button data-teacher-page="reports"><i class="fa-solid fa-chart-column"></i>รายงานผล</button>
       <button data-teacher-page="settings"><i class="fa-solid fa-gear"></i>ตั้งค่า</button>
     </nav>`;
-    side.querySelectorAll('button').forEach(b=>b.onclick=()=>show(b.dataset.teacherPage));
+    side.querySelectorAll('button').forEach(b=>b.onclick=e=>{e.preventDefault();e.stopPropagation();show(b.dataset.teacherPage);});
     const main=document.createElement('div');main.className='teacher-clean-main';
     const page=(name)=>{const p=document.createElement('section');p.className='teacher-clean-page';p.dataset.teacherPage=name;main.appendChild(p);return p};
 

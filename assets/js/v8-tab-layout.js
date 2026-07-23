@@ -46,7 +46,7 @@
     document.querySelectorAll('.v8-main-panel').forEach(p=>p.classList.toggle('hidden',p.dataset.v8tab!==name));
     document.querySelectorAll('.v8-primary-tab').forEach(b=>b.classList.toggle('active',b.dataset.v8tab===name));
     localStorage.setItem('fingerMath_mainTab',name);
-    const root=$('screenMenu');if(root)root.scrollTo({top:0,behavior:'smooth'});
+    // Keep the current scroll position when switching tabs.
   }
   function init(){
     const shell=document.querySelector('#screenMenu .menu-shell');
