@@ -77,3 +77,7 @@ body[data-user-role="teacher"] .teacher-hard-sidebar table{display:none!importan
  body[data-user-role="teacher"] .teacher-hard-sidebar .teacher-clean-nav,body[data-user-role="teacher"] .teacher-hard-sidebar .teacher-pro-extra-nav{grid-template-columns:repeat(2,minmax(0,1fr))!important}
  body[data-user-role="teacher"] #teacherCleanShell>.teacher-hard-main{height:auto!important;overflow:visible!important;padding:16px 10px 30px!important}
 }
+
+body[data-user-role="teacher"] .teacher-hard-sidebar .teacher-clean-brand strong:before{
+  content:''!important;width:52px!important;height:48px!important;border-radius:0!important;background:url('../images/finger-math-logo-transparent.png') center/contain no-repeat!important;box-shadow:none!important;filter:drop-shadow(0 8px 12px rgba(76,29,149,.28));
+}

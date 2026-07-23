@@ -54,3 +54,5 @@ body[data-user-role="teacher"] .teacher-clean-nav button:focus-visible,body[data
   body[data-user-role="teacher"] #teacherCleanShell .teacher-clean-sidebar{height:auto!important;overflow:visible!important}
   body[data-user-role="teacher"] #teacherCleanShell .teacher-clean-main{height:auto!important;overflow:visible!important;padding:16px 12px 28px!important}
 }
+
+body[data-user-role="teacher"] .teacher-clean-brand strong:before{content:''!important;width:52px!important;height:48px!important;border-radius:0!important;background:url('../images/finger-math-logo-transparent.png') center/contain no-repeat!important;box-shadow:none!important;filter:drop-shadow(0 8px 12px rgba(76,29,149,.28))}
